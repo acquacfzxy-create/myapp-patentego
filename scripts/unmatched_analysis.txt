@@ -1,0 +1,47 @@
+======================================================================
+未匹配题目分析报告
+======================================================================
+
+未匹配原因统计:
+
+  no_img_match: 0 道题目
+  no_answer_match: 0 道题目
+  no_db_img: 0 道题目
+  multiple_matches: 3100 道题目
+  json_only: 0 道题目
+
+总未匹配题目数: 3100
+
+======================================================================
+改进匹配策略建议:
+======================================================================
+
+1. 图片路径不匹配 (no_db_img):
+   - 检查JSON和数据库中的图片路径格式是否一致
+   - 可能需要路径标准化（去除前导/，或添加前缀）
+
+2. 答案不匹配 (no_answer_match):
+   - 检查数据库中的answer字段格式（0/1 vs True/False）
+   - 可能需要通过题目内容进一步匹配
+
+3. 多个候选题目 (multiple_matches):
+   - 同一张图片对应多道题目（相同图片，不同问题）
+   - 需要通过题目内容精确匹配
+
+4. 无映射分类:
+   - 检查JSON中是否有分类没有在映射表中
+   - 添加缺失的映射关系
+
+
+======================================================================
+未匹配题目示例（前10个）:
+======================================================================
+
+
+【multiple_matches】示例:
+  1. {'json': ('', "L'attraversamento pedonale viene segnalato con str", True), 'candidates': 65}
+  2. {'json': ('', "L'attraversamento pedonale è una parte della carre", True), 'candidates': 65}
+  3. {'json': ('', "L'attraversamento pedonale è una parte della carre", True), 'candidates': 65}
+  4. {'json': ('', "L'attraversamento pedonale è una parte della carre", True), 'candidates': 65}
+  5. {'json': ('', "L'attraversamento pedonale è una parte della carre", True), 'candidates': 65}
+  ... 还有 3095 个
