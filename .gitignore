@@ -6,21 +6,25 @@
 .pub-cache/
 .pub/
 build/
+.cache/
+.config/
+.dart-tool/
+.dartServer/
+.python_packages/
 *.iml
 *.ipr
 *.iws
+*.code-workspace
 .idea/
 
 # Android
-**/android/**/gradle-wrapper.jar
 **/android/.gradle
 **/android/captures/
-**/android/gradlew
-**/android/gradlew.bat
 **/android/local.properties
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 *.jks
+**/android/**/google-services.json
 
 # iOS
 **/ios/**/*.mode1v3
@@ -50,6 +54,7 @@ build/
 **/ios/Flutter/flutter_export_environment.sh
 **/ios/ServiceDefinitions.json
 **/ios/Runner/GeneratedPluginRegistrant.*
+**/ios/**/GoogleService-Info.plist
 *.mode1v3
 *.mode2v3
 *.moved-aside
@@ -59,6 +64,10 @@ build/
 # macOS
 **/macos/Flutter/GeneratedPluginRegistrant.swift
 **/macos/Flutter/ephemeral
+**/macos/**/GoogleService-Info.plist
+
+# Firebase local configuration (contains project/API identifiers; keep local)
+lib/firebase_options.dart
 
 # Web
 **/web/*.dart.js
@@ -93,6 +102,9 @@ user_progress.db
 
 # Logs
 *.log
+failed_ids.txt
+firepit-log.txt
+process_log.txt
 
 # OS generated files
 .DS_Store
