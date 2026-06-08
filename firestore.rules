@@ -1,0 +1,158 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function entitlementFields() {
+      return [
+        'isVip',
+        'vip',
+        'isPremium',
+        'premium',
+        'entitlements',
+        'subscription',
+        'subscriptionStatus'
+      ];
+    }
+
+    function dailyUsageFields() {
+      return [
+        'quiz_count',
+        'explanation_count',
+        'exam_used',
+        'updated_at'
+      ];
+    }
+
+    function validDailyUsageData() {
+      return request.resource.data.keys().hasOnly(dailyUsageFields())
+        && request.resource.data.updated_at == request.time
+        && (!('quiz_count' in request.resource.data)
+          || (request.resource.data.quiz_count is int
+            && request.resource.data.quiz_count >= 0
+            && request.resource.data.quiz_count <= 10000))
+        && (!('explanation_count' in request.resource.data)
+          || (request.resource.data.explanation_count is int
+            && request.resource.data.explanation_count >= 0
+            && request.resource.data.explanation_count <= 10))
+        && (!('exam_used' in request.resource.data)
+          || request.resource.data.exam_used is bool);
+    }
+
+    function incrementsByOne(fieldName) {
+      return (!request.resource.data.diff(resource.data).affectedKeys().hasAny([fieldName]))
+        || (fieldName in request.resource.data
+          && ((fieldName in resource.data
+            && request.resource.data[fieldName] == resource.data[fieldName] + 1)
+            || (!(fieldName in resource.data)
+              && request.resource.data[fieldName] == 1)));
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+
+      allow create: if isOwner(uid)
+        && !request.resource.data.keys().hasAny(entitlementFields());
+
+      allow update: if isOwner(uid)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(entitlementFields());
+
+      allow delete: if false;
+
+      match /progress/{questionId} {
+        allow read: if isOwner(uid);
+
+        allow create: if isOwner(uid)
+          && request.resource.data.keys().hasOnly([
+            'correct_streak',
+            'wrong_count',
+            'total_attempts',
+            'is_mastered',
+            'is_favorite',
+            'last_practiced'
+          ])
+          && request.resource.data.correct_streak is int
+          && request.resource.data.correct_streak >= 0
+          && request.resource.data.correct_streak <= 10000
+          && request.resource.data.wrong_count is int
+          && request.resource.data.wrong_count >= 0
+          && request.resource.data.wrong_count <= 10000
+          && request.resource.data.total_attempts is int
+          && request.resource.data.total_attempts >= 0
+          && request.resource.data.total_attempts <= 10000
+          && request.resource.data.is_mastered is bool
+          && request.resource.data.is_favorite is bool
+          && (!('last_practiced' in request.resource.data)
+            || request.resource.data.last_practiced is timestamp);
+
+        allow update: if isOwner(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'correct_streak',
+            'wrong_count',
+            'total_attempts',
+            'is_mastered',
+            'is_favorite',
+            'last_practiced'
+          ])
+          && (!('correct_streak' in request.resource.data)
+            || (request.resource.data.correct_streak is int
+              && request.resource.data.correct_streak >= 0
+              && request.resource.data.correct_streak <= 10000))
+          && (!('wrong_count' in request.resource.data)
+            || (request.resource.data.wrong_count is int
+              && request.resource.data.wrong_count >= 0
+              && request.resource.data.wrong_count <= 10000))
+          && (!('total_attempts' in request.resource.data)
+            || (request.resource.data.total_attempts is int
+              && request.resource.data.total_attempts >= 0
+              && request.resource.data.total_attempts <= 10000))
+          && (!('is_mastered' in request.resource.data)
+            || request.resource.data.is_mastered is bool)
+          && (!('is_favorite' in request.resource.data)
+            || request.resource.data.is_favorite is bool)
+          && (!('last_practiced' in request.resource.data)
+            || request.resource.data.last_practiced is timestamp);
+
+        allow delete: if isOwner(uid);
+      }
+
+      match /daily_usage/{dateId} {
+        allow read: if isOwner(uid);
+
+        allow create: if isOwner(uid)
+          && dateId.matches('^\\d{4}-\\d{2}-\\d{2}$')
+          && validDailyUsageData()
+          && (('quiz_count' in request.resource.data
+              && request.resource.data.quiz_count == 1)
+            || ('explanation_count' in request.resource.data
+              && request.resource.data.explanation_count == 1)
+            || ('exam_used' in request.resource.data
+              && request.resource.data.exam_used == true));
+
+        allow update: if isOwner(uid)
+          && dateId.matches('^\\d{4}-\\d{2}-\\d{2}$')
+          && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(dailyUsageFields())
+          && validDailyUsageData()
+          && incrementsByOne('quiz_count')
+          && incrementsByOne('explanation_count')
+          && (!request.resource.data.diff(resource.data).affectedKeys()
+              .hasAny(['exam_used'])
+            || request.resource.data.exam_used == true);
+
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

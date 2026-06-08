@@ -1,4 +1,4 @@
-package com.example.italy_quiz_app
+package com.patentego.app
 
 import io.flutter.embedding.android.FlutterActivity
 

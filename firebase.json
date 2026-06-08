@@ -1,0 +1,43 @@
+{
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "italy-patente-b",
+          "appId": "1:744398794890:android:073ea3e7d62ae88f4a7d73",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "italy-patente-b",
+          "appId": "1:744398794890:ios:c8531295333900034a7d73",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "italy-patente-b",
+          "appId": "1:744398794890:ios:c8531295333900034a7d73",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "italy-patente-b",
+          "configurations": {
+            "android": "1:744398794890:android:073ea3e7d62ae88f4a7d73",
+            "ios": "1:744398794890:ios:c8531295333900034a7d73",
+            "macos": "1:744398794890:ios:c8531295333900034a7d73",
+            "web": "1:744398794890:web:96462833fa68cd014a7d73"
+          }
+        }
+      }
+    }
+  }
+}
