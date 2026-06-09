@@ -27,10 +27,8 @@ class ChapterAssignmentService {
         [chapterId, ...questionIds],
       );
 
-      print('✅ [ChapterAssignment] 已为 $result 道题目分配章节 $chapterId');
       return result > 0;
     } catch (e) {
-      print('❌ [ChapterAssignment] 分配章节失败: $e');
       return false;
     }
   }
@@ -79,7 +77,6 @@ class ChapterAssignmentService {
       
       return counts;
     } catch (e) {
-      print('❌ [ChapterAssignment] 获取统计失败: $e');
       return {};
     }
   }
@@ -93,7 +90,6 @@ class ChapterAssignmentService {
       );
       return (result.first['count'] as int?) ?? 0;
     } catch (e) {
-      print('❌ [ChapterAssignment] 获取未分配数量失败: $e');
       return 0;
     }
   }
@@ -102,13 +98,10 @@ class ChapterAssignmentService {
   static Future<bool> clearAllChapterAssignments() async {
     try {
       final db = await DatabaseService.database;
-      final result = await db.rawUpdate('UPDATE questions SET chapter = NULL');
-      print('✅ [ChapterAssignment] 已清空 $result 道题目的章节分配');
+      await db.rawUpdate('UPDATE questions SET chapter = NULL');
       return true;
     } catch (e) {
-      print('❌ [ChapterAssignment] 清空分配失败: $e');
       return false;
     }
   }
 }
-

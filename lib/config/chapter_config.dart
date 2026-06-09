@@ -1,16 +1,16 @@
 import '../models/chapter.dart';
 
-/// 章節配置
-/// 根據意大利交通部官方規則定義的25個章節
+/// 章节配置
+/// 根据意大利交通部官方规则定义的25个章节
 class ChapterConfig {
   /// 所有章節列表（1-25）
   static List<ChapterModel> chapters = [
-    // 重點章節（1-15）
-    ChapterModel(
+    // 主要章节（1-15）
+    const ChapterModel(
       id: 1,
       titleIt: 'Segnaletica stradale',
       titleTranslations: {
-        'zh': '交通標誌',
+        'zh': '交通标志',
         'en': 'Road Signs',
         'ru': 'Дорожные знаки',
         'ur': 'سڑک کے نشانات',
@@ -19,11 +19,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 2,
       titleIt: 'Precedenza',
       titleTranslations: {
-        'zh': '優先通行權',
+        'zh': '优先通行权',
         'en': 'Right of Way',
         'ru': 'Преимущество',
         'ur': 'ترجیح',
@@ -32,11 +32,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 3,
       titleIt: 'Sosta e fermata',
       titleTranslations: {
-        'zh': '停車與停止',
+        'zh': '停车与停止',
         'en': 'Parking and Stopping',
         'ru': 'Стоянка и остановка',
         'ur': 'پارکنگ اور رکنا',
@@ -45,7 +45,7 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 4,
       titleIt: 'Velocità',
       titleTranslations: {
@@ -58,11 +58,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 5,
       titleIt: 'Sorpasso',
       titleTranslations: {
-        'zh': '超車',
+        'zh': '超车',
         'en': 'Overtaking',
         'ru': 'Обгон',
         'ur': 'اوورٹیکنگ',
@@ -71,11 +71,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 6,
       titleIt: 'Distanza di sicurezza',
       titleTranslations: {
-        'zh': '安全距離',
+        'zh': '安全距离',
         'en': 'Safety Distance',
         'ru': 'Безопасная дистанция',
         'ur': 'سیفٹی فاصلہ',
@@ -84,7 +84,7 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 7,
       titleIt: 'Incroci',
       titleTranslations: {
@@ -97,11 +97,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 8,
       titleIt: 'Curve e cambiamenti di carreggiata',
       titleTranslations: {
-        'zh': '彎道與變道',
+        'zh': '弯道与变道',
         'en': 'Curves and Lane Changes',
         'ru': 'Повороты и смена полосы',
         'ur': 'کرونا اور لین تبدیل',
@@ -110,11 +110,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 9,
       titleIt: 'Veicoli e loro caratteristiche',
       titleTranslations: {
-        'zh': '車輛及其特徵',
+        'zh': '车辆及其特征',
         'en': 'Vehicles and Their Characteristics',
         'ru': 'Транспортные средства и их характеристики',
         'ur': 'گاڑیاں اور ان کی خصوصیات',
@@ -123,11 +123,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 10,
       titleIt: 'Documenti di circolazione',
       titleTranslations: {
-        'zh': '行駛證件',
+        'zh': '行驶证件',
         'en': 'Driving Documents',
         'ru': 'Документы для вождения',
         'ur': 'ڈرائیونگ دستاویزات',
@@ -136,11 +136,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 11,
       titleIt: 'Guida in condizioni difficili',
       titleTranslations: {
-        'zh': '困難條件下的駕駛',
+        'zh': '困难条件下的驾驶',
         'en': 'Driving in Difficult Conditions',
         'ru': 'Вождение в сложных условиях',
         'ur': 'مشکل حالات میں ڈرائیونگ',
@@ -149,11 +149,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 12,
       titleIt: 'Comportamento in caso di incidente',
       titleTranslations: {
-        'zh': '事故處理',
+        'zh': '事故处理',
         'en': 'Behavior in Case of Accident',
         'ru': 'Поведение при аварии',
         'ur': 'حادثے کی صورت میں رویہ',
@@ -162,11 +162,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 13,
       titleIt: 'Limiti e divieti',
       titleTranslations: {
-        'zh': '限制與禁止',
+        'zh': '限制与禁止',
         'en': 'Limits and Prohibitions',
         'ru': 'Ограничения и запреты',
         'ur': 'حدود اور پابندیاں',
@@ -175,11 +175,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 14,
       titleIt: 'Segnali luminosi',
       titleTranslations: {
-        'zh': '交通信號燈',
+        'zh': '交通信号灯',
         'en': 'Traffic Lights',
         'ru': 'Светофоры',
         'ur': 'ٹریفک لائٹس',
@@ -188,11 +188,11 @@ class ChapterConfig {
       },
       isPrincipal: true,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 15,
       titleIt: 'Regole generali di comportamento',
       titleTranslations: {
-        'zh': '一般行為規則',
+        'zh': '一般行为规则',
         'en': 'General Behavior Rules',
         'ru': 'Общие правила поведения',
         'ur': 'عمومی رویے کے قواعد',
@@ -202,12 +202,12 @@ class ChapterConfig {
       isPrincipal: true,
     ),
     
-    // 次要章節（16-25）
-    ChapterModel(
+    // 次要章节（16-25）
+    const ChapterModel(
       id: 16,
       titleIt: 'Norme per la circolazione dei veicoli',
       titleTranslations: {
-        'zh': '車輛通行規則',
+        'zh': '车辆通行规则',
         'en': 'Vehicle Traffic Rules',
         'ru': 'Правила движения транспортных средств',
         'ur': 'گاڑیوں کی ٹریفک قواعد',
@@ -216,7 +216,7 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 17,
       titleIt: 'Circolazione dei pedoni',
       titleTranslations: {
@@ -229,11 +229,11 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 18,
       titleIt: 'Circolazione dei ciclisti',
       titleTranslations: {
-        'zh': '自行車通行',
+        'zh': '自行车通行',
         'en': 'Cyclist Traffic',
         'ru': 'Движение велосипедистов',
         'ur': 'سائیکل سواروں کی ٹریفک',
@@ -242,11 +242,11 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 19,
       titleIt: 'Norme di comportamento per i conducenti',
       titleTranslations: {
-        'zh': '駕駛員行為規範',
+        'zh': '驾驶员行为规范',
         'en': 'Driver Behavior Standards',
         'ru': 'Нормы поведения водителей',
         'ur': 'ڈرائیورز کے رویے کے معیارات',
@@ -255,11 +255,11 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 20,
       titleIt: 'Uso dei dispositivi di segnalazione',
       titleTranslations: {
-        'zh': '信號裝置的使用',
+        'zh': '信号装置的使用',
         'en': 'Use of Signaling Devices',
         'ru': 'Использование сигнальных устройств',
         'ur': 'سگنلنگ ڈیوائسز کا استعمال',
@@ -268,11 +268,11 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 21,
       titleIt: 'Norme per il trasporto di persone e cose',
       titleTranslations: {
-        'zh': '人員與物品運輸規範',
+        'zh': '人员与物品运输规范',
         'en': 'Rules for Transporting People and Goods',
         'ru': 'Правила перевозки людей и грузов',
         'ur': 'لوگوں اور سامان کی نقل و حمل کے قواعد',
@@ -281,11 +281,11 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 22,
       titleIt: 'Guida ecologica',
       titleTranslations: {
-        'zh': '環保駕駛',
+        'zh': '环保驾驶',
         'en': 'Ecological Driving',
         'ru': 'Экологическое вождение',
         'ur': 'ماحولیاتی ڈرائیونگ',
@@ -294,11 +294,11 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 23,
       titleIt: 'Uso delle cinture di sicurezza',
       titleTranslations: {
-        'zh': '安全帶的使用',
+        'zh': '安全带的使用',
         'en': 'Use of Seat Belts',
         'ru': 'Использование ремней безопасности',
         'ur': 'سیٹ بیلٹ کا استعمال',
@@ -307,11 +307,11 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 24,
       titleIt: 'Norme per la circolazione dei veicoli pubblici',
       titleTranslations: {
-        'zh': '公共車輛通行規則',
+        'zh': '公共车辆通行规则',
         'en': 'Public Vehicle Traffic Rules',
         'ru': 'Правила движения общественного транспорта',
         'ur': 'عوامی گاڑیوں کی ٹریفک قواعد',
@@ -320,11 +320,11 @@ class ChapterConfig {
       },
       isPrincipal: false,
     ),
-    ChapterModel(
+    const ChapterModel(
       id: 25,
       titleIt: 'Norme per la circolazione dei veicoli pesanti',
       titleTranslations: {
-        'zh': '重型車輛通行規則',
+        'zh': '重型车辆通行规则',
         'en': 'Heavy Vehicle Traffic Rules',
         'ru': 'Правила движения тяжелых транспортных средств',
         'ur': 'بھاری گاڑیوں کی ٹریفک قواعد',
@@ -335,8 +335,8 @@ class ChapterConfig {
     ),
   ];
   
-  /// 獲取所有重點章節（1-15）
-  /// 按章節ID排序，確保順序正確
+  /// 获取所有主要章节（1-15）
+  /// 按章节ID排序，确保顺序正确
   static List<ChapterModel> get principalChapters {
     return chapters
         .where((chapter) => chapter.isPrincipal)
@@ -344,8 +344,8 @@ class ChapterConfig {
       ..sort((a, b) => a.id.compareTo(b.id));
   }
   
-  /// 獲取所有次要章節（16-25）
-  /// 按章節ID排序，確保順序正確
+  /// 获取所有次要章节（16-25）
+  /// 按章节ID排序，确保顺序正确
   static List<ChapterModel> get secondaryChapters {
     return chapters
         .where((chapter) => !chapter.isPrincipal)
@@ -353,7 +353,7 @@ class ChapterConfig {
       ..sort((a, b) => a.id.compareTo(b.id));
   }
   
-  /// 根據ID獲取章節
+  /// 根据ID获取章节
   static ChapterModel? getChapterById(int id) {
     try {
       return chapters.firstWhere((chapter) => chapter.id == id);
@@ -362,13 +362,13 @@ class ChapterConfig {
     }
   }
   
-  /// 獲取章節總數
+  /// 获取章节总数
   static int get totalChapters => chapters.length;
   
-  /// 獲取重點章節數量
+  /// 获取主要章节数量
   static int get principalChaptersCount => principalChapters.length;
   
-  /// 獲取次要章節數量
+  /// 获取次要章节数量
   static int get secondaryChaptersCount => secondaryChapters.length;
 }
 
