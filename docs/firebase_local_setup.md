@@ -62,4 +62,4 @@ firebase deploy --only firestore:rules --dry-run --project italy-patente-b
 
 App 启动时会尝试初始化 Firebase。若运行环境的 Firebase 配置异常，离线题库和本地学习进度仍应可用；登录、云端同步、Firestore VIP 恢复等功能会跳过或提示不可用。
 
-注意：如果 `lib/firebase_options.dart` 完全不存在，Dart 编译会失败。新机器首次运行前必须先生成本文件。
+注意：当前 Dart 启动流程不会直接 import `lib/firebase_options.dart`，所以缺少该文件时离线题库仍可编译运行；但登录、云端同步、Google/Apple 登录、以及 iOS/macOS 原生构建仍需要对应平台的 Firebase 本地配置文件。新机器首次联调 Firebase 前必须先生成这些文件。
