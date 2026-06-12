@@ -1,0 +1,63 @@
+name: italy_quiz_app
+description: 義大利駕照測驗 App
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^4.3.0
+  firebase_auth: ^6.1.3
+  cloud_firestore: ^6.1.1
+
+  # 登入
+  google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.1
+  crypto: ^3.0.3
+
+  # 數據庫
+  sqflite: ^2.3.0
+  path: ^1.8.3
+  path_provider: ^2.1.1
+
+  # 狀態管理（未來擴展用）
+  provider: ^6.1.1
+  
+  # 本地存儲
+  shared_preferences: ^2.2.2
+  flutter_secure_storage: ^9.2.2
+  in_app_purchase: ^3.2.3
+  
+  # UI
+  cupertino_icons: ^1.0.6
+  fl_chart: ^0.68.0
+  url_launcher: ^6.3.1
+  
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/italy_quiz.db
+    - assets/images/
+    - images/img_sign/
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  remove_alpha_ios: true  # 必须开启这个，移除透明度
+  adaptive_icon_background: "#3B82F6"
+  adaptive_icon_foreground: "assets/images/app_icon.png"
