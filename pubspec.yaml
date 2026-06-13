@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   fl_chart: ^0.68.0
   url_launcher: ^6.3.1
+  flutter_tts: ^4.2.5
   
 dev_dependencies:
   flutter_test:
@@ -53,6 +54,51 @@ flutter:
     - assets/italy_quiz.db
     - assets/images/
     - images/img_sign/
+    - docs/licenses/fonts/
+
+  fonts:
+    - family: NotoSansSC
+      fonts:
+        - asset: assets/fonts/noto/NotoSansCJKsc-Regular.otf
+          weight: 400
+        - asset: assets/fonts/noto/NotoSansCJKsc-Medium.otf
+          weight: 500
+        - asset: assets/fonts/noto/NotoSansCJKsc-Medium.otf
+          weight: 600
+        - asset: assets/fonts/noto/NotoSansCJKsc-Bold.otf
+          weight: 700
+        - asset: assets/fonts/noto/NotoSansCJKsc-Bold.otf
+          weight: 800
+    - family: NotoSans
+      fonts:
+        - asset: assets/fonts/noto/NotoSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/noto/NotoSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/noto/NotoSans-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/noto/NotoSans-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/noto/NotoSans-Bold.ttf
+          weight: 800
+    - family: NotoNastaliqUrdu
+      fonts:
+        - asset: assets/fonts/noto/NotoNastaliqUrdu-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/noto/NotoNastaliqUrdu-Bold.ttf
+          weight: 700
+    - family: NotoSansGurmukhi
+      fonts:
+        - asset: assets/fonts/noto/NotoSansGurmukhi-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/noto/NotoSansGurmukhi-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/noto/NotoSansGurmukhi-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/noto/NotoSansGurmukhi-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/noto/NotoSansGurmukhi-Bold.ttf
+          weight: 800
 
 flutter_launcher_icons:
   android: "launcher_icon"

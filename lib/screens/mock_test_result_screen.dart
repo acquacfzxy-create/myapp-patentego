@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:ui';
 import '../config/mock_test_config.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../models/question.dart';
 import 'exam_review_screen.dart';
 import 'mock_test_screen.dart';
@@ -111,20 +112,8 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
     return Scaffold(
       // 毛玻璃 AppBar
       appBar: _buildGlassAppBar(context),
-      // 淺藍色漸變背景
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Color(0xFFE0F2FE), // 淺藍
-              Color(0xFFF0F9FF), // 更淺的藍
-              Colors.white, // 白色
-            ],
-            stops: [0.0, 0.4, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),

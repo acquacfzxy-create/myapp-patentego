@@ -8,6 +8,7 @@ import 'screens/home_screen.dart';
 import 'services/database_service.dart';
 import 'services/firebase_status.dart';
 import 'config/app_strings.dart';
+import 'config/app_theme.dart';
 import 'config/route_observer.dart';
 import 'providers/user_state_provider.dart';
 
@@ -102,10 +103,7 @@ class MyApp extends StatelessWidget {
 
         return MaterialApp(
           title: AppStrings.getWithLanguage(currentLang, 'app_title'),
-          theme: ThemeData(
-            colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-            useMaterial3: true,
-          ),
+          theme: AppTheme.lightTheme(),
           builder: (context, child) {
             return Directionality(
               textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,

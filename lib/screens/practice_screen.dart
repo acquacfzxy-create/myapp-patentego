@@ -7,6 +7,7 @@ import '../services/database_service.dart';
 import '../services/firebase_status.dart';
 import '../models/question.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/question_widget.dart';
 import 'subscription_page.dart';
@@ -868,7 +869,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
+                            color: AppTheme.ink,
                           ),
                         ),
                       ],
@@ -897,7 +898,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF27AE60), // stats-green
+                            color: AppTheme.roadGreen,
                           ),
                         ),
                       ],
@@ -941,18 +942,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
         return Scaffold(
           backgroundColor: Colors.transparent,
           body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFE8F0F8), // 左上角：浅灰蓝（增加饱和度）
-                  Color(0xFFF2F6FA), // 中间：浅灰蓝（增加饱和度）
-                  Color(0xFFE8F0F8), // 右下角：浅灰蓝（增加饱和度）
-                ],
-                stops: [0.0, 0.5, 1.0],
-              ),
-            ),
+            decoration: AppTheme.pageDecoration,
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _currentQuestion == null

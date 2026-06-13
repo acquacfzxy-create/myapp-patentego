@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/user_state.dart';
 import '../config/app_config.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../services/database_service.dart';
 import '../services/firebase_status.dart';
@@ -41,8 +42,8 @@ class SettingsScreen extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1d1d1f),
-                  letterSpacing: -0.5,
+                  color: AppTheme.ink,
+                  letterSpacing: 0,
                 ),
               ),
             ),
@@ -390,18 +391,7 @@ class SettingsScreen extends StatelessWidget {
         return Scaffold(
           backgroundColor: Colors.transparent,
           body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFFE0F7FA), // 左上角：极浅蓝色
-                  Color(0xFFF0F9FF), // 中间：极浅蓝色
-                  Color(0xFFFFFFFF), // 右下角：白色
-                ],
-                stops: [0.0, 0.5, 1.0],
-              ),
-            ),
+            decoration: AppTheme.pageDecoration,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [

@@ -4,8 +4,10 @@ import 'package:provider/provider.dart';
 import '../services/database_service.dart';
 import '../models/question.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../widgets/question_widget.dart';
 import '../widgets/empty_state_view.dart';
+import '../widgets/translation_panel.dart';
 import '../providers/user_state_provider.dart';
 import 'subscription_page.dart';
 
@@ -56,8 +58,8 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
         final question = await DatabaseService.getQuestionById(id, lang: 'it');
         if (question != null) {
           if (_currentLanguage != 'it') {
-            final translated =
-                await DatabaseService.getQuestionById(id, lang: _currentLanguage);
+            final translated = await DatabaseService.getQuestionById(id,
+                lang: _currentLanguage);
             if (translated != null) {
               questions.add(question.mergeLanguages(translated));
             } else {
@@ -154,7 +156,7 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE8F0F8),
+      backgroundColor: AppTheme.pageMid,
       appBar: AppBar(
         title: Text(
           AppStrings.get('favorite_questions'),
@@ -176,18 +178,7 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE8F0F8),
-              Color(0xFFF2F6FA),
-              Color(0xFFE8F0F8),
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _favoriteQuestions.isEmpty
@@ -241,7 +232,9 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
   Widget _buildFavoriteCard(Question question, int index) {
     final questionId = question.id;
     final correctAnswer = question.answer;
-    final questionText = question.getQuestionText('it') ?? '';
+    final questionText = question.getDisplayQuestionText(
+      defaultText: AppStrings.get('question_content_missing'),
+    );
     final translationText = question.getQuestionText(_currentLanguage);
     final hasImage =
         question.imageName != null && question.imageName!.isNotEmpty;
@@ -292,20 +285,9 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
                       if (_showTranslation[questionId] == true &&
                           translationText != null) ...[
                         const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            translationText,
-                            style: TextStyle(
-                              fontSize: 14,
-                              height: 1.5,
-                              color: Colors.grey[700],
-                            ),
-                          ),
+                        TranslationPanel(
+                          text: translationText,
+                          languageCode: _currentLanguage,
                         ),
                       ],
                       if (_showTranslation[questionId] == true) ...[
@@ -409,7 +391,9 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
           ),
           const SizedBox(width: 12),
           GestureDetector(
-            onTap: () async { await _openExplanationModal(question); },
+            onTap: () async {
+              await _openExplanationModal(question);
+            },
             child: Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
@@ -532,7 +516,8 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
                       color: Colors.black.withOpacity(0.6),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.close, color: Colors.white, size: 20),
+                    child:
+                        const Icon(Icons.close, color: Colors.white, size: 20),
                   ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
@@ -592,10 +577,8 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
       runSpacing: 4,
       children: keywords.map((keyword) {
         final itWord = keyword['it'] ?? '';
-        final translation = keyword[_currentLanguage] ??
-            keyword['en'] ??
-            keyword['zh'] ??
-            '';
+        final translation =
+            keyword[_currentLanguage] ?? keyword['en'] ?? keyword['zh'] ?? '';
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -617,7 +600,8 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
               ),
               if (translation.isNotEmpty) ...[
                 const SizedBox(width: 4),
-                Text('•', style: TextStyle(fontSize: 9, color: Colors.grey[400])),
+                Text('•',
+                    style: TextStyle(fontSize: 9, color: Colors.grey[400])),
                 const SizedBox(width: 4),
                 Text(
                   translation,

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -62,7 +63,6 @@ class _AuthPageState extends State<AuthPage> {
     }
   }
 
-
   Future<void> _maybeMergeGuestProgress() async {
     final userStateProvider = context.read<UserStateProvider>();
     final hasGuestData = await userStateProvider.hasGuestProgress();
@@ -74,15 +74,18 @@ class _AuthPageState extends State<AuthPage> {
       builder: (dialogContext) {
         return AlertDialog(
           title: Text(AppStrings.getWithLanguage(lang, 'merge_progress_title')),
-          content: Text(AppStrings.getWithLanguage(lang, 'merge_progress_message')),
+          content:
+              Text(AppStrings.getWithLanguage(lang, 'merge_progress_message')),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: Text(AppStrings.getWithLanguage(lang, 'merge_progress_later')),
+              child: Text(
+                  AppStrings.getWithLanguage(lang, 'merge_progress_later')),
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: Text(AppStrings.getWithLanguage(lang, 'merge_progress_confirm')),
+              child: Text(
+                  AppStrings.getWithLanguage(lang, 'merge_progress_confirm')),
             ),
           ],
         );
@@ -96,7 +99,8 @@ class _AuthPageState extends State<AuthPage> {
           final lang = context.read<UserStateProvider>().currentLanguage;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(AppStrings.getWithLanguage(lang, 'merge_progress_success')),
+              content: Text(
+                  AppStrings.getWithLanguage(lang, 'merge_progress_success')),
               backgroundColor: Colors.green,
             ),
           );
@@ -129,18 +133,7 @@ class _AuthPageState extends State<AuthPage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE0F7FA), // 左上角：极浅蓝色
-              Color(0xFFF0F9FF), // 中间：极浅蓝色
-              Color(0xFFFFFFFF), // 右下角：白色
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: Stack(
           children: [
             // 主要內容（底層）
@@ -155,7 +148,8 @@ class _AuthPageState extends State<AuthPage> {
                       child: Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new, size: 20, color: Color(0xFF475569)),
+                            icon: const Icon(Icons.arrow_back_ios_new,
+                                size: 20, color: Color(0xFF475569)),
                             onPressed: isLoading ? null : _handleClose,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -209,10 +203,13 @@ class _AuthPageState extends State<AuthPage> {
                                   ? null
                                   : () => _handleSignIn(
                                         providerKey: 'google',
-                                        action: () => context.read<UserStateProvider>().signInWithGoogle(),
+                                        action: () => context
+                                            .read<UserStateProvider>()
+                                            .signInWithGoogle(),
                                       ),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 16),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -230,7 +227,8 @@ class _AuthPageState extends State<AuthPage> {
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      AppStrings.getWithLanguage(lang, 'auth_google'),
+                                      AppStrings.getWithLanguage(
+                                          lang, 'auth_google'),
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
@@ -263,12 +261,16 @@ class _AuthPageState extends State<AuthPage> {
                                       ? null
                                       : () => _handleSignIn(
                                             providerKey: 'apple',
-                                            action: () => context.read<UserStateProvider>().signInWithApple(),
+                                            action: () => context
+                                                .read<UserStateProvider>()
+                                                .signInWithApple(),
                                           ),
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 16),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 16),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         const Icon(
                                           Icons.apple,
@@ -277,7 +279,8 @@ class _AuthPageState extends State<AuthPage> {
                                         ),
                                         const SizedBox(width: 12),
                                         Text(
-                                          AppStrings.getWithLanguage(lang, 'auth_apple'),
+                                          AppStrings.getWithLanguage(
+                                              lang, 'auth_apple'),
                                           style: const TextStyle(
                                             fontSize: 16,
                                             fontWeight: FontWeight.w600,
@@ -293,11 +296,10 @@ class _AuthPageState extends State<AuthPage> {
                             const SizedBox(height: 24),
                             // 游客模式按鈕
                             TextButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : _handleClose,
+                              onPressed: isLoading ? null : _handleClose,
                               child: Text(
-                                AppStrings.getWithLanguage(lang, 'auth_guest_later'),
+                                AppStrings.getWithLanguage(
+                                    lang, 'auth_guest_later'),
                                 style: TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey[600],

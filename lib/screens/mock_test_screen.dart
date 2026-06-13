@@ -7,6 +7,7 @@ import '../services/database_service.dart';
 import '../models/question.dart';
 import '../config/mock_test_config.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import 'mock_test_result_screen.dart';
 import 'home_screen.dart';
@@ -395,7 +396,9 @@ class _MockTestScreenState extends State<MockTestScreen> {
   Widget _buildQuestionCard(int index) {
     final question = _questions[index];
     final selectedAnswer = userChoices[index];
-    final questionText = question.getQuestionText('it') ?? '';
+    final questionText = question.getDisplayQuestionText(
+      defaultText: AppStrings.get('question_content_missing'),
+    );
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -808,28 +811,31 @@ class _MockTestScreenState extends State<MockTestScreen> {
     return Scaffold(
       // 自定義 AppBar（毛玻璃效果）
       appBar: _buildGlassAppBar(context),
-      body: Stack(
-        children: [
-          // 題目列表（滾動）
-          ListView.builder(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100), // 底部留出空間給提交按鈕
-            itemCount: _questions.length,
-            itemBuilder: (context, index) {
-              return _buildQuestionCard(index);
-            },
-          ),
-          // 吸底提交按鈕
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: SafeArea(
-              child: Center(
-                child: _buildSubmitButton(submitButtonText),
+      body: Container(
+        decoration: AppTheme.pageDecoration,
+        child: Stack(
+          children: [
+            // 題目列表（滾動）
+            ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100), // 底部留出空間給提交按鈕
+              itemCount: _questions.length,
+              itemBuilder: (context, index) {
+                return _buildQuestionCard(index);
+              },
+            ),
+            // 吸底提交按鈕
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Center(
+                  child: _buildSubmitButton(submitButtonText),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

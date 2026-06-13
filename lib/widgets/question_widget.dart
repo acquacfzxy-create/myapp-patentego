@@ -5,10 +5,13 @@ import 'dart:ui';
 import '../models/question.dart';
 import '../services/database_service.dart';
 import '../services/explanation_parser.dart';
+import '../services/question_speech_service.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../screens/subscription_page.dart';
 import 'glass_card.dart';
+import 'translation_panel.dart';
 
 /// 題目顯示組件
 /// 負責顯示題目內容、圖片、選項和解析
@@ -226,8 +229,8 @@ class QuestionWidget extends StatefulWidget {
       builder: (BuildContext bottomSheetContext) {
         return ClipRRect(
           borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(32),
-            topRight: Radius.circular(32),
+            topLeft: Radius.circular(AppTheme.radiusXl),
+            topRight: Radius.circular(AppTheme.radiusXl),
           ),
           child: Container(
             constraints: BoxConstraints(
@@ -236,8 +239,8 @@ class QuestionWidget extends StatefulWidget {
             decoration: const BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(32),
-                topRight: Radius.circular(32),
+                topLeft: Radius.circular(AppTheme.radiusXl),
+                topRight: Radius.circular(AppTheme.radiusXl),
               ),
             ),
             child: Column(
@@ -265,10 +268,10 @@ class QuestionWidget extends StatefulWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: Colors.blue[50],
+                            color: AppTheme.primarySoft,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: Colors.blue[200]!,
+                              color: AppTheme.primary.withOpacity(0.22),
                               width: 1.5,
                             ),
                           ),
@@ -281,14 +284,14 @@ class QuestionWidget extends StatefulWidget {
                                 style: const TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF1d1d1f),
+                                  color: AppTheme.ink,
                                 ),
                               ),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF137FEC),
+                                  color: AppTheme.primary,
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Center(
@@ -323,12 +326,12 @@ class QuestionWidget extends StatefulWidget {
                             const TextStyle(
                               fontSize: 15,
                               height: 1.6,
-                              color: Color(0xFF1d1d1f),
+                              color: AppTheme.ink,
                             ),
                             const TextStyle(
                               fontSize: 15,
                               height: 1.6,
-                              color: Color(0xFF9CA3AF), // 淡灰色，用於括號內母語翻譯
+                              color: AppTheme.muted,
                             ),
                           ),
                         ),
@@ -359,7 +362,7 @@ class QuestionWidget extends StatefulWidget {
                                     margin: const EdgeInsets.only(
                                         top: 6, right: 10),
                                     decoration: const BoxDecoration(
-                                      color: Color(0xFF137FEC),
+                                      color: AppTheme.primary,
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -369,7 +372,7 @@ class QuestionWidget extends StatefulWidget {
                                         style: const TextStyle(
                                           fontSize: 15,
                                           height: 1.5,
-                                          color: Color(0xFF1d1d1f),
+                                          color: AppTheme.ink,
                                         ),
                                         children: [
                                           TextSpan(
@@ -424,7 +427,7 @@ class QuestionWidget extends StatefulWidget {
                               children: [
                                 Icon(
                                   Icons.lightbulb_outline,
-                                  color: Colors.blue[700],
+                                  color: AppTheme.warning,
                                   size: 24,
                                 ),
                                 const SizedBox(width: 12),
@@ -521,10 +524,10 @@ class _StudyTipSectionState extends State<_StudyTipSection>
         Container(
           padding: const EdgeInsets.fromLTRB(16, 16, 48, 16),
           decoration: BoxDecoration(
-            color: Colors.blue[50],
+            color: AppTheme.primarySoft,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: Colors.blue[200]!,
+              color: AppTheme.primary.withOpacity(0.22),
               width: 1,
             ),
           ),
@@ -582,6 +585,8 @@ class _QuestionWidgetState extends State<QuestionWidget>
   bool _showExplanation = false;
   bool _isFavorite = false;
   bool _showTranslation = false; // 翻譯顯示狀態
+  bool _isSpeakingQuestion = false;
+  final QuestionSpeechService _speechService = QuestionSpeechService();
   final ScrollController _scrollController = ScrollController(); // 用於自動滾動
 
   // 滑动卡片相关
@@ -608,6 +613,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
 
   @override
   void dispose() {
+    _speechService.dispose();
     _scrollController.dispose();
     _dragAnimationController?.dispose();
     super.dispose();
@@ -619,9 +625,11 @@ class _QuestionWidgetState extends State<QuestionWidget>
     super.didUpdateWidget(oldWidget);
     // 如果題目ID改變，重置翻譯和解析顯示狀態，并重置拖拽状态
     if (oldWidget.question.id != widget.question.id) {
+      _speechService.stop();
       setState(() {
         _showTranslation = false;
         _showExplanation = false;
+        _isSpeakingQuestion = false;
         _resetDragState();
       });
     }
@@ -795,8 +803,12 @@ class _QuestionWidgetState extends State<QuestionWidget>
     final currentLang = context.watch<UserStateProvider>().currentLanguage;
 
     // 默認顯示意大利語題目
-    final questionTextIt = widget.question.getQuestionText('it') ??
-        widget.question.getQuestionText(widget.currentLanguage);
+    final questionTextIt = widget.question.getDisplayQuestionText(
+      defaultText: AppStrings.getWithLanguage(
+        currentLang,
+        'question_content_missing',
+      ),
+    );
 
     // 獲取翻譯語言的題目內容（如果存在）
     final questionTextTranslation = widget.currentLanguage != 'it'
@@ -863,18 +875,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
         }
       },
       child: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFF2F6FA), // 左上角：浅灰蓝（增加饱和度）
-              Color(0xFFE8F0F8), // 中间：浅灰蓝（增加饱和度）
-              Color(0xFFF2F6FA), // 右下角：浅灰蓝（增加饱和度）
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: Stack(
           children: [
             // 主要内容区域（可滚动，带滑动卡片效果）
@@ -924,7 +925,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
               ],
             ),
             // 右侧悬浮按钮
-            _buildFloatingButtons(context, currentLang),
+            _buildFloatingButtons(context, currentLang, questionTextIt),
           ],
         ),
       ),
@@ -955,8 +956,8 @@ class _QuestionWidgetState extends State<QuestionWidget>
                 fontSize: 22,
                 fontWeight: FontWeight.w600, // SemiBold
                 height: 1.4,
-                letterSpacing: -0.3,
-                color: Color(0xFF1A1C1E),
+                letterSpacing: 0,
+                color: AppTheme.ink,
               ),
             ),
           ),
@@ -967,13 +968,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
             if (questionTextTranslation != null)
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
-                child: Text(
-                  questionTextTranslation,
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 1.6,
-                    color: Colors.grey[600],
-                  ),
+                child: TranslationPanel(
+                  text: questionTextTranslation,
+                  languageCode: currentLang,
                 ),
               ),
             // 重点词汇（Chip 形式）- 始终显示（如果存在）
@@ -1019,9 +1016,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: AppTheme.primarySoft,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue[200]!),
+                border: Border.all(color: AppTheme.primary.withOpacity(0.22)),
               ),
               child: Text(
                 explanationText,
@@ -1138,7 +1135,11 @@ class _QuestionWidgetState extends State<QuestionWidget>
   }
 
   /// 构建右侧悬浮按钮
-  Widget _buildFloatingButtons(BuildContext context, String currentLang) {
+  Widget _buildFloatingButtons(
+    BuildContext context,
+    String currentLang,
+    String questionTextIt,
+  ) {
     // 模拟考试模式下，只显示收藏按钮，不显示翻译和解析按钮
     if (widget.isExamMode) {
       return Positioned(
@@ -1172,6 +1173,18 @@ class _QuestionWidgetState extends State<QuestionWidget>
             label: AppStrings.getWithLanguage(currentLang, 'favorite'),
             onTap: _toggleFavorite,
             isActive: _isFavorite,
+          ),
+          const SizedBox(height: 12),
+          // 朗讀按鈕：只朗讀意大利語原文，模擬考場音頻按鈕體驗
+          _buildFloatingButton(
+            icon: _isSpeakingQuestion
+                ? Icons.stop_circle_outlined
+                : Icons.volume_up_outlined,
+            label: AppStrings.getWithLanguage(currentLang, 'listen_question'),
+            onTap: () {
+              _toggleQuestionSpeech(questionTextIt, currentLang);
+            },
+            isActive: _isSpeakingQuestion,
           ),
           const SizedBox(height: 12),
           // 解析按钮
@@ -1251,6 +1264,66 @@ class _QuestionWidgetState extends State<QuestionWidget>
     }
   }
 
+  Future<void> _toggleQuestionSpeech(
+    String questionText,
+    String currentLang,
+  ) async {
+    if (_isSpeakingQuestion) {
+      await _speechService.stop();
+      if (mounted) {
+        setState(() {
+          _isSpeakingQuestion = false;
+        });
+      }
+      return;
+    }
+
+    try {
+      final started = await _speechService.speakItalian(
+        questionText,
+        onStart: () {
+          if (mounted) {
+            setState(() {
+              _isSpeakingQuestion = true;
+            });
+          }
+        },
+        onStop: () {
+          if (mounted) {
+            setState(() {
+              _isSpeakingQuestion = false;
+            });
+          }
+        },
+      );
+
+      if (mounted && started) {
+        setState(() {
+          _isSpeakingQuestion = true;
+        });
+      } else if (mounted) {
+        _showSpeechUnavailableMessage(currentLang);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isSpeakingQuestion = false;
+        });
+        _showSpeechUnavailableMessage(currentLang);
+      }
+    }
+  }
+
+  void _showSpeechUnavailableMessage(String currentLang) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppStrings.getWithLanguage(currentLang, 'speech_unavailable'),
+        ),
+      ),
+    );
+  }
+
   /// 构建单个悬浮按钮
   Widget _buildFloatingButton({
     required IconData icon,
@@ -1268,11 +1341,11 @@ class _QuestionWidgetState extends State<QuestionWidget>
           height: 48,
           decoration: BoxDecoration(
             color: isActive
-                ? const Color(0xFF136DEC).withOpacity(0.12)
+                ? AppTheme.primary.withOpacity(0.12)
                 : Colors.transparent,
             border: isActive
                 ? Border.all(
-                    color: const Color(0xFF136DEC).withOpacity(0.3),
+                    color: AppTheme.primary.withOpacity(0.3),
                     width: 1,
                   )
                 : null,
@@ -1284,9 +1357,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
               Icon(
                 icon,
                 size: 20,
-                color: isActive
-                    ? const Color(0xFF136DEC)
-                    : const Color(0xFF475569),
+                color: isActive ? AppTheme.primary : const Color(0xFF475569),
               ),
               const SizedBox(height: 2),
               Text(
@@ -1294,9 +1365,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                 style: TextStyle(
                   fontSize: 9,
                   fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                  color: isActive
-                      ? const Color(0xFF136DEC)
-                      : const Color(0xFF64748B),
+                  color: isActive ? AppTheme.primary : const Color(0xFF64748B),
                 ),
               ),
             ],
@@ -1393,12 +1462,11 @@ class _QuestionWidgetState extends State<QuestionWidget>
 
     // 按钮背景色：如果已答题且被选中，变为蓝色；否则为白色
     final buttonColor = isSelected
-        ? const Color(0xFF4A7DFF) // 蓝色激活态
+        ? AppTheme.primary // 蓝色激活态
         : Colors.white; // 白色初始态
 
     // 文字颜色：如果已答题且被选中，变为白色；否则为深灰色
-    final textColor =
-        isSelected ? Colors.white : const Color(0xFF1E263C); // 深灰色
+    final textColor = isSelected ? Colors.white : AppTheme.ink;
 
     return GestureDetector(
       onTap: widget.isAnswered ? null : () => widget.onAnswerSelected(isVero),
@@ -1535,7 +1603,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A7DFF), // 蓝色背景
+                  color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -1592,7 +1660,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A7DFF), // 蓝色背景
+                  color: AppTheme.primary,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(

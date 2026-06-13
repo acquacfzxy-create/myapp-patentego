@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../config/chapter_config.dart';
 import '../providers/user_state_provider.dart';
 import '../services/database_service.dart';
@@ -98,7 +99,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
         _topWeakChapters.isNotEmpty;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.pageMid,
       appBar: AppBar(
         title: Text(
           AppStrings.getWithLanguage(currentLang, 'mastery_report_title'),
@@ -120,19 +121,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
         ),
       ),
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE8F4FC),
-              Color(0xFFF5FAFE),
-              Color(0xFFFDFCFB),
-              Color(0xFFFFF9F5),
-            ],
-            stops: [0.0, 0.35, 0.7, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : hasAnyData

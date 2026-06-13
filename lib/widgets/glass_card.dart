@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../config/app_theme.dart';
 
 /// 玻璃态卡片组件
 /// 参考 Stitch 设计稿的 glass-card 样式
@@ -23,32 +24,18 @@ class GlassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final card = Container(
       decoration: BoxDecoration(
-        borderRadius: borderRadius ?? BorderRadius.circular(32),
-        // 玻璃态效果：半透明背景 + 模糊
-        color: Colors.white.withOpacity(0.3),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusLg),
+        color: AppTheme.surface,
         border: Border.all(
-          color: Colors.white.withOpacity(0.6),
+          color: Colors.white.withOpacity(0.78),
           width: 1,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1F2687).withOpacity(0.03),
-            blurRadius: 32,
-            offset: const Offset(0, 8),
-          ),
-          // 内阴影效果
-          BoxShadow(
-            color: Colors.white.withOpacity(0.4),
-            blurRadius: 0,
-            offset: const Offset(0, 0),
-            spreadRadius: 1,
-          ),
-        ],
+        boxShadow: AppTheme.cardShadow,
       ),
       child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(32),
+        borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusLg),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
           child: Padding(
             padding: padding ?? EdgeInsets.zero,
             child: child,

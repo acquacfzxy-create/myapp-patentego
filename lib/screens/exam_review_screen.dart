@@ -4,9 +4,11 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:provider/provider.dart';
 import '../models/question.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../services/database_service.dart';
 import '../widgets/question_widget.dart';
+import '../widgets/translation_panel.dart';
 import 'subscription_page.dart';
 
 /// 考後復盤頁面
@@ -33,7 +35,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
   final Map<int, bool> _showTranslation = {};
 
   // 當前語言（從 Provider 獲取）
-  String get _currentLanguage => Provider.of<UserStateProvider>(context, listen: false).currentLanguage;
+  String get _currentLanguage =>
+      Provider.of<UserStateProvider>(context, listen: false).currentLanguage;
 
   /// 切換翻譯顯示
   void _toggleTranslation(int index) {
@@ -45,7 +48,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
   /// 打開與練習模式一致的解析底部彈窗（限額檢查與計次與練習模式一致）
   Future<void> _openExplanationSheet(int index) async {
     final question = widget.questions[index];
-    final userStateProvider = Provider.of<UserStateProvider>(context, listen: false);
+    final userStateProvider =
+        Provider.of<UserStateProvider>(context, listen: false);
     final questionId = question.id;
     final isVip = userStateProvider.isVip;
 
@@ -86,7 +90,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
   /// 切換收藏狀態
   Future<void> _toggleFavorite(int index) async {
     final question = widget.questions[index];
-    final userStateProvider = Provider.of<UserStateProvider>(context, listen: false);
+    final userStateProvider =
+        Provider.of<UserStateProvider>(context, listen: false);
 
     await DatabaseService.toggleFavorite(
       question.id,
@@ -99,7 +104,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
   /// 檢查是否收藏
   Future<bool> _isFavorite(int index) async {
     final question = widget.questions[index];
-    final userStateProvider = Provider.of<UserStateProvider>(context, listen: false);
+    final userStateProvider =
+        Provider.of<UserStateProvider>(context, listen: false);
     return await DatabaseService.isFavorite(
       question.id,
       userId: userStateProvider.effectiveUserId,
@@ -111,20 +117,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
     return Scaffold(
       // 毛玻璃 AppBar
       appBar: _buildGlassAppBar(context),
-      // 淺藍色漸變背景
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Color(0xFFE0F2FE), // 淺藍
-              Color(0xFFF0F9FF), // 更淺的藍
-              Colors.white, // 白色
-            ],
-            stops: [0.0, 0.4, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: Consumer<UserStateProvider>(
           builder: (context, userStateProvider, _) {
             return ListView.builder(
@@ -248,9 +242,12 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
     final question = widget.questions[index];
     final userChoice = widget.userChoices[index];
     final correctAnswer = question.answer;
-    final questionText = question.getQuestionText('it') ?? '';
+    final questionText = question.getDisplayQuestionText(
+      defaultText: AppStrings.get('question_content_missing'),
+    );
     final translationText = question.getQuestionText(_currentLanguage);
-    final hasImage = question.imageName != null && question.imageName!.isNotEmpty;
+    final hasImage =
+        question.imageName != null && question.imageName!.isNotEmpty;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -269,19 +266,21 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 左欄 (Gutter)：題號徽章 + V/F 圓圈
                 _buildLeftGutter(index, correctAnswer, userChoice),
-                const SizedBox(width: 20), // 增加間距，確保與文字有明顯邊界
+                const SizedBox(width: 12),
 
                 // 中欄 (Content)：題目內容
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: hasImage ? MainAxisAlignment.start : MainAxisAlignment.center, // 無圖片時垂直居中
+                    mainAxisAlignment: hasImage
+                        ? MainAxisAlignment.start
+                        : MainAxisAlignment.center, // 無圖片時垂直居中
                     children: [
                       // 意語題目文本（最高優先級，字號和對比度最高）
                       Text(
@@ -301,22 +300,12 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                       ],
 
                       // 翻譯內容（如果展開）
-                      if (_showTranslation[index] == true && translationText != null) ...[
+                      if (_showTranslation[index] == true &&
+                          translationText != null) ...[
                         const SizedBox(height: 16),
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            translationText,
-                            style: TextStyle(
-                              fontSize: 14,
-                              height: 1.5,
-                              color: Colors.grey[700],
-                            ),
-                          ),
+                        TranslationPanel(
+                          text: translationText,
+                          languageCode: _currentLanguage,
                         ),
                       ],
 
@@ -325,14 +314,12 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                         const SizedBox(height: 12),
                         _buildKeyWordsChips(index),
                       ],
+
+                      const SizedBox(height: 16),
+                      _buildBottomActions(index),
                     ],
                   ),
                 ),
-
-                const SizedBox(width: 16), // 增加間距，確保與文字有明顯邊界
-
-                // 右欄 (Actions)：功能按鈕
-                _buildRightActions(index),
               ],
             ),
           ),
@@ -348,21 +335,21 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
     // - 紅色斜線：只有當用戶選錯了（userChoice != null && userChoice != correctAnswer）時才顯示
 
     // 判定：用戶是否選錯了 V（用戶選了 V 但正確答案是 F）
-    final isVWrong = userChoice != null && userChoice == true && correctAnswer == false;
+    final isVWrong =
+        userChoice != null && userChoice == true && correctAnswer == false;
 
     // 判定：用戶是否選錯了 F（用戶選了 F 但正確答案是 V）
-    final isFWrong = userChoice != null && userChoice == false && correctAnswer == true;
+    final isFWrong =
+        userChoice != null && userChoice == false && correctAnswer == true;
 
     // 增強調試信息：打印每個圓圈的判定結果
-    if (kDebugMode) {
-    }
+    if (kDebugMode) {}
 
     // 增強調試信息：打印每個圓圈的判定結果
-    if (kDebugMode) {
-    }
+    if (kDebugMode) {}
 
     return SizedBox(
-      width: 50,
+      width: 44,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -417,8 +404,7 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
     required bool isWrong, // 用戶是否選錯了這個選項
   }) {
     // 調試：檢查 isWrong 參數
-    if (kDebugMode && isWrong) {
-    }
+    if (kDebugMode && isWrong) {}
 
     return SizedBox(
       width: 40,
@@ -434,7 +420,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isCorrect
-                  ? const Color(0xFF22C55E).withOpacity(0.15) // 正確答案：淡綠色背景（始終顯示）
+                  ? const Color(0xFF22C55E)
+                      .withOpacity(0.15) // 正確答案：淡綠色背景（始終顯示）
                   : Colors.transparent,
               border: Border.all(
                 color: isCorrect
@@ -449,7 +436,9 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  fontFeatures: const [FontFeature.tabularFigures()], // Monospace 效果
+                  fontFeatures: const [
+                    FontFeature.tabularFigures()
+                  ], // Monospace 效果
                   color: isCorrect
                       ? const Color(0xFF22C55E) // 正確答案：綠色文字（始終顯示）
                       : Colors.grey[500], // 未選中：灰色文字
@@ -472,17 +461,16 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
     );
   }
 
-  /// 構建右欄（功能按鈕）
-  Widget _buildRightActions(int index) {
+  /// 構建底部功能按鈕，避免窄屏時右側欄擠壓題目與關鍵詞寬度
+  Widget _buildBottomActions(int index) {
     return FutureBuilder<bool>(
       future: _isFavorite(index),
       builder: (context, snapshot) {
         final isFavorite = snapshot.data ?? false;
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // 收藏按鈕（小巧圖標）
             IconButton(
               icon: Icon(
                 isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -493,16 +481,17 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
-            const SizedBox(height: 8),
-            // 解析按鈕（與練習模式一致：打開統一解析底部彈窗，不再內聯顯示原始 JSON）
+            const SizedBox(width: 12),
             IconButton(
-              icon: Icon(Icons.menu_book_outlined, size: 22, color: Colors.grey[600]),
-              onPressed: () async { await _openExplanationSheet(index); },
+              icon: Icon(Icons.menu_book_outlined,
+                  size: 22, color: Colors.grey[600]),
+              onPressed: () async {
+                await _openExplanationSheet(index);
+              },
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
             ),
-            const SizedBox(height: 8),
-            // 翻譯按鈕
+            const SizedBox(width: 12),
             IconButton(
               icon: Icon(
                 Icons.translate,
@@ -567,65 +556,61 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
       return const SizedBox.shrink();
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: keywords.map((keyword) {
-        final itWord = keyword['it'] ?? '';
-        final translation = keyword[_currentLanguage] ?? keyword['en'] ?? keyword['zh'] ?? '';
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: keywords.map((keyword) {
+            final itWord = keyword['it'] ?? '';
+            final translation = keyword[_currentLanguage] ??
+                keyword['en'] ??
+                keyword['zh'] ??
+                '';
 
-        return Container(
-          constraints: const BoxConstraints(maxWidth: double.infinity), // 限制最大宽度
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 意大利语单词（使用 Flexible 防止溢出）
-              Flexible(
-                flex: 1,
-                child: Text(
-                  itWord,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
+            return ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey[300]!),
+                ),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Text(
+                      itWord,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    Text(
+                      '•',
+                      style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                    ),
+                    Text(
+                      translation,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 6),
-              // 分隔符（固定宽度）
-              Text(
-                '•',
-                style: TextStyle(fontSize: 10, color: Colors.grey[400]),
-              ),
-              const SizedBox(width: 6),
-              // 翻译文本（使用 Flexible 防止溢出）
-              Flexible(
-                flex: 2, // 翻译文本通常更长，给予更多空间
-                child: Text(
-                  translation,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
-                ),
-              ),
-            ],
-          ),
+            );
+          }).toList(),
         );
-      }).toList(),
+      },
     );
   }
-
 }
 
 /// 紅色斜線繪製器（模擬老師用紅筆劃掉的效果）

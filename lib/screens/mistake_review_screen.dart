@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/database_service.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/question_widget.dart';
+import '../widgets/translation_panel.dart';
 import '../models/question.dart';
 import 'practice_screen.dart';
 import 'mock_test_screen.dart';
@@ -269,20 +271,8 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
     return Scaffold(
       // 毛玻璃 AppBar（參照 ExamReviewScreen）
       appBar: _buildGlassAppBar(context),
-      // 淺藍色漸變背景（參照 ExamReviewScreen）
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              Color(0xFFE0F2FE), // 淺藍
-              Color(0xFFF0F9FF), // 更淺的藍
-              Colors.white, // 白色
-            ],
-            stops: [0.0, 0.4, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorQuestions.isEmpty
@@ -710,7 +700,9 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
     final questionId = question.id;
 
     // 獲取題目文本：默認顯示意大利語原文
-    final questionText = question.getQuestionText('it') ?? '';
+    final questionText = question.getDisplayQuestionText(
+      defaultText: AppStrings.get('question_content_missing'),
+    );
     final translationText = question.getQuestionText(_currentLanguage);
     final hasImage =
         question.imageName != null && question.imageName!.isNotEmpty;
@@ -771,20 +763,9 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                           if (_showTranslation[questionId] == true &&
                               translationText != null) ...[
                             const SizedBox(height: 16),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.grey[50],
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                translationText,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  height: 1.5,
-                                  color: Colors.grey[700],
-                                ),
-                              ),
+                            TranslationPanel(
+                              text: translationText,
+                              languageCode: _currentLanguage,
                             ),
                           ],
 
@@ -858,7 +839,10 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              entry.question.getQuestionText('it') ?? '',
+                              entry.question.getDisplayQuestionText(
+                                defaultText:
+                                    AppStrings.get('question_content_missing'),
+                              ),
                               style: const TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,

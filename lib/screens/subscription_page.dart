@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../config/app_strings.dart';
 import '../config/app_config.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../services/iap_service.dart';
 
@@ -144,16 +145,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     return Scaffold(
       backgroundColor: Colors.black,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment.topCenter,
-            radius: 1.2,
-            colors: [
-              Color(0xFF1E1B4B), // 深紫
-              Color(0xFF0F172A), // 深藍
-            ],
-          ),
-        ),
+        decoration: AppTheme.premiumDecoration,
         child: SafeArea(
           child: Stack(
             children: [
@@ -222,7 +214,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFACC15).withOpacity(0.6),
+                color: AppTheme.premiumGold.withOpacity(0.45),
                 blurRadius: 24,
                 spreadRadius: 2,
               ),
@@ -231,7 +223,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           child: const Icon(
             Icons.workspace_premium,
             size: 64,
-            color: Color(0xFFFACC15),
+            color: AppTheme.premiumGold,
           ),
         ),
         // 標題
@@ -259,7 +251,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
   static const double _iconBoxSize = 36.0;
   static const double _iconBoxRadius = 8.0;
-  static const Color _iconGold = Color(0xFFF59E0B);
+  static const Color _iconGold = AppTheme.premiumGold;
 
   Widget _buildFeatureList(BuildContext context) {
     return Column(
@@ -405,7 +397,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFACC15),
+                    color: AppTheme.premiumGold,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -476,7 +468,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     Expanded(
                       child: Container(
                         height: 2,
-                        color: const Color(0xFF3B82F6),
+                        color: AppTheme.primary,
                       ),
                     ),
                     Expanded(
@@ -493,7 +485,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildTimelineDot(
-                    color: const Color(0xFF3B82F6),
+                    color: AppTheme.primary,
                     titleKey: 'sub_timeline_today',
                     subtitleKey: 'sub_timeline_today_desc',
                   ),
@@ -577,14 +569,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         child: ElevatedButton(
           onPressed: isDisabled ? null : _handleSubscribeButtonPressed,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2563EB),
+            backgroundColor: AppTheme.primary,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(14),
             ),
             elevation: 8,
-            shadowColor: const Color(0xFF3B82F6).withOpacity(0.6),
+            shadowColor: AppTheme.primary.withOpacity(0.55),
           ),
           child: isPurchaseInProgress
               ? const SizedBox(

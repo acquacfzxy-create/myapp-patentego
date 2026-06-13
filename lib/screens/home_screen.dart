@@ -11,6 +11,7 @@ import 'mastery_report_screen.dart';
 import '../services/database_service.dart';
 import '../services/firebase_status.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../config/route_observer.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
@@ -222,19 +223,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       body: Container(
-        // 从左上角（极浅蓝色）过渡到右下角（白色）
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE0F7FA), // 左上角：极浅蓝色
-              Color(0xFFF0F9FF), // 中间：极浅蓝色
-              Color(0xFFFFFFFF), // 右下角：白色
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: RefreshIndicator(
           onRefresh: _loadStatistics,
           child: CustomScrollView(
@@ -268,8 +257,8 @@ class _HomeScreenState extends State<HomeScreen>
                       context,
                       title: AppStrings.get('random_practice'),
                       icon: Icons.shuffle,
-                      iconColor: const Color(0xFF0EA5E9), // sky-500
-                      bgColor: const Color(0xFFF0F9FF), // sky-50
+                      iconColor: AppTheme.primary,
+                      bgColor: AppTheme.primarySoft,
                       onTap: isDbReady
                           ? () async {
                               final userStateProvider =
@@ -316,8 +305,8 @@ class _HomeScreenState extends State<HomeScreen>
                       context,
                       title: AppStrings.get('chapter_practice'),
                       icon: Icons.menu_book,
-                      iconColor: const Color(0xFF8B5CF6), // soft-purple
-                      bgColor: const Color(0xFFF5F3FF), // violet-50
+                      iconColor: AppTheme.roadGreen,
+                      bgColor: AppTheme.roadGreenSoft,
                       onTap: isDbReady
                           ? () {
                               Navigator.push(
@@ -334,8 +323,8 @@ class _HomeScreenState extends State<HomeScreen>
                       context,
                       title: AppStrings.get('official_mock_test'),
                       icon: Icons.timer,
-                      iconColor: const Color(0xFFF97316), // coral-orange
-                      bgColor: const Color(0xFFFFF7ED), // orange-50
+                      iconColor: AppTheme.warning,
+                      bgColor: const Color(0xFFFFF7ED),
                       onTap: isDbReady
                           ? () {
                               _checkAndNavigateToMockTest(context);
@@ -346,8 +335,8 @@ class _HomeScreenState extends State<HomeScreen>
                       context,
                       title: AppStrings.get('mistake_review'),
                       icon: Icons.report,
-                      iconColor: const Color(0xFFF43F5E), // rose-pink
-                      bgColor: const Color(0xFFFFF1F2), // rose-50
+                      iconColor: AppTheme.danger,
+                      bgColor: const Color(0xFFFEF2F2),
                       onTap: isDbReady
                           ? () {
                               Navigator.push(
@@ -424,8 +413,8 @@ class _HomeScreenState extends State<HomeScreen>
                     style: const TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1d1d1f),
-                      letterSpacing: -0.5,
+                      color: AppTheme.ink,
+                      letterSpacing: 0,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -435,7 +424,7 @@ class _HomeScreenState extends State<HomeScreen>
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: userStateProvider.isVip
-                          ? Colors.blue[500]?.withOpacity(0.8)
+                          ? AppTheme.primary
                           : Colors.grey[600],
                       letterSpacing: 0.15,
                     ),
@@ -474,7 +463,7 @@ class _HomeScreenState extends State<HomeScreen>
                   },
                   child: const Icon(
                     Icons.settings,
-                    color: Color(0xFF9CA3AF),
+                    color: AppTheme.muted,
                     size: 24,
                   ),
                 ),
@@ -560,10 +549,10 @@ class _HomeScreenState extends State<HomeScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF137FEC).withOpacity(0.08),
+                        color: AppTheme.primary.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: const Color(0xFF137FEC).withOpacity(0.3),
+                          color: AppTheme.primary.withOpacity(0.3),
                           width: 0.8,
                         ),
                       ),
@@ -576,14 +565,14 @@ class _HomeScreenState extends State<HomeScreen>
                             style: const TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF137FEC),
+                              color: AppTheme.primary,
                             ),
                           ),
                           const SizedBox(width: 2),
                           const Icon(
                             Icons.arrow_forward_ios_rounded,
                             size: 9,
-                            color: Color(0xFF137FEC),
+                            color: AppTheme.primary,
                           ),
                         ],
                       ),
@@ -640,7 +629,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF1d1d1f),
+                                      color: AppTheme.ink,
                                     ),
                                   ),
                                   TextSpan(
@@ -684,7 +673,7 @@ class _HomeScreenState extends State<HomeScreen>
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w600,
-                                      color: Color(0xFF1d1d1f),
+                                      color: AppTheme.ink,
                                     ),
                                   ),
                                   TextSpan(
@@ -836,9 +825,9 @@ class _HomeScreenState extends State<HomeScreen>
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
+                  color: iconColor.withOpacity(0.18),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
                   spreadRadius: 0,
                 ),
                 BoxShadow(
@@ -862,7 +851,7 @@ class _HomeScreenState extends State<HomeScreen>
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF000000),
+              color: AppTheme.ink,
               letterSpacing: 0.2,
             ),
             maxLines: 2,
@@ -901,7 +890,7 @@ class _HomeScreenState extends State<HomeScreen>
           Icon(
             Icons.favorite_border,
             size: 18,
-            color: const Color(0xFFF43F5E).withOpacity(0.6),
+            color: AppTheme.danger.withOpacity(0.7),
           ),
           const SizedBox(width: 8),
           Text(
@@ -909,8 +898,8 @@ class _HomeScreenState extends State<HomeScreen>
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[500],
-              letterSpacing: 0.5,
+              color: AppTheme.muted,
+              letterSpacing: 0,
             ),
           ),
         ],

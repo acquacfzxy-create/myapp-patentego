@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../config/chapter_config.dart';
 import '../models/chapter.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
 import 'practice_screen.dart';
@@ -153,18 +154,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE0F7FA), // 左上角：极浅蓝色
-              Color(0xFFF0F9FF), // 中间：极浅蓝色
-              Color(0xFFFFFFFF), // 右下角：白色
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: SafeArea(
           child: Column(
             children: [
@@ -225,7 +215,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                 // 返回按钮
                 IconButton(
                   icon: const Icon(Icons.chevron_left,
-                      size: 28, color: Color(0xFF136DEC)),
+                      size: 28, color: AppTheme.primary),
                   onPressed: () => Navigator.of(context).pop(),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -239,8 +229,8 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0d131b),
-                      letterSpacing: -0.5,
+                      color: AppTheme.ink,
+                      letterSpacing: 0,
                     ),
                   ),
                 ),
@@ -313,14 +303,14 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
               : Colors.white.withOpacity(0.45),
           border: Border.all(
             color: isActive
-                ? const Color(0xFF136DEC).withOpacity(0.3)
+                ? AppTheme.primary.withOpacity(0.3)
                 : Colors.transparent,
             width: 1,
           ),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: const Color(0xFF136DEC).withOpacity(0.1),
+                    color: AppTheme.primary.withOpacity(0.1),
                     blurRadius: 20,
                     offset: const Offset(0, 8),
                   ),
@@ -345,9 +335,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                    color: isActive
-                        ? const Color(0xFF136DEC)
-                        : const Color(0xFF4c6c9a),
+                    color: isActive ? AppTheme.primary : AppTheme.muted,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -355,8 +343,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                   width: 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color:
-                        isActive ? const Color(0xFF136DEC) : Colors.transparent,
+                    color: isActive ? AppTheme.primary : Colors.transparent,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -451,7 +438,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                         style: const TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0d131b),
+                          color: AppTheme.ink,
                           height: 1.2,
                         ),
                         maxLines: 2,
@@ -462,7 +449,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                         chapter.getTitle(currentLanguage),
                         style: const TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF4c6c9a),
+                          color: AppTheme.muted,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -506,7 +493,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF4c6c9a),
+                        color: AppTheme.muted,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -517,7 +504,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF4c6c9a),
+                        color: AppTheme.muted,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -528,7 +515,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF4c6c9a),
+                        color: AppTheme.muted,
                       ),
                     ),
                   ],
@@ -555,7 +542,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       color: isCompleted
                           ? const Color(0xFF4CAF50)
                           : (coveragePercentage > 0
-                              ? const Color(0xFF136DEC)
+                              ? AppTheme.primary
                               : const Color(0xFF94a3b8)),
                     ),
                   ),
@@ -567,7 +554,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       color: isCompleted
                           ? const Color(0xFF4CAF50)
                           : (coveragePercentage > 0
-                              ? const Color(0xFF136DEC)
+                              ? AppTheme.primary
                               : const Color(0xFF94a3b8)),
                     ),
                   ),
@@ -593,7 +580,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                           decoration: BoxDecoration(
                             color: isCompleted
                                 ? const Color(0xFF4CAF50) // 亮绿色
-                                : const Color(0xFF136DEC), // 蓝色
+                                : AppTheme.primary,
                             borderRadius: BorderRadius.circular(3),
                           ),
                         ),

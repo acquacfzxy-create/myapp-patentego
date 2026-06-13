@@ -198,6 +198,36 @@ class Question {
     return translations[lang];
   }
 
+  /// 獲取可顯示的題幹文本：優先指定語言，按需才降級到備用語言或任一可用翻譯。
+  String getDisplayQuestionText({
+    String preferredLanguage = 'it',
+    String? fallbackLanguage,
+    String defaultText = '',
+    bool allowAnyLanguageFallback = false,
+  }) {
+    final preferred = translations[preferredLanguage];
+    if (preferred != null && preferred.trim().isNotEmpty) {
+      return preferred;
+    }
+
+    if (fallbackLanguage != null) {
+      final fallback = translations[fallbackLanguage];
+      if (fallback != null && fallback.trim().isNotEmpty) {
+        return fallback;
+      }
+    }
+
+    if (allowAnyLanguageFallback) {
+      for (final text in translations.values) {
+        if (text.trim().isNotEmpty) {
+          return text;
+        }
+      }
+    }
+
+    return defaultText;
+  }
+
   /// 獲取指定語言的解析內容
   String? getExplanationText(String lang) {
     return explanations[lang];
@@ -211,21 +241,18 @@ class Question {
   /// 2. 新格式（多語言嵌套）：{"it": [{"it": "word", "zh": "詞彙"}, ...], "zh": [...], "en": [...]}
   List<Map<String, String>> getKeyWords(String languageCode) {
     // 🔍 調試：打印正在解析的 JSON
-    if (kDebugMode) {
-    }
+    if (kDebugMode) {}
 
     // 檢查 keywordsJson 是否為 null 或空字符串
     if (keywordsJson == null || keywordsJson!.trim().isEmpty) {
-      if (kDebugMode) {
-      }
+      if (kDebugMode) {}
       return [];
     }
 
     // 檢查是否為空數組的 JSON 字符串
     final trimmedJson = keywordsJson!.trim();
     if (trimmedJson == '[]' || trimmedJson == 'null') {
-      if (kDebugMode) {
-      }
+      if (kDebugMode) {}
       return [];
     }
 
@@ -292,14 +319,12 @@ class Question {
                   result.add(keywordMap);
                 }
               } catch (e) {
-                if (kDebugMode) {
-                }
+                if (kDebugMode) {}
               }
             }
           }
 
-          if (kDebugMode) {
-          }
+          if (kDebugMode) {}
 
           return result;
         }
@@ -325,15 +350,18 @@ class Question {
               String? translation;
 
               // 1. 優先使用目標語言
-              if (keywordMap.containsKey(languageCode) && keywordMap[languageCode]!.isNotEmpty) {
+              if (keywordMap.containsKey(languageCode) &&
+                  keywordMap[languageCode]!.isNotEmpty) {
                 translation = keywordMap[languageCode];
               }
               // 2. 降級到英語
-              else if (keywordMap.containsKey('en') && keywordMap['en']!.isNotEmpty) {
+              else if (keywordMap.containsKey('en') &&
+                  keywordMap['en']!.isNotEmpty) {
                 translation = keywordMap['en'];
               }
               // 3. 降級到中文
-              else if (keywordMap.containsKey('zh') && keywordMap['zh']!.isNotEmpty) {
+              else if (keywordMap.containsKey('zh') &&
+                  keywordMap['zh']!.isNotEmpty) {
                 translation = keywordMap['zh'];
               }
               // 4. 最後降級到意大利語（如果都沒有，至少顯示原始語言）
@@ -349,28 +377,24 @@ class Question {
 
               result.add(targetMap);
             } catch (e) {
-              if (kDebugMode) {
-              }
+              if (kDebugMode) {}
             }
           }
         }
 
-        if (kDebugMode) {
-        }
+        if (kDebugMode) {}
 
         return result;
       }
 
       // 格式不匹配
-      if (kDebugMode) {
-      }
+      if (kDebugMode) {}
       return [];
     } catch (e) {
       // 如果 JSON 解析失敗，返回空列表（不會導致頁面報錯）
       if (kDebugMode) {
         if (trimmedJson.length > 200) {
-        } else {
-        }
+        } else {}
       }
       return [];
     }
@@ -401,4 +425,3 @@ class Question {
     return 'Question(id: $id, answer: $answer, translations: ${translations.keys})';
   }
 }
-

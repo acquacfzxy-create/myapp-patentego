@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../models/user_state.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
@@ -217,18 +218,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFE0F7FA),
-              Color(0xFFF0F9FF),
-              Color(0xFFFFFFFF),
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
+        decoration: AppTheme.pageDecoration,
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
