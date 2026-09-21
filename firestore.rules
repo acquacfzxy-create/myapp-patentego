@@ -149,6 +149,80 @@ service cloud.firestore {
 
         allow delete: if isOwner(uid);
       }
+
+      match /exam_history/{attemptId} {
+        allow read: if isOwner(uid);
+
+        allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly([
+            'attempt_id',
+            'completed_at_ms',
+            'total_questions',
+            'correct_count',
+            'wrong_count',
+            'time_used_seconds',
+            'passed',
+            'question_ids',
+            'selected_answers'
+          ])
+          && request.resource.data.attempt_id == attemptId
+          && request.resource.data.completed_at_ms is int
+          && request.resource.data.completed_at_ms > 0
+          && request.resource.data.total_questions == 30
+          && request.resource.data.correct_count is int
+          && request.resource.data.correct_count >= 0
+          && request.resource.data.correct_count <= 30
+          && request.resource.data.wrong_count is int
+          && request.resource.data.wrong_count >= 0
+          && request.resource.data.wrong_count <= 30
+          && request.resource.data.correct_count
+            + request.resource.data.wrong_count == 30
+          && request.resource.data.time_used_seconds is int
+          && request.resource.data.time_used_seconds >= 0
+          && request.resource.data.time_used_seconds <= 1200
+          && request.resource.data.passed is bool
+          && request.resource.data.question_ids is list
+          && request.resource.data.question_ids.size() == 30
+          && request.resource.data.selected_answers is map;
+
+        allow delete: if isOwner(uid);
+      }
+
+      match /exam_sessions/{sessionId} {
+        allow read: if isOwner(uid);
+
+        allow create, update: if isOwner(uid)
+          && sessionId == 'current'
+          && request.resource.data.keys().hasOnly([
+            'updated_at_ms',
+            'session'
+          ])
+          && request.resource.data.updated_at_ms is int
+          && request.resource.data.updated_at_ms > 0
+          && request.resource.data.session is map
+          && request.resource.data.session.keys().hasOnly([
+            'schema_version',
+            'data_version',
+            'actor_id',
+            'random_seed',
+            'question_ids',
+            'selected_answers',
+            'started_at_ms',
+            'deadline_ms',
+            'current_index',
+            'submitted_at_ms'
+          ])
+          && request.resource.data.session.schema_version == 1
+          && request.resource.data.session.actor_id == uid
+          && request.resource.data.session.question_ids is list
+          && request.resource.data.session.question_ids.size() == 30
+          && request.resource.data.session.selected_answers is map
+          && request.resource.data.session.current_index is int
+          && request.resource.data.session.current_index >= 0
+          && request.resource.data.session.current_index < 30;
+
+        allow delete: if isOwner(uid);
+      }
     }
 
     match /{document=**} {
