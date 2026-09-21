@@ -1,0 +1,16 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // 語音包是公開的產品素材，訪客也需要下載；客戶端永遠不可寫入。
+    match /voice_packs/{path=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // 未明確開放的 Storage 路徑預設全部拒絕。
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
