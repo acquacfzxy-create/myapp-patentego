@@ -25,11 +25,11 @@ class AppConfig {
   /// 是否開啟調試模式
   static const bool debugMode = false;
 
-  /// 合規頁面連結（GitHub Pages 從 docs/ 發布時對應 docs/privacy.html 與 docs/terms.html）
+  /// 合規頁面連結（GitHub Pages 由公開倉庫 linguapatente-legal 發布）
   static const String privacyPolicyUrl =
-      'https://acquacfzxy-create.github.io/myapp-patentego/privacy.html';
+      'https://acquacfzxy-create.github.io/linguapatente-legal/privacy.html';
   static const String termsOfServiceUrl =
-      'https://acquacfzxy-create.github.io/myapp-patentego/terms.html';
+      'https://acquacfzxy-create.github.io/linguapatente-legal/terms.html';
   static const String supportContactUrl =
       'mailto:patentegoapp@gmail.com?subject=PatenteGo%20Support';
 }

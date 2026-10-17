@@ -23,11 +23,11 @@ void main() {
       );
       expect(
         AppConfig.privacyPolicyUrl,
-        'https://acquacfzxy-create.github.io/myapp-patentego/privacy.html',
+        'https://acquacfzxy-create.github.io/linguapatente-legal/privacy.html',
       );
       expect(
         AppConfig.termsOfServiceUrl,
-        'https://acquacfzxy-create.github.io/myapp-patentego/terms.html',
+        'https://acquacfzxy-create.github.io/linguapatente-legal/terms.html',
       );
       expect(
         AppConfig.supportContactUrl,
