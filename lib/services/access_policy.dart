@@ -3,6 +3,7 @@ class AccessPolicy {
 
   static const int freeDailyQuizLimit = 30;
   static const int freeReviewPreviewLimit = 10;
+  static const int freeMistakePreviewLimit = 5;
   static const int maxFreeExplanations = 10;
 
   static int remainingExplanations({
@@ -33,9 +34,8 @@ class AccessPolicy {
     required bool isUnlockedToday,
     required int dailyExplanationCount,
   }) {
-    return isVip ||
-        isUnlockedToday ||
-        dailyExplanationCount < maxFreeExplanations;
+    // Full explanations are free for everyone, including legacy exhausted accounts.
+    return true;
   }
 
   static bool shouldLockPreviewItem({
@@ -43,5 +43,17 @@ class AccessPolicy {
     required int index,
   }) {
     return !isVip && index >= freeReviewPreviewLimit;
+  }
+
+  /// 免費錯題本最多預覽五題，但永遠保留至少一題不展示，避免錯題數
+  /// 少於五題時反而能看到完整錯題本。
+  static int visibleMistakePreviewCount({
+    required bool isVip,
+    required int totalItems,
+  }) {
+    if (totalItems <= 0) return 0;
+    if (isVip) return totalItems;
+    if (totalItems <= freeMistakePreviewLimit) return totalItems - 1;
+    return freeMistakePreviewLimit;
   }
 }

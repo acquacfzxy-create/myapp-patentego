@@ -1,0 +1,37 @@
+{
+ "_source": "assets/italy_quiz.db (read-only export after keyword batch 4; keywords_json is the stored string). 5949 has the 41-character Italian term filled in batch 3; 6659 has the 47-character term, the longest of batch 4.",
+ "questions": [
+  {
+   "id": "5949",
+   "image_name": "/img_sign/704.png",
+   "answer": true,
+   "chapter": 18,
+   "translations": {
+    "en": "The symbol shown is placed on the warning light that integrates the indicator of the temperature of the coolant circulating in the engine.",
+    "it": "Il simbolo raffigurato è posto sulla spia che integra l’indicatore della temperatura del liquido di raffreddamento che circola nel motore",
+    "pa": "وکھایا گیا نشان اس وارننگ لائٹ اتے رکھیا گیا ہے جو انجن وچّ گردش کرن والے کولنٹ دے درجہ حرارت دے اشارے نوں مربوط کردی ہے۔",
+    "ru": "Изображенный символ расположен на контрольной лампе, которая объединяет индикатор температуры охлаждающей жидкости, циркулирующей в двигателе.",
+    "uk": "Символ на малюнку розташовано на індикаторі, який інтегрує індикатор температури охолоджуючої рідини, що циркулює в двигуні.",
+    "ur": "نشان دی گئی علامت اس وارننگ لائٹ پر رکھی گئی ہے جو انجن میں گردش کرنے والے کولنٹ کے درجہ حرارت کے اشارے کو مربوط کرتی ہے۔",
+    "zh": "图中所示的符号位于指示发动机中循环的冷却液温度的指示灯上。"
+   },
+   "keywords_json": "[{\"it\": \"simbolo raffigurato\", \"zh\": \"所示符号\", \"en\": \"the symbol shown\", \"ru\": \"изображённый символ\", \"uk\": \"зображений символ\", \"pa\": \"ਤਸਵੀਰ ਵਿੱਚ ਦਿਖਾਇਆ ਚਿੰਨ੍ਹ\", \"ur\": \"تصویر میں دکھائی گئی علامت\"}, {\"it\": \"è posto\", \"zh\": \"设置在\", \"en\": \"is placed\", \"ru\": \"установлен\", \"uk\": \"встановлений\", \"pa\": \"ਲਗਾਇਆ ਗਿਆ ਹੈ\", \"ur\": \"نصب ہے\"}, {\"it\": \"spia\", \"zh\": \"指示灯\", \"en\": \"warning light\", \"ru\": \"контрольная лампа\", \"uk\": \"контрольна лампа\", \"pa\": \"ਚੇਤਾਵਨੀ ਬੱਤੀ\", \"ur\": \"انتباہی بتی\"}, {\"it\": \"integra\", \"zh\": \"配合（补充）\", \"en\": \"supplements\", \"ru\": \"дополняет\", \"uk\": \"доповнює\", \"pa\": \"ਨਾਲ ਜੁੜੀ ਹੈ\", \"ur\": \"کے ساتھ جڑی ہے\"}, {\"it\": \"indicatore\", \"zh\": \"指示表\", \"en\": \"gauge\", \"ru\": \"указатель\", \"uk\": \"покажчик\", \"pa\": \"ਸੂਚਕ\", \"ur\": \"اشاریہ\"}, {\"it\": \"temperatura del liquido di raffreddamento\", \"zh\": \"冷却液温度\", \"en\": \"coolant temperature\", \"ru\": \"температура охлаждающей жидкости\", \"uk\": \"температура охолоджувальної рідини\", \"pa\": \"ਕੂਲੈਂਟ ਦਾ ਤਾਪਮਾਨ\", \"ur\": \"کولنٹ کا درجہ حرارت\"}, {\"it\": \"circola\", \"zh\": \"循环流动\", \"en\": \"circulates\", \"ru\": \"циркулирует\", \"uk\": \"циркулює\", \"pa\": \"ਘੁੰਮਦਾ ਹੈ\", \"ur\": \"گردش کرتا ہے\"}, {\"it\": \"motore\", \"zh\": \"发动机\", \"en\": \"engine\", \"ru\": \"двигатель\", \"uk\": \"двигун\", \"pa\": \"ਇੰਜਣ\", \"ur\": \"انجن\"}]"
+  },
+  {
+   "id": "6659",
+   "image_name": null,
+   "answer": false,
+   "chapter": 23,
+   "translations": {
+    "en": "When the car's civil liability insurance has expired, the vehicle must undergo a technical inspection before being put back into circulation",
+    "it": "Quando l'assicurazione per la responsabilità civile auto è scaduta di validità, il veicolo deve essere sottoposto a collaudo tecnico prima di essere rimesso in circolazione",
+    "pa": "جدوں کار دی سول ذمہ واری انشورنس دی معیاد ختم ہو گئی ہووے، تاں گڈی نوں واپس گردش وچ پان توں پہلاں اوس دا تکنیکی معائنہ کرانا ضروری اے۔",
+    "ru": "Когда страхование гражданской ответственности автомобиля истекло, транспортное средство должно пройти технический осмотр, прежде чем снова будет допущено к эксплуатации.",
+    "uk": "Коли страховка цивільної відповідальності автомобіля закінчилася, транспортний засіб повинен пройти технічний огляд, перш ніж знову буде допущено до експлуатації.",
+    "ur": "جب کار کی سول ذمہ داری کی انشورنس کی میعاد ختم ہو گئی ہو، تو گاڑی کو دوبارہ گردش میں ڈالنے سے پہلے اس کا تکنیکی معائنہ کرانا ضروری ہے۔",
+    "zh": "当汽车民事责任保险过期时，车辆必须在重新投入使用前进行技术测试"
+   },
+   "keywords_json": "[{\"it\": \"quando\", \"zh\": \"当…时\", \"en\": \"when\", \"ru\": \"когда\", \"uk\": \"коли\", \"pa\": \"ਜਦੋਂ\", \"ur\": \"جب\"}, {\"it\": \"assicurazione per la responsabilità civile auto\", \"zh\": \"汽车民事责任保险\", \"en\": \"car third-party liability insurance\", \"ru\": \"страхование гражданской ответственности автовладельцев\", \"uk\": \"страхування цивільної відповідальності автовласників\", \"pa\": \"ਕਾਰ ਤੀਜੀ-ਧਿਰ ਦੇਣਦਾਰੀ ਬੀਮਾ\", \"ur\": \"گاڑی کی تیسری پارٹی ذمہ داری انشورنس\"}, {\"it\": \"è scaduta di validità\", \"zh\": \"已过有效期\", \"en\": \"has expired\", \"ru\": \"срок действия истёк\", \"uk\": \"термін дії закінчився\", \"pa\": \"ਮਿਆਦ ਖ਼ਤਮ ਹੋ ਗਈ ਹੈ\", \"ur\": \"میعاد ختم ہو گئی ہے\"}, {\"it\": \"veicolo\", \"zh\": \"车辆\", \"en\": \"vehicle\", \"ru\": \"транспортное средство\", \"uk\": \"транспортний засіб\", \"pa\": \"ਵਾਹਨ\", \"ur\": \"گاڑی\"}, {\"it\": \"deve essere sottoposto a\", \"zh\": \"必须接受\", \"en\": \"must undergo\", \"ru\": \"должно пройти\", \"uk\": \"має пройти\", \"pa\": \"ਕਰਵਾਉਣੀ ਲਾਜ਼ਮੀ ਹੈ\", \"ur\": \"سے گزرنا لازمی ہے\"}, {\"it\": \"collaudo tecnico\", \"zh\": \"技术检验\", \"en\": \"technical inspection\", \"ru\": \"технический осмотр\", \"uk\": \"технічний огляд\", \"pa\": \"ਤਕਨੀਕੀ ਨਿਰੀਖਣ\", \"ur\": \"تکنیکی معائنہ\"}, {\"it\": \"prima di\", \"zh\": \"在…之前\", \"en\": \"before\", \"ru\": \"перед\", \"uk\": \"перед\", \"pa\": \"ਤੋਂ ਪਹਿਲਾਂ\", \"ur\": \"سے پہلے\"}, {\"it\": \"essere rimesso in circolazione\", \"zh\": \"重新上路\", \"en\": \"being put back on the road\", \"ru\": \"быть вновь допущенным к движению\", \"uk\": \"бути знову допущеним до руху\", \"pa\": \"ਮੁੜ ਸੜਕ 'ਤੇ ਲਿਆਉਣਾ\", \"ur\": \"دوبارہ سڑک پر لانا\"}]"
+  }
+ ]
+}

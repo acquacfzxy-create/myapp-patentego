@@ -1,4 +1,35 @@
-# PatenteGo Release Sprint Checklist
+# 2026-10-17 合併版本 1.1.0+12
+
+使用者已明確授權合併另一對話的修改並發布新版；這取代以下歷史記錄中的「尚無發布授權」，不取代真實的帳號／商店門檻。即時交接見 `release_candidates/release_1.1.0_20261017/`。
+
+- DB92：7139/7139 題驗收，49191 詞；發布前另完成 5 題 5 值補正，非題幹／答案改寫。
+- 全 Flutter 測試 1038 通過（含 Firestore fixture），範圍 analyze 無 issue，7 項 Firestore emulator 通過；本輪錯題復盤模擬器整合測試通過，3 張畫面已目視。歷史失敗日誌保留，並非刪除／skip 取得全綠。
+- Android 最終簽名 AAB 1.1.0（12），包內 DB92 hash 符合，API36、Billing8、arm64 16KB 相容，權限與正式11相同；Play 正式版草稿已建立，最終狀態以本輪發布報告為準。
+- Play 三函式及 deleteAccount 已部署，兩 callable 未登入 HTTP401；未刪除任何真實帳號／進行真實購買。Apple IAP 三函式未部署。
+- iOS 同源 1.1.0（12）無簽名裝置編譯通過，含 DB92；Apple 內購旗標關閉，不能當可送審成品。舊簽名候選 DB82 保留，不冒稱新 DB92。
+- Apple 登入本輪已過期，待使用者登入；案件22926042本輪仍僅有受理信。銀行／稅務／DSA沒有本輪登入後的即時確認，不能冒用舊值。
+- 隱私草稿必以新 `IOS_SDK_PRIVACY_AUDIT.json`／`IOS_DISCLOSURE_RESOLUTION.md` 為準：GoogleSignIn 與 Firebase 實際清單包含舊稿漏列的項目；BoringSSL 亦不能稱純 OS 加密。尚未代填虛構稅務／內容權利／法國加密聲明。
+- 詞彙自動化保持 PAUSED。Web 內容包未同步／未部署，母語確認、真實商店購買與真帳號刪除仍為明示邊界。
+
+---
+
+# LinguaPatente Release Sprint Checklist
+
+## Pending Next Version — 2026-10-17
+
+- [x] Remove daily limits and quota consumption for full explanations across practice, favorites, mistake review, exam review, session review, and Web. Remove remaining-count hints and explanation VIP badges. Update all seven subscription-page languages to state that full explanations are free and unlimited for everyone. Include this change in the same next-version release after the question-bank batch completes. See [verification record](../outputs/session_mistake_review_20261017/free_explanations/完成紀錄.md).
+
+- [x] Preserve the local fast-practice update: session mistake review, summary review, and optional inline extra explanation. See [implementation record](../outputs/session_mistake_review_20261017/完成紀錄.md) and [extra explanation verification](../outputs/session_mistake_review_20261017/expanded_details/完成紀錄.md).
+- [ ] Wait for the current question-bank batch to finish, then verify its completion logs and resulting data quality.
+- [ ] Validate the finished question bank and this feature together; increment `kStaticDbVersion` when bundling an updated database, confirm the next app version/build, and complete release checks before packaging.
+- Release timing confirmed by the maintainer: include this feature with the completed question bank in the next version; do not release it separately.
+
+## Every Update - Non-negotiable Gates
+
+- [ ] Run `flutter test test/app_theme_test.dart`; every Material text style must use the bundled language-specific Noto family.
+- [ ] New UI text inherits `AppTheme`; do not add literal `fontFamily` values or raw `RichText` widgets that bypass `DefaultTextStyle`.
+- [ ] Smoke-check Chinese home, settings, question, explanation, dialog, and button text on Android; no serif Chinese is accepted for release.
+- [ ] Run full `flutter analyze`, `flutter test`, and `git diff --check` before handing off an update.
 
 ## Day 1 - Baseline
 
@@ -37,7 +68,7 @@
 
 - [ ] Test monthly purchase in sandbox.
 - [ ] Test restore purchase after reinstall with StoreKit/TestFlight sandbox.
-- [ ] Test VIP unlock removes practice, mock exam, explanation, review locks.
+- [ ] Test VIP unlock removes practice, mock exam, and review locks; full explanations remain free for everyone.
 - [x] Guard local VIP cache against stale iOS Keychain data after reinstall.
 - [ ] Decide whether first release ships with platform purchase stream validation or a backend receipt verifier.
 
@@ -75,6 +106,7 @@
 
 ## Latest Local Smoke Results
 
+- 2026-08-31: Subscription release-readiness pass completed. `flutter analyze` passed; 53 focused subscription, entitlement, access-policy, provider, and release-flow tests passed. Android release AAB `1.0.3+4` built successfully, its signature verified, and the merged manifest contains `com.android.vending.BILLING` with target SDK 36. iOS release device build also succeeded with codesigning disabled. Real store purchase/restore remains blocked on Play Console/App Store Connect account access and store-distributed sandbox builds. Full `flutter test` had 175 passing tests and one unrelated failure because the current worktree has `web/index.html` deleted.
 - 2026-06-02: Pre-submit gate review completed. Full Git status was reviewed against the 7 planned batches, local secret/config files are present but ignored, sensitive scanning found no real secrets, `git diff --check` passed after trimming whitespace in `lib/models/question.dart`, `flutter analyze` passed, and full `flutter test` passed with 42 tests. Remaining submission blockers are still account-side: Google Play, Apple Developer, sandbox IAP, real sign-in, Archive/TestFlight, and store upload metadata.
 - 2026-06-02: Pre-submit file selection closure completed. Removed duplicate root `images/app_icon.png`, restored iOS workspace shared metadata files, moved watermark tool requirements to `maintenance/scripts/requirements_watermark.txt`, and removed generated `maintenance/reports/watermark_report.txt`. `analysis_options.yaml` lint downgrades remain as a temporary release strategy because narrowing them currently exposes 148 analyzer info items, mostly Flutter `withOpacity` deprecations. Follow-up `git diff --check`, `flutter analyze`, and `flutter test` with 42 tests passed.
 - 2026-06-02: Batch 7 maintenance toolchain migration review completed. Personal absolute paths were removed from migrated scripts/docs, Gemini smoke tooling now uses Flash candidates and env-only keys, keyword write testing uses and cleans a temporary DB copy, Python scripts compiled, shell scripts passed syntax checks, `git diff --check` passed, keyword coverage is 7139/7139, and sensitive scanning found no real secrets. Remaining risk: some historical chapter-mapping SQL/docs still reference old `chapter_id` and should not be run against the current DB without review.

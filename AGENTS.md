@@ -1,7 +1,9 @@
-# Codex 接班人說明書 — Patentego / Italy Quiz App
+# Codex 接班人說明書 — LinguaPatente
 
 本文件供 **OpenAI Codex**（CLI / IDE 擴充 / App）在接手本倉庫時自動載入。
 維護者從 **Cursor** 遷移而來；請把本檔視為「專案憲法 + 營運手冊」。
+
+**跨工具協作入口（2026-10-19）**：開始新工作前先讀 [PROJECT_HUB.md](PROJECT_HUB.md)，確認承接對話、最新狀態及目前實作者。同一批檔案由一方修改，另一方驗收；保留正在執行的 Claude 作業與既有未提交成果。總覽不取代本文件的工程規則，也不新增外部操作授權。
 
 ---
 
@@ -9,8 +11,8 @@
 
 | 項目 | 說明 |
 |------|------|
-| **產品** | 義大利駕照理論測驗 App（Flutter） |
-| **套件名** | `italy_quiz_app`（`pubspec.yaml`） |
+| **產品** | LinguaPatente — 義大利駕照理論測驗 App（Flutter） |
+| **套件名** | `lingua_patente`（`pubspec.yaml`） |
 | **商店包名** | Android/iOS：`com.patentego.app` |
 | **工作目錄** | `/Users/fabio/Desktop/assets`（倉庫根） |
 | **題庫規模** | 約 **7139** 題（以 `questions` 表為準） |

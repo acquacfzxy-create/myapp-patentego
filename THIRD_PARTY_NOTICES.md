@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-PatenteGo includes selected road sign image assets from the following open-source dataset:
+LinguaPatente includes selected road sign image assets from the following open-source dataset:
 
 ## QuizPatenteB
 

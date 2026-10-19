@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:italy_quiz_app/config/app_strings.dart';
-import 'package:italy_quiz_app/providers/user_state_provider.dart';
-import 'package:italy_quiz_app/screens/auth_page.dart';
+import 'package:lingua_patente/config/app_strings.dart';
+import 'package:lingua_patente/providers/user_state_provider.dart';
+import 'package:lingua_patente/screens/auth_page.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 

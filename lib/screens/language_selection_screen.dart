@@ -5,7 +5,7 @@ import '../config/app_theme.dart';
 import '../models/user_state.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
-import 'home_screen.dart';
+import 'daily_goal_setup_screen.dart';
 
 /// 語言選擇頁面
 /// 首次啟動時顯示，讓用戶選擇首選語言
@@ -94,10 +94,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
 
     if (!context.mounted) return;
 
-    // 使用淡入淡出動畫進入主頁
+    // 使用淡入淡出動畫進入每日目標設定頁
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const HomeScreen(),
+        pageBuilder: (_, __, ___) => const DailyGoalSetupScreen(),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(
             opacity: animation,
@@ -111,6 +111,8 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
 
   /// 構建單個語言選項（含入場動畫）
   Widget _buildLanguageTile(String lang, List<String> allLanguages) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     final isSelected = lang == _selectedLanguage;
     final languageName = UserState.languageNames[lang] ?? lang;
     final fontSize = _getLanguageFontSize(lang);
@@ -145,21 +147,26 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius:
+                  isRetro ? BorderRadius.zero : BorderRadius.circular(18),
               color: isSelected
-                  ? const Color(0xFFE3F2FF)
-                  : Colors.grey[50]!.withOpacity(0.95),
+                  ? colorScheme.primary.withOpacity(0.12)
+                  : colorScheme.surface.withOpacity(0.95),
               border: Border.all(
-                color: isSelected ? const Color(0xFF137FEC) : Colors.grey[200]!,
+                color: isSelected
+                    ? colorScheme.primary
+                    : colorScheme.outlineVariant,
                 width: isSelected ? 1.6 : 1.0,
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
-                  blurRadius: 10,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+              boxShadow: isRetro
+                  ? const []
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -169,9 +176,12 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color:
-                        isSelected ? const Color(0xFF137FEC) : Colors.grey[200],
-                    shape: BoxShape.circle,
+                    color: isSelected
+                        ? colorScheme.primary
+                        : colorScheme.onSurface.withOpacity(0.12),
+                    shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
+                    border:
+                        isRetro ? Border.all(color: AppTheme.retroLine) : null,
                   ),
                   alignment: Alignment.center,
                   child: AnimatedDefaultTextStyle(
@@ -180,9 +190,12 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                       fontSize: 18,
                       fontWeight:
                           isSelected ? FontWeight.w700 : FontWeight.w600,
-                      color: isSelected ? Colors.white : Colors.grey[700],
+                      color: isSelected
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurfaceVariant,
                     ),
-                    child: Text(initial),
+                    // 徽章是固定 32pt 的图形标记，文字不随系统字级放大，避免被圆形裁切。
+                    child: Text(initial, textScaler: TextScaler.noScaling),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -198,7 +211,7 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                         fontSize: fontSize,
                         fontWeight: FontWeight.w600,
                         height: lineHeight,
-                        color: const Color(0xFF0F172A),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -214,11 +227,13 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
   @override
   Widget build(BuildContext context) {
     const languages = UserState.supportedLanguages;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     final selectedLanguageIsRtl = _isRtlLanguage(_selectedLanguage);
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
@@ -243,20 +258,33 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                                 children: [
                                   Container(
                                     padding: const EdgeInsets.all(18),
-                                    decoration: const BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      gradient: RadialGradient(
-                                        colors: [
-                                          Color(0x330EA5E9),
-                                          Colors.transparent,
-                                        ],
-                                        radius: 0.9,
-                                      ),
+                                    decoration: BoxDecoration(
+                                      shape: isRetro
+                                          ? BoxShape.rectangle
+                                          : BoxShape.circle,
+                                      color: isRetro
+                                          ? AppTheme.retroPageAlt
+                                          : null,
+                                      border: isRetro
+                                          ? Border.all(
+                                              color: AppTheme.retroLine,
+                                            )
+                                          : null,
+                                      gradient: isRetro
+                                          ? null
+                                          : RadialGradient(
+                                              colors: [
+                                                colorScheme.primary
+                                                    .withOpacity(0.2),
+                                                Colors.transparent,
+                                              ],
+                                              radius: 0.9,
+                                            ),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.public,
                                       size: 36,
-                                      color: Color(0xFF0EA5E9),
+                                      color: AppTheme.primaryFor(context),
                                     ),
                                   ),
                                   const SizedBox(height: 12),
@@ -268,10 +296,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                                       _localized(
                                           _selectedLanguage, 'select_language'),
                                       textAlign: TextAlign.center,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 20,
                                         fontWeight: FontWeight.w700,
-                                        color: Color(0xFF0F172A),
+                                        color: AppTheme.inkFor(context),
                                         letterSpacing: 0,
                                       ),
                                     ),
@@ -302,22 +330,32 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () => _confirmAndEnterHome(context),
-                      borderRadius: BorderRadius.circular(32),
+                      borderRadius: isRetro
+                          ? BorderRadius.zero
+                          : BorderRadius.circular(32),
                       child: Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 32, vertical: 16),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3B82F6),
-                          borderRadius: BorderRadius.circular(32),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF3B82F6).withOpacity(0.25),
-                              blurRadius: 14,
-                              offset: const Offset(0, 4),
-                              spreadRadius: 1,
-                            ),
-                          ],
+                          color: colorScheme.primary,
+                          borderRadius: isRetro
+                              ? BorderRadius.zero
+                              : BorderRadius.circular(32),
+                          border: isRetro
+                              ? Border.all(color: AppTheme.retroLine)
+                              : null,
+                          boxShadow: isRetro
+                              ? const []
+                              : [
+                                  BoxShadow(
+                                    color:
+                                        colorScheme.primary.withOpacity(0.25),
+                                    blurRadius: 14,
+                                    offset: const Offset(0, 4),
+                                    spreadRadius: 1,
+                                  ),
+                                ],
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -327,17 +365,17 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                               Text(
                                 _localized(_selectedLanguage, 'start_learning'),
                                 textDirection: TextDirection.rtl,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: colorScheme.onPrimary,
                                 ),
                               ),
                               const SizedBox(width: 8),
                             ],
-                            const Icon(
+                            Icon(
                               Icons.play_arrow_rounded,
-                              color: Colors.white,
+                              color: colorScheme.onPrimary,
                               size: 22,
                             ),
                             if (!selectedLanguageIsRtl)
@@ -346,10 +384,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
                               Text(
                                 _localized(_selectedLanguage, 'start_learning'),
                                 textDirection: TextDirection.ltr,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: colorScheme.onPrimary,
                                 ),
                               ),
                           ],

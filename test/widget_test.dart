@@ -1,17 +1,17 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:italy_quiz_app/config/app_config.dart';
-import 'package:italy_quiz_app/config/app_strings.dart';
-import 'package:italy_quiz_app/models/user_state.dart';
+import 'package:lingua_patente/config/app_config.dart';
+import 'package:lingua_patente/config/app_strings.dart';
+import 'package:lingua_patente/models/user_state.dart';
 
 void main() {
-  group('PatenteGo release smoke tests', () {
+  group('LinguaPatente release smoke tests', () {
     test('free users can access only the configured free chapters', () {
-      expect(AppConfig.freeChapterLimit, 3);
+      expect(AppConfig.freeChapterLimit, 2);
       expect(AppConfig.isChapterLocked(1, isVip: false), isFalse);
       expect(AppConfig.isChapterLocked(2, isVip: false), isFalse);
-      expect(AppConfig.isChapterLocked(3, isVip: false), isFalse);
+      expect(AppConfig.isChapterLocked(3, isVip: false), isTrue);
       expect(AppConfig.isChapterLocked(4, isVip: false), isTrue);
       expect(AppConfig.isChapterLocked(25, isVip: true), isFalse);
     });
@@ -31,7 +31,7 @@ void main() {
       );
       expect(
         AppConfig.supportContactUrl,
-        'mailto:patentegoapp@gmail.com?subject=PatenteGo%20Support',
+        'mailto:patentegoapp@gmail.com?subject=LinguaPatente%20Support',
       );
     });
 
@@ -197,6 +197,23 @@ void main() {
       expect(iapSource, isNot(contains('Subscription is not ready yet')));
       expect(iapSource, isNot(contains('Purchase could not be started')));
       expect(iapSource, isNot(contains('Purchase could not be verified')));
+    });
+
+    test('answered practice questions stay read-only in every practice mode',
+        () {
+      final source =
+          File('lib/screens/practice_screen.dart').readAsStringSync();
+      final restoresRecordedAnswer = RegExp(
+        r'final hasRecordedAnswer\s*=\s*question != null &&\s*'
+        r'_answerStates\.containsKey\(question\.id\)',
+      );
+
+      expect(restoresRecordedAnswer.hasMatch(source), isTrue);
+      expect(
+        source,
+        contains('_answerStates.containsKey(_currentQuestion!.id)'),
+      );
+      expect(source, isNot(contains('_isFreePracticeMode')));
     });
   });
 }

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:italy_quiz_app/services/access_policy.dart';
+import 'package:lingua_patente/services/access_policy.dart';
 
 void main() {
   group('AccessPolicy', () {
@@ -33,7 +33,7 @@ void main() {
       );
     });
 
-    test('free explanation access respects unlocked questions and daily count',
+    test('full explanations remain free with legacy exhausted daily counts',
         () {
       expect(
         AccessPolicy.canViewExplanation(
@@ -49,7 +49,7 @@ void main() {
           isUnlockedToday: false,
           dailyExplanationCount: 10,
         ),
-        isFalse,
+        isTrue,
       );
       expect(
         AccessPolicy.canViewExplanation(
@@ -105,6 +105,37 @@ void main() {
       expect(
         AccessPolicy.shouldLockPreviewItem(isVip: true, index: 99),
         isFalse,
+      );
+    });
+
+    test('free mistake list never exposes the complete notebook', () {
+      expect(
+        AccessPolicy.visibleMistakePreviewCount(
+          isVip: false,
+          totalItems: 9,
+        ),
+        5,
+      );
+      expect(
+        AccessPolicy.visibleMistakePreviewCount(
+          isVip: false,
+          totalItems: 20,
+        ),
+        5,
+      );
+      expect(
+        AccessPolicy.visibleMistakePreviewCount(
+          isVip: false,
+          totalItems: 1,
+        ),
+        0,
+      );
+      expect(
+        AccessPolicy.visibleMistakePreviewCount(
+          isVip: true,
+          totalItems: 20,
+        ),
+        20,
       );
     });
   });

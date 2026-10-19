@@ -1,0 +1,21 @@
+{
+ "_source": "assets/italy_quiz.db (read-only export after keyword batch 11; keywords_json is the stored string). 5269 has an English meaning of 56 characters (sorpassi in scia): longer than the 52 characters of the earlier samples. The list is the complete final list of batch 11, nothing was removed or shortened for the test.",
+ "questions": [
+  {
+   "id": "5269",
+   "image_name": null,
+   "answer": false,
+   "chapter": 15,
+   "translations": {
+    "en": "The driver of the vehicle being overtaken is obliged to move the vehicle to the center of the lane to avoid tailgating overtakes.",
+    "it": "Il conducente del veicolo da sorpassare ha l'obbligo di portarsi al centro della carreggiata per evitare sorpassi in scia",
+    "pa": "ਜਿਸ ਗੱਡੀ ਨੂੰ ਓਵਰਟੇਕ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ ਉਸ ਦੇ ਡਰਾਈਵਰ ਦੀ ਜ਼ਿੰਮੇਵਾਰੀ ਹੈ ਕਿ ਉਹ ਗੱਡੀ ਨੂੰ ਲੇਨ ਦੇ ਵਿਚਕਾਰ ਲੈ ਜਾਵੇ ਤਾਂ ਜੋ ਪਿੱਛੇ ਤੋਂ ਓਵਰਟੇਕ ਕਰਨ ਤੋਂ ਬਚਾ ਜਾ ਸਕੇ।",
+    "ru": "Водитель обгоняемого транспортного средства обязан переместить транспортное средство в центр полосы, чтобы избежать обгона вплотную.",
+    "uk": "Водій транспортного засобу, який обганяють, зобов'язаний перемістити транспортний засіб у центр смуги, щоб уникнути обгону впритул.",
+    "ur": "جس گاڑی کو اوورٹیک کیا جا رہا ہے اس کے ڈرائیور کی ذمہ داری ہے کہ وہ گاڑی کو لین کے بیچ میں لے جائے تاکہ پیچھے سے اوورٹیک کرنے سے بچا جا سکے۔",
+    "zh": "被超车辆的驾驶员有义务将车辆移到车道中央，以避免尾随超车。"
+   },
+   "keywords_json": "[{\"it\": \"conducente\", \"zh\": \"驾驶人\", \"en\": \"driver\", \"ru\": \"водитель\", \"uk\": \"водій\", \"pa\": \"ਡਰਾਈਵਰ\", \"ur\": \"ڈرائیور\"}, {\"it\": \"veicolo\", \"zh\": \"车辆\", \"en\": \"vehicle\", \"ru\": \"транспортное средство\", \"uk\": \"транспортний засіб\", \"pa\": \"ਵਾਹਨ\", \"ur\": \"گاڑی\"}, {\"it\": \"sorpassare\", \"zh\": \"超车\", \"en\": \"to overtake\", \"ru\": \"обгонять\", \"uk\": \"обганяти\", \"pa\": \"ਓਵਰਟੇਕ ਕਰਨਾ\", \"ur\": \"اوورٹیک کرنا\"}, {\"it\": \"ha l'obbligo di\", \"zh\": \"有义务（必须）\", \"en\": \"is obliged to\", \"ru\": \"обязан\", \"uk\": \"зобов'язаний\", \"pa\": \"ਦਾ ਫ਼ਰਜ਼ ਹੈ\", \"ur\": \"کا فرض ہے\"}, {\"it\": \"portarsi\", \"zh\": \"驶到（移到）\", \"en\": \"to move\", \"ru\": \"переместиться\", \"uk\": \"переміститися\", \"pa\": \"ਚਲੇ ਜਾਣਾ\", \"ur\": \"چلے جانا\"}, {\"it\": \"al centro\", \"zh\": \"在（到）中央\", \"en\": \"at (to) the centre\", \"ru\": \"в центре\", \"uk\": \"у центрі\", \"pa\": \"ਵਿਚਕਾਰ\", \"ur\": \"درمیان میں\"}, {\"it\": \"carreggiata\", \"zh\": \"车行道\", \"en\": \"roadway\", \"ru\": \"проезжая часть\", \"uk\": \"проїзна частина\", \"pa\": \"ਸੜਕ\", \"ur\": \"سڑک\"}, {\"it\": \"per evitare\", \"zh\": \"为了避免\", \"en\": \"in order to avoid\", \"ru\": \"чтобы избежать\", \"uk\": \"щоб уникнути\", \"pa\": \"ਬਚਣ ਲਈ\", \"ur\": \"بچنے کے لئے\"}, {\"it\": \"sorpassi in scia\", \"zh\": \"紧跟在别车后面的连续超车\", \"en\": \"overtaking in another vehicle's wake (one after another)\", \"ru\": \"обгоны следом друг за другом\", \"uk\": \"обгони слідом один за одним\", \"pa\": \"ਇੱਕ-ਦੂਜੇ ਦੇ ਪਿੱਛੇ ਲੱਗ ਕੇ ਓਵਰਟੇਕ\", \"ur\": \"ایک دوسرے کے پیچھے لگ کر اوورٹیک\"}]"
+  }
+ ]
+}

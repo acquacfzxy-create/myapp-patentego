@@ -100,47 +100,57 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.lock, color: Colors.amber, size: 28),
-            const SizedBox(width: 12),
-            Expanded(
+      builder: (dialogContext) {
+        final warningColor = AppTheme.warningTextFor(dialogContext);
+        final primaryColor = AppTheme.primaryFor(dialogContext);
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.lock, color: warningColor, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              IconButton(
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          content: Text(
+            message,
+            style: const TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
               child: Text(
-                title,
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                AppStrings.getWithLanguage(currentLang, 'nav_back'),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 20),
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primaryColor,
+                foregroundColor: Theme.of(dialogContext).colorScheme.onPrimary,
+              ),
+              child: Text(
+                AppStrings.getWithLanguage(
+                  currentLang,
+                  'go_subscribe_unlock',
+                ),
+              ),
             ),
           ],
-        ),
-        content: Text(
-          message,
-          style: const TextStyle(fontSize: 16),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(AppStrings.getWithLanguage(currentLang, 'nav_back')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              foregroundColor: Colors.black,
-            ),
-            child: Text(
-              AppStrings.getWithLanguage(currentLang, 'go_subscribe_unlock'),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -154,7 +164,7 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: SafeArea(
           child: Column(
             children: [
@@ -194,12 +204,13 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
 
   /// 构建顶部 Header
   Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: colorScheme.surface.withOpacity(0.6),
         border: Border(
           bottom: BorderSide(
-            color: Colors.black.withOpacity(0.05),
+            color: colorScheme.outline.withOpacity(0.2),
             width: 0.5,
           ),
         ),
@@ -214,8 +225,9 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
               children: [
                 // 返回按钮
                 IconButton(
-                  icon: const Icon(Icons.chevron_left,
-                      size: 28, color: AppTheme.primary),
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  icon: const Icon(Icons.chevron_left, size: 28),
+                  color: colorScheme.primary,
                   onPressed: () => Navigator.of(context).pop(),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -226,10 +238,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                   child: Text(
                     AppStrings.get('select_chapter'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.ink,
+                      color: colorScheme.onSurface,
                       letterSpacing: 0,
                     ),
                   ),
@@ -292,41 +304,49 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
     required bool isActive,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: isRetro ? BorderRadius.zero : BorderRadius.circular(20),
           color: isActive
-              ? Colors.white.withOpacity(0.85)
-              : Colors.white.withOpacity(0.45),
+              ? colorScheme.surface.withOpacity(0.9)
+              : colorScheme.surface.withOpacity(0.45),
           border: Border.all(
             color: isActive
-                ? AppTheme.primary.withOpacity(0.3)
+                ? primaryColor.withOpacity(isRetro ? 1 : 0.3)
                 : Colors.transparent,
             width: 1,
           ),
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: AppTheme.primary.withOpacity(0.1),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: const Color(0xFF1F2687).withOpacity(0.03),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+          boxShadow: isRetro
+              ? const []
+              : isActive
+                  ? [
+                      BoxShadow(
+                        color: primaryColor.withOpacity(0.1),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: const Color(0xFF1F2687).withOpacity(0.03),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: isRetro ? BorderRadius.zero : BorderRadius.circular(20),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            filter: ImageFilter.blur(
+              sigmaX: isRetro ? 0 : 20,
+              sigmaY: isRetro ? 0 : 20,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -335,7 +355,9 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                    color: isActive ? AppTheme.primary : AppTheme.muted,
+                    color: isActive
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -343,8 +365,8 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                   width: 6,
                   height: 6,
                   decoration: BoxDecoration(
-                    color: isActive ? AppTheme.primary : Colors.transparent,
-                    shape: BoxShape.circle,
+                    color: isActive ? colorScheme.primary : Colors.transparent,
+                    shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
                   ),
                 ),
               ],
@@ -367,7 +389,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
       return Center(
         child: Text(
           AppStrings.get('no_chapters'),
-          style: const TextStyle(fontSize: 16, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 16,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       );
     }
@@ -409,6 +434,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
     required bool isLocked,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    final successColor = AppTheme.successFor(context);
     final total = progress['total'] ?? 0;
     final practiced = progress['practiced'] ?? 0;
     final mastered = progress['mastered'] ?? 0;
@@ -435,10 +464,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                     children: [
                       Text(
                         '${chapter.id}. ${chapter.titleIt}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.ink,
+                          color: colorScheme.onSurface,
                           height: 1.2,
                         ),
                         maxLines: 2,
@@ -447,9 +476,9 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       const SizedBox(height: 4),
                       Text(
                         chapter.getTitle(currentLanguage),
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppTheme.muted,
+                          color: colorScheme.onSurfaceVariant,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -472,16 +501,19 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.16),
-                          borderRadius: BorderRadius.circular(999),
+                          color: AppTheme.warningFor(context).withOpacity(0.16),
+                          borderRadius: isRetro
+                              ? BorderRadius.zero
+                              : BorderRadius.circular(999),
                           border: Border.all(
-                            color: Colors.amber.withOpacity(0.55),
+                            color: AppTheme.warningTextFor(context)
+                                .withOpacity(0.55),
                           ),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.lock,
                           size: 14,
-                          color: Color(0xFFD97706),
+                          color: AppTheme.warningTextFor(context),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -490,10 +522,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       AppStrings.getWithLanguage(
                               currentLanguage, 'chapter_stat_bank')
                           .replaceAll('{count}', '$total'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.muted,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -501,10 +533,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       AppStrings.getWithLanguage(
                               currentLanguage, 'chapter_stat_covered')
                           .replaceAll('{count}', '$practiced'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.muted,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -512,10 +544,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       AppStrings.getWithLanguage(
                               currentLanguage, 'chapter_stat_mastered')
                           .replaceAll('{count}', '$mastered'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
-                        color: AppTheme.muted,
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -540,10 +572,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: isCompleted
-                          ? const Color(0xFF4CAF50)
+                          ? successColor
                           : (coveragePercentage > 0
-                              ? AppTheme.primary
-                              : const Color(0xFF94a3b8)),
+                              ? primaryColor
+                              : colorScheme.onSurfaceVariant),
                     ),
                   ),
                   Text(
@@ -552,10 +584,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: isCompleted
-                          ? const Color(0xFF4CAF50)
+                          ? successColor
                           : (coveragePercentage > 0
-                              ? AppTheme.primary
-                              : const Color(0xFF94a3b8)),
+                              ? primaryColor
+                              : colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ],
@@ -566,11 +598,13 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                 width: double.infinity,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFcfd9e7).withOpacity(0.5),
-                  borderRadius: BorderRadius.circular(3),
+                  color: colorScheme.onSurface.withOpacity(0.12),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(3),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(3),
                   child: Stack(
                     children: [
                       // 进度条填充
@@ -578,10 +612,10 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
                         widthFactor: coveragePercentage / 100,
                         child: Container(
                           decoration: BoxDecoration(
-                            color: isCompleted
-                                ? const Color(0xFF4CAF50) // 亮绿色
-                                : AppTheme.primary,
-                            borderRadius: BorderRadius.circular(3),
+                            color: isCompleted ? successColor : primaryColor,
+                            borderRadius: isRetro
+                                ? BorderRadius.zero
+                                : BorderRadius.circular(3),
                           ),
                         ),
                       ),

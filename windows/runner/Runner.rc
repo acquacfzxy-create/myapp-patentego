@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "italy_quiz_app" "\0"
+            VALUE "CompanyName", "LinguaPatente" "\0"
+            VALUE "FileDescription", "LinguaPatente" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "italy_quiz_app" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "italy_quiz_app.exe" "\0"
-            VALUE "ProductName", "italy_quiz_app" "\0"
+            VALUE "InternalName", "LinguaPatente" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 LinguaPatente. All rights reserved." "\0"
+            VALUE "OriginalFilename", "LinguaPatente.exe" "\0"
+            VALUE "ProductName", "LinguaPatente" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

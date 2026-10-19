@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/database_service.dart';
 import '../models/question.dart';
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/question_widget.dart';
 
@@ -25,9 +26,10 @@ class _MockTestErrorsScreenState extends State<MockTestErrorsScreen> {
   List<Question> _errorQuestions = [];
   bool _isLoading = true;
   int _currentIndex = 0;
-  
+
   // 當前語言（從 Provider 獲取）
-  String get _currentLanguage => Provider.of<UserStateProvider>(context, listen: false).currentLanguage;
+  String get _currentLanguage =>
+      Provider.of<UserStateProvider>(context, listen: false).currentLanguage;
 
   @override
   void initState() {
@@ -44,14 +46,16 @@ class _MockTestErrorsScreenState extends State<MockTestErrorsScreen> {
     try {
       // 獲取錯題的完整信息（包含意大利語和翻譯）
       final questions = <Question>[];
-      
+
       for (final id in widget.errorIds) {
         // 先獲取意大利語題目
-        final questionIt = await DatabaseService.getQuestionById(id, lang: 'it');
+        final questionIt =
+            await DatabaseService.getQuestionById(id, lang: 'it');
         if (questionIt != null) {
           // 如果當前語言不是意大利語，獲取翻譯並合併
           if (_currentLanguage != 'it') {
-            final translatedQuestion = await DatabaseService.getQuestionById(id, lang: _currentLanguage);
+            final translatedQuestion = await DatabaseService.getQuestionById(id,
+                lang: _currentLanguage);
             if (translatedQuestion != null) {
               questions.add(questionIt.mergeLanguages(translatedQuestion));
             } else {
@@ -62,7 +66,7 @@ class _MockTestErrorsScreenState extends State<MockTestErrorsScreen> {
           }
         }
       }
-      
+
       setState(() {
         _errorQuestions = questions;
         _currentIndex = 0;
@@ -72,7 +76,7 @@ class _MockTestErrorsScreenState extends State<MockTestErrorsScreen> {
       setState(() {
         _isLoading = false;
       });
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('${AppStrings.get('failed_to_load')}: $e')),
@@ -91,10 +95,12 @@ class _MockTestErrorsScreenState extends State<MockTestErrorsScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(isCorrect 
-              ? AppStrings.get('correct_answer') 
+          content: Text(isCorrect
+              ? AppStrings.get('correct_answer')
               : AppStrings.get('wrong_answer')),
-          backgroundColor: isCorrect ? Colors.green : Colors.red,
+          backgroundColor: isCorrect
+              ? AppTheme.successFor(context)
+              : AppTheme.dangerFor(context),
           duration: const Duration(milliseconds: 700),
         ),
       );
@@ -121,77 +127,94 @@ class _MockTestErrorsScreenState extends State<MockTestErrorsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(AppStrings.get('view_test_errors')),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Colors.transparent,
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _errorQuestions.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+      body: Container(
+        decoration: AppTheme.pageDecorationFor(context),
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _errorQuestions.isEmpty
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 88,
+                          color: AppTheme.successFor(context),
+                        ),
+                        const SizedBox(height: 24),
+                        Text(
+                          AppStrings.get('no_mistakes'),
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: colorScheme.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : Column(
                     children: [
-                      const Icon(
-                        Icons.check_circle_outline,
-                        size: 100,
-                        color: Colors.green,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceFor(context),
+                          border: Border(
+                            bottom: BorderSide(
+                              color: AppTheme.lineFor(context),
+                            ),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            IconButton(
+                              tooltip: MaterialLocalizations.of(context)
+                                  .previousPageTooltip,
+                              icon: const Icon(Icons.arrow_back),
+                              onPressed:
+                                  _currentIndex > 0 ? _previousQuestion : null,
+                            ),
+                            Text(
+                              '${_currentIndex + 1} / ${_errorQuestions.length}',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: MaterialLocalizations.of(context)
+                                  .nextPageTooltip,
+                              icon: const Icon(Icons.arrow_forward),
+                              onPressed:
+                                  _currentIndex < _errorQuestions.length - 1
+                                      ? _nextQuestion
+                                      : null,
+                            ),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 24),
-                      Text(
-                        AppStrings.get('no_mistakes'),
-                        style: const TextStyle(
-                          fontSize: 20,
-                          color: Colors.grey,
+                      Expanded(
+                        child: QuestionWidget(
+                          question: _errorQuestions[_currentIndex],
+                          onAnswerSelected: _onAnswerSelected,
+                          currentLanguage: _currentLanguage,
+                          currentIndex: _currentIndex,
+                          totalQuestions: _errorQuestions.length,
+                          isExamMode: false,
                         ),
                       ),
                     ],
                   ),
-                )
-              : Column(
-                  children: [
-                    // 題目進度和導航
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      color: Colors.grey[200],
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.arrow_back),
-                            onPressed: _currentIndex > 0 ? _previousQuestion : null,
-                          ),
-                          Text(
-                            '${_currentIndex + 1} / ${_errorQuestions.length}',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.arrow_forward),
-                            onPressed: _currentIndex < _errorQuestions.length - 1
-                                ? _nextQuestion
-                                : null,
-                          ),
-                        ],
-                      ),
-                    ),
-                    // 題目內容
-                    Expanded(
-                      child: QuestionWidget(
-                        question: _errorQuestions[_currentIndex],
-                        onAnswerSelected: _onAnswerSelected,
-                        currentLanguage: _currentLanguage,
-                        currentIndex: _currentIndex,
-                        totalQuestions: _errorQuestions.length,
-                        isExamMode: false, // 練習模式，可以查看解析
-                      ),
-                    ),
-                  ],
-                ),
+      ),
     );
   }
 }
-

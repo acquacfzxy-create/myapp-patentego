@@ -1,12 +1,12 @@
 {
-    "name": "italy_quiz_app",
-    "short_name": "italy_quiz_app",
+    "name": "LinguaPatente",
+    "short_name": "LinguaPatente",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#F4F7FB",
+    "theme_color": "#137FEC",
+    "description": "Multilingual Italian driving theory practice for phone and computer.",
+    "orientation": "any",
     "prefer_related_applications": false,
     "icons": [
         {

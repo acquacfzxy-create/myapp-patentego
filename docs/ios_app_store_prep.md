@@ -1,14 +1,13 @@
-# PatenteGo iOS App Store / TestFlight Prep
+# LinguaPatente iOS App Store / TestFlight Prep
 
 This file collects the values and tasks that can be prepared before the Apple
 Developer account is approved.
 
 ## Current Build Values
 
-- App name: `PatenteGo`
+- App name: `LinguaPatente`
 - Bundle ID: `com.patentego.app`
-- Version: `1.0.0`
-- Build number: `1`
+- Version / build: see `pubspec.yaml` (currently `1.0.8+10`); this table is outdated — the current checklist is `docs/ios_app_store_launch_checklist.md`
 - SKU suggestion: `patentego-ios-100`
 - Primary category suggestion: `Education`
 - Secondary category suggestion: `Reference`
@@ -34,7 +33,7 @@ Developer account is approved.
 Create the app after the Apple Developer account is approved.
 
 - Platform: iOS
-- Name: `PatenteGo`
+- Name: `LinguaPatente`
 - Primary language: Italian
 - Bundle ID: `com.patentego.app`
 - SKU: `patentego-ios-100`
@@ -57,7 +56,7 @@ mock exams, mistake review, favorites, and progress sync.
 
 ### Description
 
-PatenteGo helps learners prepare for the Italian driving theory exam with a
+LinguaPatente helps learners prepare for the Italian driving theory exam with a
 large question bank, chapter practice, mock exams, mistake review, favorites,
 and multilingual explanations.
 
@@ -69,9 +68,9 @@ Core features:
 - Read structured explanations with key points and study tips.
 - Switch between supported study languages.
 - Sign in with Apple or Google to keep progress in sync.
-- Upgrade to PatenteGo VIP for full access and cloud sync.
+- Upgrade to LinguaPatente VIP for full access and cloud sync.
 
-PatenteGo is an independent study tool and is not affiliated with, endorsed by,
+LinguaPatente is an independent study tool and is not affiliated with, endorsed by,
 or operated by Italian government authorities.
 
 ### Keywords
@@ -81,7 +80,7 @@ driving license, practice test
 
 ### Review Notes
 
-PatenteGo is a study app for the Italian driving theory exam. The app supports
+LinguaPatente is a study app for the Italian driving theory exam. The app supports
 guest use, Apple/Google sign-in, local progress, cloud sync, and a monthly VIP
 subscription.
 
@@ -108,12 +107,12 @@ Create this in App Store Connect after the app record exists.
 
 - Type: Auto-renewable subscription
 - Product ID: `patentego_vip_monthly`
-- Reference name: `PatenteGo VIP Monthly`
-- Subscription group reference name: `PatenteGo VIP`
-- Subscription group display name: `PatenteGo VIP`
+- Reference name: `LinguaPatente VIP Monthly`
+- Subscription group reference name: `LinguaPatente VIP`
+- Subscription group display name: `LinguaPatente VIP`
 - Duration: 1 month
 - Pricing: decide in App Store Connect
-- Localization display name: `PatenteGo VIP Monthly`
+- Localization display name: `LinguaPatente VIP Monthly`
 - Localization description:
   `Unlock full practice access, mock exams, mistake review, explanations, study reports, and cloud sync.`
 
@@ -162,7 +161,7 @@ Local StoreKit testing can be prepared before App Store Connect is ready:
 1. Open `ios/Runner.xcworkspace`.
 2. Choose File > New > File from Template.
 3. Search for `StoreKit Configuration File`.
-4. Create a local file such as `PatenteGo.storekit`.
+4. Create a local file such as `LinguaPatente.storekit`.
 5. Add an auto-renewable subscription group.
 6. Add product ID `patentego_vip_monthly`.
 7. In the Runner scheme, Run > Options, select the StoreKit configuration file.

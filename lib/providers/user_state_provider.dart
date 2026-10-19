@@ -10,11 +10,14 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:crypto/crypto.dart';
 import '../models/user_state.dart';
+import '../models/daily_goal_plan.dart';
 import '../config/app_strings.dart';
 import '../config/app_config.dart';
+import '../config/app_theme.dart';
 import '../services/access_policy.dart';
 import '../services/database_service.dart';
 import '../services/firebase_status.dart';
+import '../services/subscription_entitlement.dart';
 
 /// 用户状态管理 Provider
 /// 管理全局用户状态：语言、会员状态等
@@ -45,20 +48,96 @@ class UserStateProvider extends ChangeNotifier {
   // 是否跳过已掌握题目
   bool _skipMastered = false;
 
+  // 当前主题；旧版的 dark/classic 存储值由 AppThemeModeCodec 兼容读取。
+  AppThemeMode _themeMode = AppThemeMode.classic;
+
   // VIP状态
   bool _isVip = false;
+  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _entitlementSubscription;
+  Timer? _entitlementTimer;
+  EntitlementMonitor? _entitlementMonitor;
+  RenewalChecker? _renewalChecker;
+
+  void _watchEntitlement(String? uid) {
+    _entitlementSubscription?.cancel();
+    _entitlementTimer?.cancel();
+    // 旧账号的计时、重试与晚到结果全部作废。
+    _entitlementMonitor?.dispose();
+    _entitlementMonitor = null;
+    _isVip = false;
+    _userState = _userState.copyWith(isVip: false);
+    if (uid == null) return;
+    final monitor = EntitlementMonitor(
+      uid: uid,
+      checker: _renewalChecker,
+      onChanged: (active) {
+        if (_userId != uid || _isVip == active) return;
+        _isVip = active;
+        _userState = _userState.copyWith(isVip: active);
+        notifyListeners();
+      },
+    );
+    _entitlementMonitor = monitor;
+    _entitlementSubscription = FirebaseStatus.firestore?.collection('users').doc(uid)
+        .snapshots(includeMetadataChanges: true).listen((snapshot) {
+      if (_userId != uid) return;
+      monitor.updateSnapshot(
+        EntitlementSnapshot.fromUserDoc(snapshot.data()),
+        fromCache: snapshot.metadata.isFromCache,
+      );
+    }, onError: (Object _) {});
+    // 到期与等待上限已精确计时；这里只是兜底。
+    _entitlementTimer = Timer.periodic(const Duration(seconds: 30), (_) => monitor.evaluate());
+  }
+
+  /// 由 main.dart 注入 IapService 的续订核对（Web / 未启用购买的平台不注入）。
+  void attachRenewalChecker(RenewalChecker checker) {
+    _renewalChecker = checker;
+    _entitlementMonitor?.checker = checker;
+  }
+
+  /// 回前台：推进尚未完成的续订核对。
+  void handleAppResumed() => _entitlementMonitor?.onResumed();
 
   // 今日已刷题数
   int _dailyQuizCount = 0;
 
-  // 今日已查看解析次數
+  // 每日學習目標（題）
+  int _dailyStudyGoal = 30;
+
+  // 今日計畫拆分：首次作答的新題 / 已做過的複習題
+  int _dailyNewQuestionCount = 0;
+  int _dailyReviewQuestionCount = 0;
+  int _dueReviewCount = 0;
+
+  // 學習計畫截止日期；每日會依剩餘題量自動重算。
+  DateTime? _studyPlanTargetDate;
+
+  // 輕量連續學習：每天完成至少 10 題即維持連續紀錄。
+  LearningStreakStats _learningStreak = LearningStreakStats.empty;
+
+  // 舊版解析消耗記錄（保留讀取相容性，不再扣次或限制）
   int _dailyExplanationCount = 0;
 
-  // 今日已解鎖解析的題目 ID 集合（避免同一題多次扣費）
+  // 舊版已解鎖解析 ID，僅供歷史資料相容
   Set<String> _todayUnlockedExplanations = {};
 
-  // 每日免費解析上限（非 VIP）
+  // 舊版解析額度常數，僅供歷史資料相容
   static const int maxFreeExplanations = AccessPolicy.maxFreeExplanations;
+
+  /// 學習計畫描述使用者想達成的節奏，不應隨會員權益被篡改。
+  static int normalizeDailyStudyGoal(int goal) =>
+      DailyGoalPlan.normalizeGoal(goal);
+
+  @visibleForTesting
+  static int resolveDailyQuizCount({
+    required bool wasDailyReset,
+    required String? secureCount,
+    required int sharedCount,
+  }) {
+    if (wasDailyReset) return 0;
+    return max(0, int.tryParse(secureCount ?? '') ?? sharedCount);
+  }
 
   // 最后一次模拟考日期（格式：'YYYY-MM-DD'）
   String? _lastExamDate;
@@ -108,13 +187,85 @@ class UserStateProvider extends ChangeNotifier {
   // 获取是否跳过已掌握题目
   bool get skipMastered => _skipMastered;
 
+  AppThemeMode get themeMode => _themeMode;
+
+  bool get isDarkMode => _themeMode == AppThemeMode.night;
+
+  bool get isRetroMode => _themeMode == AppThemeMode.retro;
+
   // 获取VIP状态
   bool get isVip => _isVip;
 
   // 获取今日已刷题数
   int get dailyQuizCount => _dailyQuizCount;
 
-  // 今日剩餘免費解析次數（若為 VIP 則視為無限）
+  // 獲取每日學習目標
+  int get dailyStudyGoal => effectiveDailyStudyGoal(
+        isVip: _isVip,
+        savedGoal: _dailyStudyGoal,
+      );
+
+  @visibleForTesting
+  static int effectiveDailyStudyGoal({
+    required bool isVip,
+    required int savedGoal,
+  }) {
+    final normalized = normalizeDailyStudyGoal(savedGoal);
+    return isVip
+        ? normalized
+        : min(normalized, AccessPolicy.freeDailyQuizLimit);
+  }
+
+  int get dailyNewQuestionCount => _dailyNewQuestionCount;
+
+  int get dailyReviewQuestionCount => _dailyReviewQuestionCount;
+
+  int get dueReviewCount => _dueReviewCount;
+
+  DateTime? get studyPlanTargetDate {
+    if (_isVip || _dailyStudyGoal <= AccessPolicy.freeDailyQuizLimit) {
+      return _studyPlanTargetDate;
+    }
+    return DailyGoalPlan.targetDateForTotalGoal(
+      remainingQuestions: DailyGoalPlan.remainingQuestions(_attemptedCount),
+      attemptedQuestions: _attemptedCount,
+      totalGoal: dailyStudyGoal,
+    );
+  }
+
+  LearningStreakStats get learningStreak => _learningStreak;
+
+  DailyPlanAllocation get currentDailyPlan {
+    final remaining = DailyGoalPlan.remainingQuestions(_attemptedCount);
+    final targetDate = studyPlanTargetDate;
+    late final DailyPlanAllocation basePlan;
+    if (targetDate != null) {
+      basePlan = DailyGoalPlan.recalculateForTarget(
+        remainingQuestions: remaining,
+        attemptedQuestions: _attemptedCount,
+        targetDate: targetDate,
+        fallbackTotalGoal: dailyStudyGoal,
+      );
+    } else {
+      basePlan = DailyGoalPlan.allocateTotalGoal(
+        totalGoal: dailyStudyGoal,
+        remainingQuestions: remaining,
+        attemptedQuestions: _attemptedCount,
+      );
+    }
+    final dueConstrainedPlan = DailyGoalPlan.constrainToDueReviews(
+      plan: basePlan,
+      dueReviewCount: _dueReviewCount,
+      completedReviewCount: _dailyReviewQuestionCount,
+      remainingQuestions: remaining,
+    );
+    return DailyGoalPlan.constrainToTotalGoal(
+      plan: dueConstrainedPlan,
+      totalGoal: dailyStudyGoal,
+    );
+  }
+
+  // 舊版剩餘額度，僅保留相容 API；不再用於顯示或權限判定。
   int get remainingExplanations => AccessPolicy.remainingExplanations(
         isVip: _isVip,
         dailyExplanationCount: _dailyExplanationCount,
@@ -151,7 +302,7 @@ class UserStateProvider extends ChangeNotifier {
   // ─── VIP 权限判定（SubscriptionPage 激活后统一解除下列限制）────────────────
   // 1. 练习：dailyQuizCount 不再拦截  2. 模考：每日 1 次解除
   // 3. 错题/复盘：shouldLockMistake / shouldLockReview 为 false，无遮罩
-  // 4. 解析：canViewExplanation 恒 true，无每日 10 次限制
+  // 4. 解析：所有用戶免費不限次，與 VIP 無關
 
   /// 是否可以继续练习：会员不限次，非会员每日 30 题内
   bool canPractice() => AccessPolicy.canPractice(
@@ -165,7 +316,7 @@ class UserStateProvider extends ChangeNotifier {
         isExamUsedToday: _isExamUsedToday,
       );
 
-  /// 是否可以查看解析：會員不限次；非會員若當天已解鎖過該題或仍有剩餘次數也允許
+  /// 完整解析對所有用戶免費不限次；兼容既有呼叫端。
   bool canViewExplanation(String questionId) => AccessPolicy.canViewExplanation(
         isVip: _isVip,
         isUnlockedToday: _todayUnlockedExplanations.contains(questionId),
@@ -289,14 +440,15 @@ class UserStateProvider extends ChangeNotifier {
         final newUid = user?.uid;
         if (newUid != _userId) {
           _userId = newUid;
+          if (AppConfig.requireServerPurchaseVerification) _watchEntitlement(newUid);
           notifyListeners();
 
-          // 登入成功：同步 VIP 狀態 → 若為 VIP 則從 Firestore 拉取進度並合併到本地（新設備登入不丟進度）
+          // 登入成功：同步帳號權益，並為所有登入用戶恢復跨設備學習進度。
           if (_userId != null) {
             updateMasteryStats();
             if (user != null) {
               _syncVipFromFirebase(user).then((_) {
-                if (_isVip) _restoreProgressFromCloud();
+                _restoreProgressFromCloud();
               });
             }
             // 登入後從雲端恢復當日已用每日配額（綁定 UID，換機/重裝不丟每日限制）
@@ -311,6 +463,7 @@ class UserStateProvider extends ChangeNotifier {
 
   /// 从 Firebase Custom Claims 同步 VIP 状态到本地
   Future<void> _syncVipFromFirebase(User user) async {
+    if (AppConfig.requireServerPurchaseVerification) return;
     try {
       final tokenResult = await user.getIdTokenResult(true);
       final claims = tokenResult.claims ?? {};
@@ -351,14 +504,18 @@ class UserStateProvider extends ChangeNotifier {
     final uid = FirebaseStatus.currentUserUid;
     if (uid == null) return;
 
+    if (_userId != uid && AppConfig.requireServerPurchaseVerification) {
+      _watchEntitlement(uid);
+    }
     _userId = uid;
     await DatabaseService.mergeGuestDataToAccount(uid);
     await updateMasteryStats();
     await refreshMistakeCount();
+    await refreshDueReviewCount();
     await refreshChaptersProgress();
     await loadPassRatePrediction();
     await loadMockExamImprovement();
-    if (_isVip) _scheduleCloudSync();
+    _scheduleCloudSync();
   }
 
   /// 從 Firestore 讀取當日每日限額使用情況並與本地合併（取較大值），確保卸載重裝後仍能續用當日配額
@@ -467,6 +624,10 @@ class UserStateProvider extends ChangeNotifier {
       throw Exception(_localizedError('auth_error_firebase_unavailable'));
     }
 
+    if (kIsWeb) {
+      return auth.signInWithPopup(GoogleAuthProvider());
+    }
+
     final googleSignIn = GoogleSignIn();
     final googleUser = await googleSignIn.signIn();
     if (googleUser == null) {
@@ -487,6 +648,13 @@ class UserStateProvider extends ChangeNotifier {
     final auth = FirebaseStatus.auth;
     if (auth == null) {
       throw Exception(_localizedError('auth_error_firebase_unavailable'));
+    }
+
+    if (kIsWeb) {
+      final provider = OAuthProvider('apple.com')
+        ..addScope('email')
+        ..addScope('name');
+      return auth.signInWithPopup(provider);
     }
 
     final rawNonce = _generateNonce();
@@ -640,13 +808,15 @@ class UserStateProvider extends ChangeNotifier {
       try {
         secureVipRaw = await _secureStorage.read(key: 'is_vip');
       } catch (_) {}
-      try {
-        secureDailyQuizRaw = await _secureStorage.read(key: 'daily_quiz_count');
-      } catch (_) {}
 
       // 初始化时先检查是否需要重置每日计数器；失败不应影响语言偏好加载。
+      var wasDailyReset = false;
       try {
-        await checkAndResetDailyCounters(prefs: prefs);
+        wasDailyReset = await checkAndResetDailyCounters(prefs: prefs);
+      } catch (_) {}
+      // 必須在跨日重置後讀取，避免啟動期間把重置前的舊值重新填回記憶體。
+      try {
+        secureDailyQuizRaw = await _secureStorage.read(key: 'daily_quiz_count');
       } catch (_) {}
 
       // 从 SharedPreferences 加载语言（兼容舊版本的 it 配置）
@@ -676,16 +846,26 @@ class UserStateProvider extends ChangeNotifier {
       // 从 SharedPreferences 加载跳过已掌握题目设置
       final skipMastered = prefs.getBool('skip_mastered') ?? false;
 
+      // 从 SharedPreferences 加载主题设置，兼容旧版的 classic/dark 值。
+      final themeMode = AppThemeModeCodec.decode(prefs.getString('theme_mode'));
+
       // 从 SharedPreferences 加载最后一次模拟考日期
       final lastExamDate = prefs.getString('last_exam_date');
 
       // 從加密存儲 / SharedPreferences 加載日消耗記錄（每日刷題數）
-      int dailyQuizCount;
-      if (secureDailyQuizRaw != null) {
-        dailyQuizCount = int.tryParse(secureDailyQuizRaw) ?? 0;
-      } else {
-        dailyQuizCount = prefs.getInt('daily_quiz_count') ?? 0;
-      }
+      final dailyQuizCount = resolveDailyQuizCount(
+        wasDailyReset: wasDailyReset,
+        secureCount: secureDailyQuizRaw,
+        sharedCount: prefs.getInt('daily_quiz_count') ?? 0,
+      );
+      final dailyStudyGoal = prefs.getInt('daily_study_goal') ?? 30;
+      final dailyNewQuestionCount =
+          prefs.getInt('daily_new_question_count') ?? 0;
+      final dailyReviewQuestionCount =
+          prefs.getInt('daily_review_question_count') ?? 0;
+      final savedTargetDate = DateTime.tryParse(
+        prefs.getString('study_plan_target_date') ?? '',
+      );
       final isExamUsedToday = prefs.getBool('is_exam_used_today') ?? false;
       final dailyExplanationCount =
           prefs.getInt('daily_explanation_count') ?? 0;
@@ -711,7 +891,7 @@ class UserStateProvider extends ChangeNotifier {
       }
 
       // 設置 VIP 狀態（唯一真理來源）
-      _isVip = effectiveVip;
+      if (!AppConfig.requireServerPurchaseVerification) _isVip = effectiveVip;
 
       _userState = _userState.copyWith(
         currentLanguage: currentLang,
@@ -723,7 +903,14 @@ class UserStateProvider extends ChangeNotifier {
 
       // 先落地会直接影响 UI 的本地状态；统计刷新即使失败也不应让语言回退。
       _skipMastered = skipMastered;
+      _themeMode = themeMode;
       _dailyQuizCount = dailyQuizCount;
+      _dailyStudyGoal = normalizeDailyStudyGoal(dailyStudyGoal);
+      _dailyNewQuestionCount = wasDailyReset ? 0 : dailyNewQuestionCount;
+      _dailyReviewQuestionCount = wasDailyReset ? 0 : dailyReviewQuestionCount;
+      _studyPlanTargetDate = savedTargetDate == null
+          ? null
+          : DailyGoalPlan.dateOnly(savedTargetDate);
       _lastExamDate = lastExamDate;
       _isExamUsedToday = isExamUsedToday;
       _dailyExplanationCount = dailyExplanationCount;
@@ -739,6 +926,12 @@ class UserStateProvider extends ChangeNotifier {
       // 初始化统计数据；失败时保留已加载的语言和本地状态。
       try {
         await refreshMasteryStats();
+      } catch (_) {}
+      try {
+        await _ensureStudyPlanTargetDate(prefs);
+        await refreshDailyPlanProgress();
+        await refreshDueReviewCount();
+        await refreshLearningStreak();
       } catch (_) {}
       try {
         await refreshMistakeCount();
@@ -781,13 +974,19 @@ class UserStateProvider extends ChangeNotifier {
       _mistakeCount = 0;
       _skipMastered = false;
       _dailyQuizCount = 0;
+      _dailyStudyGoal = 30;
+      _dailyNewQuestionCount = 0;
+      _dailyReviewQuestionCount = 0;
+      _dueReviewCount = 0;
+      _studyPlanTargetDate = null;
+      _learningStreak = LearningStreakStats.empty;
       _lastExamDate = null;
       _isExamUsedToday = false;
     }
   }
 
   /// 每日重置计数器（比较 lastAccessDate）
-  Future<void> checkAndResetDailyCounters({SharedPreferences? prefs}) async {
+  Future<bool> checkAndResetDailyCounters({SharedPreferences? prefs}) async {
     final sharedPrefs = prefs ?? await SharedPreferences.getInstance();
     final currentDate = _getCurrentDateString();
 
@@ -797,12 +996,16 @@ class UserStateProvider extends ChangeNotifier {
 
     if (lastAccessDate != currentDate) {
       _dailyQuizCount = 0;
+      _dailyNewQuestionCount = 0;
+      _dailyReviewQuestionCount = 0;
       _dailyExplanationCount = 0;
       _todayUnlockedExplanations.clear();
       _isExamUsedToday = false;
       _lastExamDate = null;
 
       await sharedPrefs.setInt('daily_quiz_count', 0);
+      await sharedPrefs.setInt('daily_new_question_count', 0);
+      await sharedPrefs.setInt('daily_review_question_count', 0);
       await sharedPrefs.setInt('daily_explanation_count', 0);
       await sharedPrefs.setStringList('today_unlocked_explanations', const []);
       await sharedPrefs.setString('last_access_date', currentDate);
@@ -814,8 +1017,18 @@ class UserStateProvider extends ChangeNotifier {
         await _secureStorage.write(key: 'daily_quiz_count', value: '0');
       } catch (_) {}
 
+      if (_studyPlanTargetDate != null) {
+        await _ensureStudyPlanTargetDate(sharedPrefs);
+      }
+      try {
+        await refreshDueReviewCount();
+        await refreshLearningStreak();
+      } catch (_) {}
+
       notifyListeners();
+      return true;
     }
+    return false;
   }
 
   /// 检查是否已经选择过语言（是否首次启动）
@@ -854,6 +1067,97 @@ class UserStateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 設定每日學習目標（題數）
+  Future<void> setDailyStudyGoal(
+    int goal, {
+    DateTime? targetDate,
+  }) async {
+    final normalizedGoal = effectiveDailyStudyGoal(
+      isVip: _isVip,
+      savedGoal: goal,
+    );
+    _dailyStudyGoal = normalizedGoal;
+    _studyPlanTargetDate = DailyGoalPlan.dateOnly(
+      targetDate ??
+          DailyGoalPlan.targetDateForTotalGoal(
+            remainingQuestions:
+                DailyGoalPlan.remainingQuestions(_attemptedCount),
+            attemptedQuestions: _attemptedCount,
+            totalGoal: normalizedGoal,
+          ),
+    );
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('daily_study_goal', normalizedGoal);
+      await prefs.setString(
+        'study_plan_target_date',
+        _studyPlanTargetDate!.toIso8601String(),
+      );
+    } catch (_) {
+      // 本地保存失敗時仍保留當前會話中的設定。
+    }
+
+    notifyListeners();
+  }
+
+  Future<void> _ensureStudyPlanTargetDate(SharedPreferences prefs) async {
+    final today = DailyGoalPlan.dateOnly(DateTime.now());
+    final savedTarget = _studyPlanTargetDate;
+    if (savedTarget != null && !savedTarget.isBefore(today)) return;
+
+    _studyPlanTargetDate = DailyGoalPlan.targetDateForTotalGoal(
+      remainingQuestions: DailyGoalPlan.remainingQuestions(_attemptedCount),
+      attemptedQuestions: _attemptedCount,
+      totalGoal: _dailyStudyGoal,
+      today: today,
+    );
+    await prefs.setString(
+      'study_plan_target_date',
+      _studyPlanTargetDate!.toIso8601String(),
+    );
+  }
+
+  Future<void> refreshDailyPlanProgress() async {
+    final growth = await DatabaseService.getDailyGrowth(
+      userId: effectiveUserId,
+      days: 1,
+    );
+    if (growth.isEmpty) return;
+    final today = growth.last;
+    _dailyNewQuestionCount = max(
+      _dailyNewQuestionCount,
+      (today['newQuestions'] as int?) ?? 0,
+    );
+    _dailyReviewQuestionCount = max(
+      _dailyReviewQuestionCount,
+      (today['reviewQuestions'] as int?) ?? 0,
+    );
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setInt('daily_new_question_count', _dailyNewQuestionCount);
+      await prefs.setInt(
+        'daily_review_question_count',
+        _dailyReviewQuestionCount,
+      );
+    } catch (_) {}
+    notifyListeners();
+  }
+
+  Future<void> refreshDueReviewCount() async {
+    _dueReviewCount = await DatabaseService.getDueReviewCount(
+      userId: effectiveUserId,
+    );
+    notifyListeners();
+  }
+
+  Future<void> refreshLearningStreak() async {
+    _learningStreak = await DatabaseService.getLearningStreakStats(
+      userId: effectiveUserId,
+    );
+    notifyListeners();
+  }
+
   /// 设置是否跳过已掌握题目
   /// [skipMastered] 是否跳过已掌握题目
   Future<void> setSkipMastered(bool skipMastered) async {
@@ -869,6 +1173,24 @@ class UserStateProvider extends ChangeNotifier {
 
     // 通知所有监听者
     notifyListeners();
+  }
+
+  /// 保存主题偏好；经典与夜间保留旧版 setDarkMode 的兼容入口。
+  Future<void> setThemeMode(AppThemeMode mode) async {
+    _themeMode = mode;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('theme_mode', AppThemeModeCodec.encode(mode));
+    } catch (_) {
+      // 偏好保存失败时仍保留当前会话中的主题选择。
+    }
+    notifyListeners();
+  }
+
+  Future<void> setDarkMode(bool isDarkMode) async {
+    await setThemeMode(
+      isDarkMode ? AppThemeMode.night : AppThemeMode.classic,
+    );
   }
 
   /// 检查章节是否被锁定（需要付费）
@@ -1012,12 +1334,18 @@ class UserStateProvider extends ChangeNotifier {
         _masteredCount = 0;
         _attemptedCount = 0;
         _dailyQuizCount = 0;
+        _dailyNewQuestionCount = 0;
+        _dailyReviewQuestionCount = 0;
+        _dueReviewCount = 0;
+        _learningStreak = LearningStreakStats.empty;
         _mistakeCount = 0;
 
         // 更新本地每日計數持久化（SharedPreferences + secure storage）
         try {
           final prefs = await SharedPreferences.getInstance();
           await prefs.setInt('daily_quiz_count', 0);
+          await prefs.setInt('daily_new_question_count', 0);
+          await prefs.setInt('daily_review_question_count', 0);
           await prefs.setString('last_access_date', _getCurrentDateString());
           await prefs.setString('last_quiz_date', _getCurrentDateString());
           await _secureStorage.write(key: 'daily_quiz_count', value: '0');
@@ -1039,6 +1367,36 @@ class UserStateProvider extends ChangeNotifier {
       // VIP 狀態保存失敗時仍保留內存狀態，避免購買完成後 UI 不更新。
       return false;
     }
+  }
+
+  /// Resets browser-owned learning counters after the Web repository has
+  /// cleared question progress. This avoids touching SQLite on Flutter Web.
+  Future<void> resetWebLearningCounters() async {
+    _masteredCount = 0;
+    _attemptedCount = 0;
+    _dailyQuizCount = 0;
+    _dailyNewQuestionCount = 0;
+    _dailyReviewQuestionCount = 0;
+    _dueReviewCount = 0;
+    _dailyExplanationCount = 0;
+    _todayUnlockedExplanations = {};
+    _learningStreak = LearningStreakStats.empty;
+    _mistakeCount = 0;
+    _isExamUsedToday = false;
+    _lastExamDate = null;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('daily_quiz_count', 0);
+    await prefs.setInt('daily_new_question_count', 0);
+    await prefs.setInt('daily_review_question_count', 0);
+    await prefs.setInt('daily_explanation_count', 0);
+    await prefs.setStringList('today_unlocked_explanations', const []);
+    await prefs.setBool('is_exam_used_today', false);
+    await prefs.remove('last_exam_date');
+    await prefs.setString('last_access_date', _getCurrentDateString());
+    await prefs.setString('last_quiz_date', _getCurrentDateString());
+    await _secureStorage.write(key: 'daily_quiz_count', value: '0');
+    notifyListeners();
   }
 
   /// 设置VIP状态（唯一真理来源）
@@ -1066,7 +1424,7 @@ class UserStateProvider extends ChangeNotifier {
 
   /// 增加今日已刷题数
   /// 返回更新后的刷题数
-  Future<int> incrementDailyQuizCount() async {
+  Future<int> incrementDailyQuizCount({bool isNewQuestion = false}) async {
     // 确保每日计数器已按日期重置
     await checkAndResetDailyCounters();
 
@@ -1075,7 +1433,17 @@ class UserStateProvider extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       _dailyQuizCount = (_dailyQuizCount) + 1;
+      if (isNewQuestion) {
+        _dailyNewQuestionCount++;
+      } else {
+        _dailyReviewQuestionCount++;
+      }
       await prefs.setInt('daily_quiz_count', _dailyQuizCount);
+      await prefs.setInt('daily_new_question_count', _dailyNewQuestionCount);
+      await prefs.setInt(
+        'daily_review_question_count',
+        _dailyReviewQuestionCount,
+      );
       await prefs.setString('last_access_date', currentDate);
       await prefs.setString('last_quiz_date', currentDate);
       await _secureStorage.write(
@@ -1085,6 +1453,11 @@ class UserStateProvider extends ChangeNotifier {
 
       // 綁定 UID 的雲端計數：若已登入，將今日使用量寫入 Firestore（非阻塞，失敗忽略）
       _writeDailyUsageToCloud({'quiz_count': FieldValue.increment(1)});
+
+      if (_dailyQuizCount >= DailyGoalPlan.habitMinimumQuestions &&
+          !_learningStreak.activeToday) {
+        await refreshLearningStreak();
+      }
 
       // 通知所有监听者
       notifyListeners();
@@ -1096,43 +1469,10 @@ class UserStateProvider extends ChangeNotifier {
     }
   }
 
-  /// 增加今日已查看解析次數（僅對非 VIP 生效）
-  Future<int> incrementExplanationCount(String questionId) async {
-    // 確保每日計數器已按日期重置
-    await checkAndResetDailyCounters();
-
-    if (_isVip) {
-      return maxFreeExplanations;
-    }
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      // 如果當天已經對該題解鎖過解析，不再重複扣費
-      if (_todayUnlockedExplanations.contains(questionId)) {
-        return _dailyExplanationCount;
-      }
-      if (_dailyExplanationCount >= maxFreeExplanations) {
-        return _dailyExplanationCount;
-      }
-
-      _dailyExplanationCount =
-          (_dailyExplanationCount + 1).clamp(0, maxFreeExplanations);
-      _todayUnlockedExplanations.add(questionId);
-
-      await prefs.setInt('daily_explanation_count', _dailyExplanationCount);
-      await prefs.setStringList(
-        'today_unlocked_explanations',
-        _todayUnlockedExplanations.toList(),
-      );
-      _writeDailyUsageToCloud({
-        'explanation_count': FieldValue.increment(1),
-      });
-      return _dailyExplanationCount;
-    } catch (_) {
-      // 模擬考日期保存失敗不阻塞本次權限狀態更新。
-      return _dailyExplanationCount;
-    }
-  }
+  /// Compatibility entry point: explanations no longer consume a daily quota.
+  /// Retain historical usage data without writing new local/cloud counts.
+  Future<int> incrementExplanationCount(String questionId) async =>
+      _dailyExplanationCount;
 
   /// 记录最后一次模拟考日期
   /// [date] 日期字符串（格式：'YYYY-MM-DD'），如果为null则使用当前日期
@@ -1181,16 +1521,36 @@ class UserStateProvider extends ChangeNotifier {
 
   /// 統一更新題目進度（含本地計數器）
   /// VIP 且已登入時會防抖上傳進度到雲端，換機可恢復。
-  Future<bool> updateQuestionProgress(String questionId, bool isCorrect) async {
+  Future<bool> updateQuestionProgress(
+    String questionId,
+    bool isCorrect, {
+    bool mistakeResolved = false,
+  }) async {
+    final isNewQuestion = !await DatabaseService.hasAttemptedQuestion(
+      questionId,
+      userId: effectiveUserId,
+    );
     final newlyMastered = await DatabaseService.updateQuestionProgress(
       questionId,
       isCorrect,
       userId: effectiveUserId,
     );
-    await incrementDailyQuizCount();
+    try {
+      await DatabaseService.recordDailyGrowth(
+        userId: effectiveUserId,
+        isCorrect: isCorrect,
+        isNewQuestion: isNewQuestion,
+        newlyMastered: newlyMastered,
+        mistakeResolved: mistakeResolved,
+      );
+    } catch (_) {
+      // 成長統計寫入失敗不應阻斷既有的答題進度。
+    }
+    await incrementDailyQuizCount(isNewQuestion: isNewQuestion);
+    await refreshDueReviewCount();
     await refreshMistakeCount();
     await refreshChaptersProgress();
-    if (_isVip && _userId != null) _scheduleCloudSync();
+    if (_userId != null) _scheduleCloudSync();
     return newlyMastered;
   }
 
@@ -1198,31 +1558,32 @@ class UserStateProvider extends ChangeNotifier {
     _cloudSyncDebounce?.cancel();
     _cloudSyncDebounce = Timer(const Duration(seconds: 3), () async {
       _cloudSyncDebounce = null;
-      if (!_isVip || _userId == null) return;
+      if (_userId == null) return;
       try {
         await syncProgressToCloud();
       } catch (_) {}
     });
   }
 
-  /// 從 Firestore 拉取進度並合併到本地 SQLite（僅 VIP、新設備登入後自動觸發；非 VIP 不執行）
+  /// 從 Firestore 拉取進度並合併到本地 SQLite（所有登入用戶）。
   Future<void> _restoreProgressFromCloud() async {
-    if (!_isVip || _userId == null) return;
+    if (_userId == null) return;
 
     try {
       await DatabaseService.restoreProgressFromCloud(userId: _userId!);
       // 恢復後刷新統計
       await updateMasteryStats();
       await refreshMistakeCount();
+      await refreshDueReviewCount();
     } catch (e) {
       // 不拋出異常，避免影響登入流程
     }
   }
 
-  /// 同步用戶進度到雲端（僅 VIP 用戶，否則拋錯）。成功時更新 lastSyncTime。
+  /// 同步登入用戶進度到雲端。成功時更新 lastSyncTime。
   Future<SyncResult> syncProgressToCloud() async {
-    if (!_isVip || _userId == null) {
-      throw Exception(_localizedError('sync_vip_required'));
+    if (_userId == null) {
+      throw Exception(_localizedError('sync_login_required'));
     }
 
     _isSyncingToCloud = true;
@@ -1244,10 +1605,10 @@ class UserStateProvider extends ChangeNotifier {
     }
   }
 
-  /// 若為 VIP 且已登入則將 user_progress 變動上傳至 Firestore；非 VIP 不執行、不拋錯。
+  /// 相容舊呼叫名稱：已登入就將 user_progress 變動上傳至 Firestore。
   /// 用於完成一組練習或模擬考後自動同步，安全可隨意調用。
   Future<void> syncProgressToCloudIfVip() async {
-    if (!_isVip || _userId == null) return;
+    if (_userId == null) return;
     try {
       await syncProgressToCloud();
     } catch (_) {}
@@ -1264,7 +1625,7 @@ class UserStateProvider extends ChangeNotifier {
   /// 商店訂閱交易驗證成功後激活本機 VIP。
   /// 正式上架前應由可信後端驗證交易，並下發雲端 VIP 權益。
   Future<void> activateVipFromVerifiedPurchase() async {
-    await setIsVip(true);
+    if (!AppConfig.requireServerPurchaseVerification) await setIsVip(true);
     if (_userId != null) {
       try {
         await syncProgressToCloud();
@@ -1274,6 +1635,9 @@ class UserStateProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _entitlementSubscription?.cancel();
+    _entitlementTimer?.cancel();
+    _entitlementMonitor?.dispose();
     _authSubscription?.cancel();
     _cloudSyncDebounce?.cancel();
     super.dispose();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
+import '../config/content_direction.dart';
 import '../models/user_state.dart';
 
 class TranslationPanel extends StatelessWidget {
@@ -16,45 +17,67 @@ class TranslationPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    final inkColor = AppTheme.inkFor(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppTheme.primarySoft.withOpacity(0.78),
-        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-        border: Border.all(color: AppTheme.primary.withOpacity(0.18)),
+        color: isRetro
+            ? AppTheme.retroPageAlt
+            : isDark
+                ? AppTheme.nightPrimarySoft.withOpacity(0.92)
+                : AppTheme.primarySoft.withOpacity(0.78),
+        borderRadius: isRetro
+            ? BorderRadius.zero
+            : BorderRadius.circular(AppTheme.radiusSm),
+        border: Border.all(
+          color: primaryColor.withOpacity(0.32),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.translate,
                 size: 15,
-                color: AppTheme.primary,
+                color: primaryColor,
               ),
               const SizedBox(width: 6),
-              Text(
-                _label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
-                  letterSpacing: 0,
+              Flexible(
+                child: Text(
+                  _label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    color: primaryColor,
+                    letterSpacing: 0,
+                  ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 8),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              height: 1.55,
-              fontWeight: FontWeight.w500,
-              color: AppTheme.ink,
-              letterSpacing: 0,
+          // 占满宽度，让从右到左的译文靠右对齐。
+          SizedBox(
+            width: double.infinity,
+            child: Text(
+              text,
+              textDirection: contentTextDirection(
+                text,
+                fallback: Directionality.of(context),
+              ),
+              style: TextStyle(
+                fontSize: 14,
+                height: 1.55,
+                fontWeight: FontWeight.w500,
+                color: inkColor,
+                letterSpacing: 0,
+              ),
             ),
           ),
         ],

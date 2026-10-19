@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'practice_screen.dart';
@@ -9,6 +11,7 @@ import 'chapter_selection_screen.dart';
 import 'subscription_page.dart';
 import 'mastery_report_screen.dart';
 import '../services/database_service.dart';
+import '../services/access_policy.dart';
 import '../services/firebase_status.dart';
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
@@ -26,6 +29,127 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+/// 系统字级放大到辅助功能级别（iOS Larger Accessibility Sizes）时返回 true，
+/// 用于把横排小组件改成竖排，避免文字被挤成单字断行或截断。
+bool _isLargeTextScale(BuildContext context) =>
+    MediaQuery.textScalerOf(context).scale(14) > 14 * 1.3;
+
+class _DailyPlanProgressRow extends StatelessWidget {
+  const _DailyPlanProgressRow({
+    required this.icon,
+    required this.label,
+    required this.completed,
+    required this.goal,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final int completed;
+  final int goal;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasGoal = goal > 0;
+    final progress = hasGoal
+        ? (completed / goal).clamp(0.0, 1.0)
+        : completed > 0
+            ? 1.0
+            : 0.0;
+    final progressLabel = hasGoal ? '$completed / $goal' : '$completed';
+    final isRetro = AppTheme.isRetroFor(context);
+    if (_isLargeTextScale(context)) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 17, color: color),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                progressLabel,
+                textAlign: TextAlign.end,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius:
+                isRetro ? BorderRadius.zero : BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 7,
+              value: progress,
+              backgroundColor: color.withOpacity(0.12),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ],
+      );
+    }
+    return Row(
+      children: [
+        Icon(icon, size: 17, color: color),
+        const SizedBox(width: 7),
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
+        ),
+        const SizedBox(width: 7),
+        Expanded(
+          child: ClipRRect(
+            borderRadius:
+                isRetro ? BorderRadius.zero : BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 7,
+              value: progress,
+              backgroundColor: color.withOpacity(0.12),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          width: 52,
+          child: Text(
+            progressLabel,
+            textAlign: TextAlign.end,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _HomeScreenState extends State<HomeScreen>
     with RouteAware, TickerProviderStateMixin {
   // 動畫控制器
@@ -33,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen>
   late AnimationController _masteryAnimationController;
   late Animation<double> _coverageAnimation;
   late Animation<double> _masteryAnimation;
+  int? _recommendedWeakChapterId;
 
   // 獲取當前語言
   String get _currentLanguage {
@@ -100,7 +225,10 @@ class _HomeScreenState extends State<HomeScreen>
     if (mounted) {
       final userStateProvider =
           Provider.of<UserStateProvider>(context, listen: false);
-      userStateProvider.updateMasteryStats().catchError((e) {
+      userStateProvider.checkAndResetDailyCounters().then((_) async {
+        if (!mounted) return;
+        await _loadStatistics();
+      }).catchError((e) {
         // 忽略错误，不阻塞UI
       });
     }
@@ -150,10 +278,32 @@ class _HomeScreenState extends State<HomeScreen>
       // 觸發 UserStateProvider 更新統計數據
       final userStateProvider =
           Provider.of<UserStateProvider>(context, listen: false);
-      await userStateProvider.updateMasteryStats();
+      await userStateProvider.checkAndResetDailyCounters();
+      await Future.wait([
+        userStateProvider.updateMasteryStats(),
+        userStateProvider.refreshMistakeCount(),
+        userStateProvider.refreshDailyPlanProgress(),
+        userStateProvider.refreshDueReviewCount(),
+        userStateProvider.refreshLearningStreak(),
+      ]);
+      final weakChapters = await DatabaseService.getTopWeakChapters(
+        userId: userStateProvider.effectiveUserId,
+        limit: 3,
+      );
+      int? recommendedWeakChapter;
+      for (final entry in weakChapters) {
+        final chapterId = entry['chapter'];
+        if (chapterId != null &&
+            !userStateProvider.isChapterLocked(chapterId)) {
+          recommendedWeakChapter = chapterId;
+          break;
+        }
+      }
 
       if (mounted) {
-        setState(() {});
+        setState(() {
+          _recommendedWeakChapterId = recommendedWeakChapter;
+        });
       }
     } catch (e) {
       // 忽略錯誤，不阻塞UI
@@ -223,7 +373,7 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Scaffold(
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: RefreshIndicator(
           onRefresh: _loadStatistics,
           child: CustomScrollView(
@@ -246,19 +396,34 @@ class _HomeScreenState extends State<HomeScreen>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
-                    childAspectRatio: 1.0,
-                  ),
+                  // 大字级（如 iOS 辅助功能字级）时改为单列，并按字高给足卡片高度，
+                  // 避免固定 1:1 比例的卡片内容溢出。
+                  gridDelegate: MediaQuery.textScalerOf(context).scale(14) >
+                          14 * 1.3
+                      ? SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 1,
+                          mainAxisSpacing: 12,
+                          mainAxisExtent: 18 * 2 +
+                              56 +
+                              10 +
+                              8 +
+                              2 *
+                                  1.15 *
+                                  MediaQuery.textScalerOf(context).scale(14),
+                        )
+                      : const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 1.0,
+                        ),
                   delegate: SliverChildListDelegate([
                     _buildFeatureCard(
                       context,
                       title: AppStrings.get('random_practice'),
                       icon: Icons.shuffle,
-                      iconColor: AppTheme.primary,
-                      bgColor: AppTheme.primarySoft,
+                      iconColor: AppTheme.primaryFor(context),
+                      bgColor: AppTheme.primarySoftFor(context),
                       onTap: isDbReady
                           ? () async {
                               final userStateProvider =
@@ -305,8 +470,8 @@ class _HomeScreenState extends State<HomeScreen>
                       context,
                       title: AppStrings.get('chapter_practice'),
                       icon: Icons.menu_book,
-                      iconColor: AppTheme.roadGreen,
-                      bgColor: AppTheme.roadGreenSoft,
+                      iconColor: AppTheme.successFor(context),
+                      bgColor: AppTheme.successSoftFor(context),
                       onTap: isDbReady
                           ? () {
                               Navigator.push(
@@ -323,8 +488,8 @@ class _HomeScreenState extends State<HomeScreen>
                       context,
                       title: AppStrings.get('official_mock_test'),
                       icon: Icons.timer,
-                      iconColor: AppTheme.warning,
-                      bgColor: const Color(0xFFFFF7ED),
+                      iconColor: AppTheme.warningTextFor(context),
+                      bgColor: AppTheme.warningFor(context).withOpacity(0.12),
                       onTap: isDbReady
                           ? () {
                               _checkAndNavigateToMockTest(context);
@@ -335,8 +500,8 @@ class _HomeScreenState extends State<HomeScreen>
                       context,
                       title: AppStrings.get('mistake_review'),
                       icon: Icons.report,
-                      iconColor: AppTheme.danger,
-                      bgColor: const Color(0xFFFEF2F2),
+                      iconColor: AppTheme.dangerFor(context),
+                      bgColor: AppTheme.dangerSoftFor(context),
                       onTap: isDbReady
                           ? () {
                               Navigator.push(
@@ -360,8 +525,10 @@ class _HomeScreenState extends State<HomeScreen>
                   child: _buildFavoriteButton(context, isDbReady),
                 ),
               ),
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 12),
+              SliverToBoxAdapter(
+                child: SizedBox(
+                  height: MediaQuery.viewPaddingOf(context).bottom + 24,
+                ),
               ),
             ],
           ),
@@ -372,6 +539,8 @@ class _HomeScreenState extends State<HomeScreen>
 
   /// 構建頭部（用戶信息 + 設置按鈕）
   Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     final userStateProvider =
         Provider.of<UserStateProvider>(context, listen: false);
 
@@ -410,10 +579,10 @@ class _HomeScreenState extends State<HomeScreen>
                 children: [
                   Text(
                     greetingText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w600,
-                      color: AppTheme.ink,
+                      color: colorScheme.onSurface,
                       letterSpacing: 0,
                     ),
                   ),
@@ -424,8 +593,8 @@ class _HomeScreenState extends State<HomeScreen>
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       color: userStateProvider.isVip
-                          ? AppTheme.primary
-                          : Colors.grey[600],
+                          ? AppTheme.primaryFor(context)
+                          : colorScheme.onSurfaceVariant,
                       letterSpacing: 0.15,
                     ),
                   ),
@@ -437,17 +606,23 @@ class _HomeScreenState extends State<HomeScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.4),
+                shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
+                borderRadius: isRetro ? BorderRadius.zero : null,
+                color: isRetro
+                    ? AppTheme.retroPageAlt
+                    : colorScheme.surface.withOpacity(0.4),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.8),
+                  color: isRetro
+                      ? AppTheme.retroLine
+                      : colorScheme.onSurface.withOpacity(0.12),
                   width: 1,
                 ),
               ),
               child: Material(
                 color: Colors.transparent,
                 child: InkWell(
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(22),
                   onTap: () async {
                     await Navigator.push(
                       context,
@@ -461,9 +636,11 @@ class _HomeScreenState extends State<HomeScreen>
                       _loadStatistics();
                     }
                   },
-                  child: const Icon(
+                  child: Icon(
                     Icons.settings,
-                    color: AppTheme.muted,
+                    color: isRetro
+                        ? AppTheme.retroInk
+                        : colorScheme.onSurfaceVariant,
                     size: 24,
                   ),
                 ),
@@ -481,6 +658,9 @@ class _HomeScreenState extends State<HomeScreen>
 
     return Consumer<UserStateProvider>(
       builder: (context, userStateProvider, child) {
+        final colorScheme = Theme.of(context).colorScheme;
+        final isRetro = AppTheme.isRetroFor(context);
+        final primaryColor = AppTheme.primaryFor(context);
         final masteredCount = userStateProvider.masteredCount;
         final attemptedCount = userStateProvider.attemptedCount;
 
@@ -531,53 +711,66 @@ class _HomeScreenState extends State<HomeScreen>
             child: Column(
               children: [
                 // 標題 + 詳細分析入口
-                Row(
-                  children: [
-                    Text(
-                      AppStrings.get('study_progress').toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[400],
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const Spacer(),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primary.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: AppTheme.primary.withOpacity(0.3),
-                          width: 0.8,
+                SizedBox(
+                  width: double.infinity,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    runSpacing: 8,
+                    children: [
+                      Text(
+                        AppStrings.get('study_progress').toUpperCase(),
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onSurfaceVariant,
+                          letterSpacing: 0.2,
                         ),
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            AppStrings.getWithLanguage(
-                                _currentLanguage, 'detailed_analysis'),
-                            style: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: AppTheme.primary,
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isRetro
+                              ? AppTheme.retroPageAlt
+                              : colorScheme.primary.withOpacity(0.1),
+                          borderRadius: isRetro
+                              ? BorderRadius.zero
+                              : BorderRadius.circular(999),
+                          border: Border.all(
+                            color: isRetro
+                                ? AppTheme.retroLine
+                                : colorScheme.primary.withOpacity(0.35),
+                            width: 0.8,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(
+                              child: Text(
+                                AppStrings.getWithLanguage(
+                                    _currentLanguage, 'detailed_analysis'),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: primaryColor,
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 2),
-                          const Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 9,
-                            color: AppTheme.primary,
-                          ),
-                        ],
+                            const SizedBox(width: 2),
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 9,
+                              color: primaryColor,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 12),
                 // 圓形進度條
@@ -601,7 +794,7 @@ class _HomeScreenState extends State<HomeScreen>
                   decoration: BoxDecoration(
                     border: Border(
                       top: BorderSide(
-                        color: Colors.white.withOpacity(0.4),
+                        color: colorScheme.outlineVariant.withOpacity(0.5),
                         width: 1,
                       ),
                     ),
@@ -609,96 +802,549 @@ class _HomeScreenState extends State<HomeScreen>
                   child: Row(
                     children: [
                       Expanded(
-                        child: Column(
-                          children: [
-                            Text(
-                              AppStrings.get('covered_questions').toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0EA5E9),
-                                letterSpacing: 0.1,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: '$attemptedCount ',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.ink,
-                                    ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Column(
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  AppStrings.get('covered_questions')
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: primaryColor,
+                                    letterSpacing: 0.1,
                                   ),
-                                  TextSpan(
-                                    text: _getQuestionText(),
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.normal,
-                                      color: Colors.grey[400],
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: '$attemptedCount ',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: _getQuestionText(),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.normal,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                       Container(
                         width: 1,
                         height: 36,
-                        color: Colors.white.withOpacity(0.6),
+                        color: colorScheme.outlineVariant.withOpacity(0.6),
                       ),
                       Expanded(
-                        child: Column(
-                          children: [
-                            Text(
-                              AppStrings.get('mastered_questions')
-                                  .toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF10B981),
-                                letterSpacing: 0.1,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            RichText(
-                              text: TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: '$masteredCount ',
-                                    style: const TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppTheme.ink,
-                                    ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          child: Column(
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  AppStrings.get('mastered_questions')
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isRetro
+                                        ? primaryColor
+                                        : colorScheme.secondary,
+                                    letterSpacing: 0.1,
                                   ),
-                                  TextSpan(
-                                    text: _getQuestionText(),
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.normal,
-                                      color: Colors.grey[400],
-                                    ),
-                                  ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text.rich(
+                                  TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: '$masteredCount ',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onSurface,
+                                        ),
+                                      ),
+                                      TextSpan(
+                                        text: _getQuestionText(),
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.normal,
+                                          color: colorScheme.onSurfaceVariant,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 14),
+                _buildDailyGoalStrip(context, userStateProvider),
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  Widget _buildDailyGoalStrip(
+    BuildContext context,
+    UserStateProvider userStateProvider,
+  ) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    final plan = userStateProvider.currentDailyPlan;
+    final streak = userStateProvider.learningStreak;
+    final estimatedText = plan.newGoal == 0
+        ? AppStrings.getWithLanguage(_currentLanguage, 'daily_goal_all_done')
+        : AppStrings.getWithLanguage(_currentLanguage, 'daily_goal_days_left')
+            .replaceAll('{days}', plan.daysRemaining.toString());
+    final habitRemaining = max(
+      0,
+      10 - userStateProvider.dailyQuizCount,
+    );
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isRetro
+            ? AppTheme.retroSurface
+            : colorScheme.surface.withOpacity(0.62),
+        borderRadius: isRetro ? BorderRadius.zero : BorderRadius.circular(18),
+        border: Border.all(
+          color: isRetro
+              ? AppTheme.retroLine
+              : colorScheme.onSurface.withOpacity(0.1),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: isRetro
+                      ? AppTheme.retroPageAlt
+                      : AppTheme.primary.withOpacity(0.12),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  Icons.flag_rounded,
+                  color: primaryColor,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppStrings.getWithLanguage(
+                          _currentLanguage, 'daily_goal_today'),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      estimatedText,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          _DailyPlanProgressRow(
+            icon: Icons.auto_awesome_rounded,
+            label: AppStrings.getWithLanguage(
+              _currentLanguage,
+              'daily_goal_new_questions',
+            ),
+            completed: userStateProvider.dailyNewQuestionCount,
+            goal: plan.newGoal,
+            color: primaryColor,
+          ),
+          const SizedBox(height: 9),
+          _DailyPlanProgressRow(
+            icon: Icons.replay_rounded,
+            label: AppStrings.getWithLanguage(
+              _currentLanguage,
+              'daily_goal_review_questions',
+            ),
+            completed: userStateProvider.dailyReviewQuestionCount,
+            goal: plan.reviewGoal,
+            color: isRetro ? primaryColor : const Color(0xFF7C3AED),
+          ),
+          const SizedBox(height: 7),
+          Row(
+            key: const Key('spaced_review_status'),
+            children: [
+              const SizedBox(width: 24),
+              Icon(
+                Icons.schedule_rounded,
+                size: 14,
+                color: isRetro ? primaryColor : const Color(0xFF7C3AED),
+              ),
+              const SizedBox(width: 5),
+              Expanded(
+                child: Text(
+                  AppStrings.getWithLanguage(
+                    _currentLanguage,
+                    'spaced_review_status',
+                  ).replaceAll(
+                    '{count}',
+                    userStateProvider.dueReviewCount.toString(),
+                  ),
+                  style: TextStyle(
+                    fontSize: 10,
+                    height: 1.25,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Builder(builder: (context) {
+            final large = _isLargeTextScale(context);
+            final status = Text(
+              streak.activeToday
+                  ? AppStrings.getWithLanguage(
+                      _currentLanguage,
+                      'learning_streak_active_today',
+                    )
+                  : AppStrings.getWithLanguage(
+                      _currentLanguage,
+                      'learning_streak_remaining',
+                    ).replaceAll('{count}', habitRemaining.toString()),
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                color: streak.activeToday
+                    ? isRetro
+                        ? primaryColor
+                        : const Color(0xFFD97706)
+                    : colorScheme.onSurfaceVariant,
+              ),
+            );
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.local_fire_department_rounded,
+                      size: 18,
+                      color: isRetro ? primaryColor : const Color(0xFFF59E0B),
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        AppStrings.getWithLanguage(
+                          _currentLanguage,
+                          'learning_streak_days',
+                        ).replaceAll('{count}', streak.current.toString()),
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    if (!large) Flexible(child: status),
+                  ],
+                ),
+                if (large)
+                  Padding(
+                    padding:
+                        const EdgeInsetsDirectional.only(start: 23, top: 4),
+                    child: status,
+                  ),
+              ],
+            );
+          }),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              key: const Key('start_daily_plan_button'),
+              onPressed: userStateProvider.canPractice()
+                  ? () => _startDailyPlan(userStateProvider)
+                  : null,
+              icon: Icon(
+                Icons.play_arrow_rounded,
+                size: 20,
+                color: isRetro ? AppTheme.retroPage : null,
+              ),
+              label: Text(
+                AppStrings.getWithLanguage(
+                  _currentLanguage,
+                  'daily_goal_start_today_plan',
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildTodayRecommendation(userStateProvider),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _startDailyPlan(UserStateProvider provider) async {
+    await provider.checkAndResetDailyCounters();
+    await provider.refreshDueReviewCount();
+    if (!mounted || !provider.canPractice()) return;
+
+    final plan = provider.currentDailyPlan;
+    final newNeeded = max(0, plan.newGoal - provider.dailyNewQuestionCount);
+    final reviewNeeded =
+        max(0, plan.reviewGoal - provider.dailyReviewQuestionCount);
+    final totalNeeded = newNeeded + reviewNeeded;
+    if (totalNeeded == 0) {
+      _showDailyPlanMessage('daily_goal_plan_complete');
+      return;
+    }
+
+    final quota = provider.isVip
+        ? min(totalNeeded, 300)
+        : min(
+            totalNeeded,
+            AccessPolicy.freeDailyQuizLimit - provider.dailyQuizCount,
+          );
+    if (quota <= 0) return;
+
+    final newCount = totalNeeded == 0
+        ? 0
+        : min(newNeeded, (quota * newNeeded / totalNeeded).ceil());
+    final reviewCount = min(reviewNeeded, quota - newCount);
+    final questions = await DatabaseService.getStudyPlanQuestions(
+      newCount: newCount,
+      reviewCount: reviewCount,
+      translationLang: provider.currentLanguage,
+      userId: provider.effectiveUserId,
+    );
+    if (!mounted) return;
+    if (questions.isEmpty) {
+      _showDailyPlanMessage('daily_goal_no_plan_questions');
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PracticeScreen(
+          questions: questions,
+          skipMastered: false,
+        ),
+      ),
+    );
+    if (mounted) await _loadStatistics();
+  }
+
+  void _showDailyPlanMessage(String key) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppStrings.getWithLanguage(_currentLanguage, key)),
+      ),
+    );
+  }
+
+  Widget _buildTodayRecommendation(UserStateProvider userStateProvider) {
+    if (!userStateProvider.canPractice()) {
+      return const SizedBox.shrink();
+    }
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    final hasMistakes = userStateProvider.mistakeCount > 0;
+    final hasAvailableWeakChapter = _recommendedWeakChapterId != null &&
+        !userStateProvider.isChapterLocked(_recommendedWeakChapterId!);
+    final recommendationKey = hasMistakes
+        ? 'growth_recommend_mistakes'
+        : hasAvailableWeakChapter
+            ? 'growth_recommend_weak_chapter'
+            : 'growth_recommend_random';
+    final icon = hasMistakes
+        ? Icons.report_outlined
+        : hasAvailableWeakChapter
+            ? Icons.menu_book_outlined
+            : Icons.shuffle_rounded;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: colorScheme.primary.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Builder(builder: (context) {
+        final large = _isLargeTextScale(context);
+        final startButton = TextButton(
+          onPressed: () => _startTodayRecommendation(userStateProvider),
+          style: TextButton.styleFrom(
+            foregroundColor: colorScheme.primary,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          child: Text(
+            AppStrings.getWithLanguage(_currentLanguage, 'growth_start'),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+        );
+        final leading = Icon(icon, size: 20, color: colorScheme.primary);
+        final texts = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            large
+                ? FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(
+                      AppStrings.getWithLanguage(
+                        _currentLanguage,
+                        'growth_today_recommendation',
+                      ),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  )
+                : Text(
+                    AppStrings.getWithLanguage(
+                      _currentLanguage,
+                      'growth_today_recommendation',
+                    ),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+            const SizedBox(height: 2),
+            Text(
+              AppStrings.getWithLanguage(
+                _currentLanguage,
+                recommendationKey,
+              ),
+              style: TextStyle(
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
+        );
+        if (large) {
+          // 大字级：图标、文字、按钮纵向堆叠，文字独占整行宽度。
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              leading,
+              const SizedBox(height: 6),
+              texts,
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: startButton,
+              ),
+            ],
+          );
+        }
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            leading,
+            const SizedBox(width: 8),
+            Expanded(child: texts),
+            startButton,
+          ],
+        );
+      }),
+    );
+  }
+
+  Future<void> _startTodayRecommendation(
+    UserStateProvider userStateProvider,
+  ) async {
+    await userStateProvider.checkAndResetDailyCounters();
+    if (!mounted || !userStateProvider.canPractice()) return;
+
+    if (userStateProvider.mistakeCount > 0) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => const MistakeReviewScreen(),
+        ),
+      );
+    } else if (_recommendedWeakChapterId != null &&
+        !userStateProvider.isChapterLocked(_recommendedWeakChapterId!)) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PracticeScreen(
+            chapterId: _recommendedWeakChapterId,
+            skipMastered: userStateProvider.skipMastered,
+          ),
+        ),
+      );
+    } else {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PracticeScreen(
+            skipMastered: userStateProvider.skipMastered,
+          ),
+        ),
+      );
+    }
+
+    if (mounted) {
+      await userStateProvider.syncProgressToCloudIfVip();
+      await _loadStatistics();
+    }
   }
 
   /// 顯示訂閱引導彈窗（標題、內容、返回首頁 / 去訂閱解鎖）
@@ -711,44 +1357,49 @@ class _HomeScreenState extends State<HomeScreen>
     return showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.lock, color: Colors.amber, size: 28),
-            const SizedBox(width: 12),
-            Expanded(
+      builder: (dialogContext) {
+        final warningColor = AppTheme.warningTextFor(dialogContext);
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.lock, color: warningColor, size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              IconButton(
+                tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+                icon: const Icon(Icons.close, size: 20),
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          content: Text(content, style: const TextStyle(fontSize: 16)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child:
+                  Text(AppStrings.getWithLanguage(currentLang, 'return_home')),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryFor(dialogContext),
+                foregroundColor: Theme.of(dialogContext).colorScheme.onPrimary,
+              ),
               child: Text(
-                title,
-                style:
-                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                AppStrings.getWithLanguage(currentLang, 'go_subscribe_unlock'),
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.close, size: 20),
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
           ],
-        ),
-        content: Text(content, style: const TextStyle(fontSize: 16)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: Text(AppStrings.getWithLanguage(currentLang, 'return_home')),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(dialogContext).pop(true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              foregroundColor: Colors.black,
-            ),
-            child: Text(
-              AppStrings.getWithLanguage(currentLang, 'go_subscribe_unlock'),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -809,8 +1460,11 @@ class _HomeScreenState extends State<HomeScreen>
     required Color bgColor,
     required VoidCallback? onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isRetro = AppTheme.isRetroFor(context);
+    final effectiveIconColor = isRetro ? AppTheme.retroPrimary : iconColor;
     return GlassCard(
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: Column(
@@ -821,37 +1475,48 @@ class _HomeScreenState extends State<HomeScreen>
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: bgColor,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: iconColor.withOpacity(0.18),
-                  blurRadius: 14,
-                  offset: const Offset(0, 8),
-                  spreadRadius: 0,
-                ),
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.8),
-                  blurRadius: 0,
-                  offset: const Offset(-1, -1),
-                  spreadRadius: 0,
-                ),
-              ],
+              color: isRetro
+                  ? AppTheme.retroPageAlt
+                  : isDark
+                      ? iconColor.withOpacity(0.16)
+                      : bgColor,
+              borderRadius:
+                  isRetro ? BorderRadius.zero : BorderRadius.circular(16),
+              border: isRetro ? Border.all(color: AppTheme.retroLine) : null,
+              boxShadow: isRetro
+                  ? const []
+                  : [
+                      BoxShadow(
+                        color: iconColor.withOpacity(0.18),
+                        blurRadius: 14,
+                        offset: const Offset(0, 8),
+                        spreadRadius: 0,
+                      ),
+                      BoxShadow(
+                        color: isDark
+                            ? Colors.white.withOpacity(0.04)
+                            : Colors.white.withOpacity(0.8),
+                        blurRadius: 0,
+                        offset: const Offset(-1, -1),
+                        spreadRadius: 0,
+                      ),
+                    ],
             ),
             child: Icon(
               icon,
               size: 28,
-              color: iconColor,
+              color: effectiveIconColor,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 15,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.15,
               fontWeight: FontWeight.w700,
-              color: AppTheme.ink,
+              color: Theme.of(context).colorScheme.onSurface,
               letterSpacing: 0.2,
             ),
             maxLines: 2,
@@ -890,7 +1555,9 @@ class _HomeScreenState extends State<HomeScreen>
           Icon(
             Icons.favorite_border,
             size: 18,
-            color: AppTheme.danger.withOpacity(0.7),
+            color: AppTheme.isRetroFor(context)
+                ? AppTheme.retroPrimary
+                : AppTheme.danger.withOpacity(0.7),
           ),
           const SizedBox(width: 8),
           Text(
@@ -898,7 +1565,7 @@ class _HomeScreenState extends State<HomeScreen>
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: AppTheme.muted,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               letterSpacing: 0,
             ),
           ),

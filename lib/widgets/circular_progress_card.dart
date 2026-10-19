@@ -1,5 +1,8 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../config/app_strings.dart';
+import '../config/app_theme.dart';
+import '../config/locale_format.dart';
 
 /// 圆形进度条卡片组件
 /// 参考 Stitch 设计稿的双环进度条
@@ -39,6 +42,8 @@ class CircularProgressCard extends StatelessWidget {
 
     // 计算内环（精通度）的 stroke-dashoffset
     final innerOffset = innerCircumference * (1 - masteryPercent / 100);
+    final isRetro = AppTheme.isRetroFor(context);
+    final inkColor = AppTheme.inkFor(context);
 
     return SizedBox(
       width: 140,
@@ -56,36 +61,48 @@ class CircularProgressCard extends StatelessWidget {
               innerOffset: innerOffset,
               outerCircumference: outerCircumference,
               innerCircumference: innerCircumference,
+              isRetro: isRetro,
+              backgroundColor: AppTheme.lineFor(context),
+              outerColor: AppTheme.primaryFor(context),
+              innerColor: AppTheme.successFor(context),
             ),
           ),
           // 中心百分比文字
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                totalPercentage.toStringAsFixed(1),
-                style: const TextStyle(
-                  fontSize: 42,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1d1d1f),
-                  letterSpacing: -1.0,
-                  height: 1.0,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '%',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1d1d1f).withOpacity(0.4),
-                    height: 1.0,
+          // 环内空间固定：大字级时等比缩小，保证数字留在内环之内。
+          SizedBox(
+            width: 84,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    LocaleFormat.decimal(
+                        AppStrings.getLanguage(), totalPercentage, 1),
+                    style: TextStyle(
+                      fontSize: 42,
+                      fontWeight: FontWeight.bold,
+                      color: inkColor,
+                      letterSpacing: isRetro ? 0 : -1.0,
+                      height: 1.0,
+                    ),
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '%',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: inkColor.withOpacity(0.55),
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
@@ -101,6 +118,10 @@ class _CircularProgressPainter extends CustomPainter {
   final double innerOffset;
   final double outerCircumference;
   final double innerCircumference;
+  final bool isRetro;
+  final Color backgroundColor;
+  final Color outerColor;
+  final Color innerColor;
 
   _CircularProgressPainter({
     required this.outerRadius,
@@ -109,6 +130,10 @@ class _CircularProgressPainter extends CustomPainter {
     required this.innerOffset,
     required this.outerCircumference,
     required this.innerCircumference,
+    required this.isRetro,
+    required this.backgroundColor,
+    required this.outerColor,
+    required this.innerColor,
   });
 
   @override
@@ -117,7 +142,7 @@ class _CircularProgressPainter extends CustomPainter {
 
     // 绘制背景圆环（灰色）
     final backgroundPaint = Paint()
-      ..color = const Color(0xFFE5E7EB).withOpacity(0.5)
+      ..color = backgroundColor.withOpacity(isRetro ? 0.38 : 0.5)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
@@ -128,25 +153,16 @@ class _CircularProgressPainter extends CustomPainter {
     canvas.drawCircle(center, innerRadius, backgroundPaint);
 
     // 绘制进度圆环（外环 - 覆盖率，天蓝色渐变）
-    const outerGradient = SweepGradient(
-      colors: [
-        const Color(0xFF38BDF8), // sky-400
-        const Color(0xFF0EA5E9), // sky-500
-      ],
-      startAngle: -math.pi / 2, // 从顶部开始
-    );
-
     final outerPaint = Paint()
-      ..shader = outerGradient.createShader(
-        Rect.fromCircle(center: center, radius: outerRadius),
-      )
+      ..color = outerColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
 
     // 绘制外环进度
     // 计算进度角度：从顶部开始，顺时针绘制
-    final outerProgress = (outerCircumference - outerOffset) / outerCircumference;
+    final outerProgress =
+        (outerCircumference - outerOffset) / outerCircumference;
     final outerSweepAngle = 2 * math.pi * outerProgress;
 
     final outerPath = Path();
@@ -158,24 +174,15 @@ class _CircularProgressPainter extends CustomPainter {
     canvas.drawPath(outerPath, outerPaint);
 
     // 绘制进度圆环（内环 - 精通度，薄荷绿渐变）
-    const innerGradient = SweepGradient(
-      colors: [
-        const Color(0xFF34D399), // emerald-400
-        const Color(0xFF10B981), // emerald-500
-      ],
-      startAngle: -math.pi / 2,
-    );
-
     final innerPaint = Paint()
-      ..shader = innerGradient.createShader(
-        Rect.fromCircle(center: center, radius: innerRadius),
-      )
+      ..color = innerColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
 
     // 绘制内环进度
-    final innerProgress = (innerCircumference - innerOffset) / innerCircumference;
+    final innerProgress =
+        (innerCircumference - innerOffset) / innerCircumference;
     final innerSweepAngle = 2 * math.pi * innerProgress;
 
     final innerPath = Path();
@@ -190,6 +197,10 @@ class _CircularProgressPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _CircularProgressPainter oldDelegate) {
     return oldDelegate.outerOffset != outerOffset ||
-        oldDelegate.innerOffset != innerOffset;
+        oldDelegate.innerOffset != innerOffset ||
+        oldDelegate.isRetro != isRetro ||
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.outerColor != outerColor ||
+        oldDelegate.innerColor != innerColor;
   }
 }

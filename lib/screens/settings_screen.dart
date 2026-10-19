@@ -1,25 +1,36 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/user_state.dart';
 import '../config/app_config.dart';
 import '../config/app_strings.dart';
+import '../config/user_error_copy.dart';
 import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
+import '../services/account_deletion_service.dart';
 import '../services/database_service.dart';
 import '../services/firebase_status.dart';
+import '../services/iap_service.dart';
 import '../widgets/glass_card.dart';
 import 'auth_page.dart';
 import 'subscription_page.dart';
+import 'daily_goal_setup_screen.dart';
+import 'voice_pack_screen.dart';
 
 /// 設置頁面
 /// 提供語言切換、付費狀態查看等功能
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
+  static final Future<String> _appVersionFuture =
+      PackageInfo.fromPlatform().then((info) => info.version);
+
   /// 構建頭部（參照首頁風格）
   Widget _buildHeader(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return SafeArea(
       bottom: false,
       child: Padding(
@@ -28,8 +39,9 @@ class SettingsScreen extends StatelessWidget {
           children: [
             // 返回按鈕
             IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new,
-                  size: 20, color: Color(0xFF475569)),
+              tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+              icon: Icon(Icons.arrow_back_ios_new,
+                  size: 20, color: colorScheme.onSurfaceVariant),
               onPressed: () => Navigator.of(context).pop(),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -39,10 +51,10 @@ class SettingsScreen extends StatelessWidget {
             Expanded(
               child: Text(
                 AppStrings.get('settings_title'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w600,
-                  color: AppTheme.ink,
+                  color: colorScheme.onSurface,
                   letterSpacing: 0,
                 ),
               ),
@@ -57,6 +69,8 @@ class SettingsScreen extends StatelessWidget {
 
   /// 構建登錄卡片
   Widget _buildLoginCard(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     return GlassCard(
       padding: const EdgeInsets.all(20),
       borderRadius: BorderRadius.circular(20),
@@ -76,12 +90,17 @@ class SettingsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.amber.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
+                  color: isRetro
+                      ? AppTheme.retroPageAlt
+                      : Colors.amber.withOpacity(0.2),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(12),
+                  border:
+                      isRetro ? Border.all(color: AppTheme.retroLine) : null,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.login,
-                  color: Colors.amber,
+                  color: isRetro ? AppTheme.retroPrimary : Colors.amber,
                   size: 24,
                 ),
               ),
@@ -92,10 +111,10 @@ class SettingsScreen extends StatelessWidget {
                   children: [
                     Text(
                       AppStrings.get('login_to_sync_unlock_vip'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFF1d1d1f),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -103,15 +122,15 @@ class SettingsScreen extends StatelessWidget {
                       AppStrings.get('guest_mode_status'),
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right,
-                color: Colors.grey,
+                color: colorScheme.onSurfaceVariant,
               ),
             ],
           ),
@@ -136,6 +155,9 @@ class SettingsScreen extends StatelessWidget {
   }) {
     final effectiveTitle =
         isLoading && loadingTitle != null ? loadingTitle : title;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final effectiveIconColor = isRetro ? AppTheme.retroPrimary : iconColor;
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       borderRadius: BorderRadius.circular(20),
@@ -145,12 +167,15 @@ class SettingsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color:
+                  isRetro ? AppTheme.retroPageAlt : iconColor.withOpacity(0.1),
+              borderRadius:
+                  isRetro ? BorderRadius.zero : BorderRadius.circular(12),
+              border: isRetro ? Border.all(color: AppTheme.retroLine) : null,
             ),
             child: Icon(
               icon,
-              color: iconColor,
+              color: effectiveIconColor,
               size: 24,
             ),
           ),
@@ -164,7 +189,7 @@ class SettingsScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: textColor ?? const Color(0xFF1d1d1f),
+                    color: textColor ?? colorScheme.onSurface,
                   ),
                 ),
                 if (subtitle != null && !isLoading) ...[
@@ -173,7 +198,7 @@ class SettingsScreen extends StatelessWidget {
                     subtitle,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[600],
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -187,7 +212,7 @@ class SettingsScreen extends StatelessWidget {
           if (onTap != null && !isLoading)
             Icon(
               Icons.chevron_right,
-              color: Colors.grey[400],
+              color: colorScheme.onSurfaceVariant,
             ),
         ],
       ),
@@ -200,9 +225,13 @@ class SettingsScreen extends StatelessWidget {
     required IconData icon,
     required Color iconColor,
     required String title,
+    String? subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final effectiveIconColor = isRetro ? AppTheme.retroPrimary : iconColor;
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       borderRadius: BorderRadius.circular(20),
@@ -212,34 +241,98 @@ class SettingsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: iconColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
+              color:
+                  isRetro ? AppTheme.retroPageAlt : iconColor.withOpacity(0.1),
+              borderRadius:
+                  isRetro ? BorderRadius.zero : BorderRadius.circular(12),
+              border: isRetro ? Border.all(color: AppTheme.retroLine) : null,
             ),
             child: Icon(
               icon,
-              color: iconColor,
+              color: effectiveIconColor,
               size: 24,
             ),
           ),
           const SizedBox(width: 16),
           Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1d1d1f),
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: const Color(0xFF0EA5E9),
           ),
         ],
       ),
     );
+  }
+
+  String _themeLabel(AppThemeMode mode) {
+    switch (mode) {
+      case AppThemeMode.classic:
+        return AppStrings.get('theme_classic');
+      case AppThemeMode.night:
+        return AppStrings.get('theme_dark');
+      case AppThemeMode.retro:
+        return AppStrings.get('theme_retro');
+    }
+  }
+
+  Future<void> _showThemeDialog(
+    BuildContext context,
+    AppThemeMode currentMode,
+  ) async {
+    final selectedMode = await showDialog<AppThemeMode>(
+      context: context,
+      builder: (dialogContext) {
+        final theme = Theme.of(dialogContext);
+        return AlertDialog(
+          title: Text(AppStrings.get('theme_mode')),
+          contentPadding: const EdgeInsets.symmetric(vertical: 8),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: AppThemeMode.values.map((mode) {
+              return RadioListTile<AppThemeMode>(
+                value: mode,
+                groupValue: currentMode,
+                title: Text(_themeLabel(mode)),
+                activeColor: theme.colorScheme.primary,
+                onChanged: (value) {
+                  if (value != null) {
+                    Navigator.of(dialogContext).pop(value);
+                  }
+                },
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+
+    if (selectedMode != null && context.mounted) {
+      await context.read<UserStateProvider>().setThemeMode(selectedMode);
+    }
   }
 
   /// 切換語言
@@ -271,21 +364,30 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       builder: (BuildContext dialogContext) {
+        final isRetro = AppTheme.isRetroFor(dialogContext);
+        final dialogTheme = Theme.of(dialogContext);
         return ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: isRetro ? BorderRadius.zero : BorderRadius.circular(20),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            filter: ImageFilter.blur(
+              sigmaX: isRetro ? 0 : 10,
+              sigmaY: isRetro ? 0 : 10,
+            ),
             child: AlertDialog(
-              backgroundColor: Colors.white.withOpacity(0.95),
+              backgroundColor: dialogTheme.colorScheme.surface,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius:
+                    isRetro ? BorderRadius.zero : BorderRadius.circular(20),
+                side: isRetro
+                    ? const BorderSide(color: AppTheme.retroLine)
+                    : BorderSide.none,
               ),
               title: Text(
                 AppStrings.get('select_language'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
+                  color: Theme.of(dialogContext).colorScheme.onSurface,
                 ),
               ),
               content: SingleChildScrollView(
@@ -297,9 +399,14 @@ class SettingsScreen extends StatelessWidget {
                       margin: const EdgeInsets.only(bottom: 8),
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFF0EA5E9).withOpacity(0.1)
+                            ? AppTheme.primarySoftFor(dialogContext)
                             : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: isRetro
+                            ? BorderRadius.zero
+                            : BorderRadius.circular(12),
+                        border: isRetro
+                            ? Border.all(color: AppTheme.retroLine)
+                            : null,
                       ),
                       child: ListTile(
                         title: Text(
@@ -309,19 +416,23 @@ class SettingsScreen extends StatelessWidget {
                                 ? FontWeight.w600
                                 : FontWeight.normal,
                             color: isSelected
-                                ? const Color(0xFF0EA5E9)
-                                : const Color(0xFF1E293B),
+                                ? Theme.of(dialogContext).colorScheme.primary
+                                : Theme.of(dialogContext).colorScheme.onSurface,
                           ),
                         ),
                         trailing: isSelected
-                            ? const Icon(Icons.check, color: Color(0xFF0EA5E9))
+                            ? Icon(Icons.check,
+                                color:
+                                    Theme.of(dialogContext).colorScheme.primary)
                             : null,
                         onTap: () {
                           _changeLanguage(context, lang);
                           // Navigator.pop 在 _changeLanguage 中處理
                         },
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: isRetro
+                              ? BorderRadius.zero
+                              : BorderRadius.circular(12),
                         ),
                       ),
                     );
@@ -369,6 +480,75 @@ class SettingsScreen extends StatelessWidget {
     userStateProvider.clearProgressStats();
   }
 
+  Future<void> _handleDeleteAccount(BuildContext context) async {
+    final userStateProvider = context.read<UserStateProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final navigator = Navigator.of(context, rootNavigator: true);
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(AppStrings.get('delete_account_confirm_title')),
+          content: Text(AppStrings.get('delete_account_confirm_message')),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: Text(AppStrings.get('cancel')),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: Text(AppStrings.get('delete_account_confirm_action')),
+            ),
+          ],
+        );
+      },
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    // 进行中：阻止返回与重复点击。
+    unawaited(showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (progressContext) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              const SizedBox(width: 16),
+              Expanded(child: Text(AppStrings.get('delete_account_progress'))),
+            ],
+          ),
+        ),
+      ),
+    ));
+
+    final outcome = await AccountDeletionService().deleteCurrentAccount();
+    navigator.pop();
+
+    if (outcome == AccountDeletionOutcome.deleted) {
+      userStateProvider.clearProgressStats();
+    }
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(AppStrings.get(switch (outcome) {
+          AccountDeletionOutcome.deleted => 'delete_account_success',
+          AccountDeletionOutcome.cancelled => 'delete_account_cancelled',
+          AccountDeletionOutcome.recentLoginRequired =>
+            'delete_account_recent_login',
+          AccountDeletionOutcome.failed => 'delete_account_failed',
+        })),
+      ),
+    );
+  }
+
   Future<void> _openExternalUrl(BuildContext context, String url) async {
     final uri = Uri.parse(url);
     final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -385,13 +565,13 @@ class SettingsScreen extends StatelessWidget {
     return Consumer<UserStateProvider>(
       builder: (context, userStateProvider, child) {
         final currentLanguage = userStateProvider.currentLanguage;
-        final isVip = userStateProvider.isVip;
         final isLoggedIn = FirebaseStatus.isSignedIn;
-
+        final iapService = Provider.of<IapService?>(context, listen: false);
+        final usesStoreBilling = iapService?.usesStoreBilling ?? false;
         return Scaffold(
           backgroundColor: Colors.transparent,
           body: Container(
-            decoration: AppTheme.pageDecoration,
+            decoration: AppTheme.pageDecorationFor(context),
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
@@ -411,15 +591,89 @@ class SettingsScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                       ],
 
+                      // VIP 订阅 / 管理订阅：直接进入既有订阅页（审核员与用户都能从设置页找到）。
+                      _buildSettingCard(
+                        context,
+                        icon: Icons.workspace_premium_outlined,
+                        iconColor: AppTheme.premiumGold,
+                        title: AppStrings.get('sub_title'),
+                        subtitle: AppStrings.get(userStateProvider.isVip
+                            ? 'manage_subscription'
+                            : 'go_subscribe_unlock'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SubscriptionPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
                       // 語言設置
                       _buildSettingCard(
                         context,
                         icon: Icons.language,
-                        iconColor: const Color(0xFF0EA5E9),
+                        iconColor: AppTheme.primaryFor(context),
                         title: AppStrings.get('language'),
                         subtitle: UserState.languageNames[currentLanguage] ??
                             currentLanguage,
                         onTap: () => _showLanguageDialog(context),
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildSettingCard(
+                        context,
+                        icon: Icons.palette_outlined,
+                        iconColor: AppTheme.primaryFor(context),
+                        title: AppStrings.get('theme_mode'),
+                        subtitle: _themeLabel(userStateProvider.themeMode),
+                        onTap: () => _showThemeDialog(
+                          context,
+                          userStateProvider.themeMode,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildSettingCard(
+                        context,
+                        icon: Icons.flag_outlined,
+                        iconColor: AppTheme.primaryFor(context),
+                        title: AppStrings.get('daily_goal_manage_title'),
+                        subtitle: AppStrings.get('daily_goal_settings_subtitle')
+                            .replaceAll(
+                          '{goal}',
+                          userStateProvider.dailyStudyGoal.toString(),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const DailyGoalSetupScreen(isEditing: true),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
+
+                      // Optional voice packs are available to every user.
+                      _buildSettingCard(
+                        context,
+                        icon: Icons.record_voice_over_outlined,
+                        iconColor: AppTheme.successFor(context),
+                        title: AppStrings.get('voice_pack_title'),
+                        subtitle:
+                            AppStrings.get('voice_pack_settings_subtitle'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const VoicePackScreen(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 12),
 
@@ -436,13 +690,13 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 12),
 
-                      // 雲端同步（僅 VIP 用戶）
-                      if (isLoggedIn && isVip) ...[
+                      // 雲端同步是登入帳號的基本能力，VIP 權益另行判定。
+                      if (isLoggedIn) ...[
                         const SizedBox(height: 12),
                         _buildSettingCard(
                           context,
                           icon: Icons.cloud_upload,
-                          iconColor: const Color(0xFF0EA5E9),
+                          iconColor: AppTheme.primaryFor(context),
                           title: AppStrings.get('sync_now'),
                           subtitle: AppStrings.get('cloud_sync'),
                           onTap: () =>
@@ -465,30 +719,26 @@ class SettingsScreen extends StatelessWidget {
                             '${AppStrings.get('last_sync_time_prefix')}${userStateProvider.lastSyncTime}',
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: AppTheme.mutedFor(context),
                             ),
                           ),
                         ),
                       ],
 
-                      // 非 VIP 用戶的雲端同步提示
-                      if (isLoggedIn && !isVip) ...[
+                      // Google Play / App Store 订阅：常驻的管理 / 取消入口（不依赖登录或 VIP 状态）。
+                      if (usesStoreBilling) ...[
                         const SizedBox(height: 12),
                         _buildSettingCard(
                           context,
-                          icon: Icons.cloud_upload,
-                          iconColor: Colors.grey,
-                          title: AppStrings.get('cloud_sync_title'),
-                          subtitle:
-                              AppStrings.get('cloud_sync_subtitle_vip_only'),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const SubscriptionPage(),
-                              ),
-                            );
-                          },
+                          icon: Icons.subscriptions_outlined,
+                          iconColor: AppTheme.premiumGold,
+                          title: AppStrings.get('manage_subscription'),
+                          subtitle: AppStrings.get(
+                              iapService!.usesGooglePlayBilling
+                                  ? 'manage_subscription_subtitle'
+                                  : 'manage_subscription_subtitle_store'),
+                          onTap: () => _openExternalUrl(
+                              context, iapService.subscriptionCenterUrl),
                         ),
                       ],
 
@@ -496,7 +746,7 @@ class SettingsScreen extends StatelessWidget {
                       _buildSettingCard(
                         context,
                         icon: Icons.privacy_tip_outlined,
-                        iconColor: const Color(0xFF0EA5E9),
+                        iconColor: AppTheme.primaryFor(context),
                         title: AppStrings.get('privacy_and_terms'),
                         subtitle:
                             '${AppStrings.get('sub_privacy_policy')} / ${AppStrings.get('sub_service_terms')}',
@@ -554,9 +804,22 @@ class SettingsScreen extends StatelessWidget {
                         icon: Icons.info,
                         iconColor: const Color(0xFF6B7280),
                         title: AppStrings.get('about'),
-                        subtitle:
-                            '${AppStrings.get('version')} ${AppConfig.appVersion}',
+                        subtitle: null,
                         onTap: null,
+                        trailing: FutureBuilder<String>(
+                          future: _appVersionFuture,
+                          builder: (context, snapshot) {
+                            final version =
+                                snapshot.data ?? AppConfig.appVersion;
+                            return Text(
+                              '${AppStrings.get('version')} $version',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.mutedFor(context),
+                              ),
+                            );
+                          },
+                        ),
                       ),
 
                       const SizedBox(height: 12),
@@ -584,6 +847,18 @@ class SettingsScreen extends StatelessWidget {
                           title: AppStrings.get('sign_out'),
                           subtitle: null,
                           onTap: () => _handleSignOut(context),
+                          textColor: Colors.red,
+                        ),
+
+                        // 删除账号（App Store 审核指南 5.1.1(v)：App 内发起）
+                        const SizedBox(height: 12),
+                        _buildSettingCard(
+                          context,
+                          icon: Icons.person_remove_outlined,
+                          iconColor: Colors.red,
+                          title: AppStrings.get('delete_account'),
+                          subtitle: AppStrings.get('delete_account_subtitle'),
+                          onTap: () => _handleDeleteAccount(context),
                           textColor: Colors.red,
                         ),
                       ],
@@ -626,7 +901,7 @@ class SettingsScreen extends StatelessWidget {
                 TextButton(
                   onPressed: () => Navigator.of(dialogContext).pop(true),
                   style: TextButton.styleFrom(
-                    foregroundColor: Colors.red,
+                    foregroundColor: AppTheme.dangerFor(context),
                   ),
                   child:
                       Text(AppStrings.getWithLanguage(currentLang, 'confirm')),
@@ -719,16 +994,6 @@ class SettingsScreen extends StatelessWidget {
     BuildContext context,
     UserStateProvider userStateProvider,
   ) async {
-    if (!userStateProvider.isVip) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SubscriptionPage(),
-        ),
-      );
-      return;
-    }
-
     if (!FirebaseStatus.isSignedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -765,7 +1030,9 @@ class SettingsScreen extends StatelessWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${AppStrings.get('sync_failed_prefix')}$e'),
+            content: Text(
+              UserErrorCopy.sync(e, language: AppStrings.getLanguage()),
+            ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),

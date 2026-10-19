@@ -9,7 +9,6 @@ import '../widgets/question_widget.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/translation_panel.dart';
 import '../providers/user_state_provider.dart';
-import 'subscription_page.dart';
 
 /// 收藏題目回顧頁面（僅列表，與錯題回顧一致的左中右三欄卡片佈局）
 /// UI 與錯題回顧列表模式完全一致：左題號+綠圈、中題目+圖片、右下愛心/書本/翻譯
@@ -112,73 +111,43 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
     }
   }
 
-  /// 打開結構化解析彈窗（與練習模式一致的限額檢查與計次）
+  /// 打開結構化解析彈窗（所有用戶免費不限次）
   Future<void> _openExplanationModal(Question question) async {
-    final userStateProvider =
-        Provider.of<UserStateProvider>(context, listen: false);
-    final questionId = question.id;
-    final isVip = userStateProvider.isVip;
-
-    if (!userStateProvider.canViewExplanation(questionId)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.get('explanation_limit_reached_message')),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SubscriptionPage(),
-        ),
-      );
-      return;
-    }
-
-    final alreadyUnlockedToday =
-        userStateProvider.isExplanationUnlockedToday(questionId);
-    final remainingBefore = userStateProvider.remainingExplanations;
-
     await QuestionWidget.showRichExplanation(
       context,
       question: question,
       currentLanguage: _currentLanguage,
-      remainingExplanations:
-          (!isVip && !alreadyUnlockedToday) ? remainingBefore : null,
-      showVipBadgeOnStudyTip: !isVip,
     );
-
-    if (!isVip && !alreadyUnlockedToday) {
-      await userStateProvider.incrementExplanationCount(questionId);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: AppTheme.pageMid,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
           AppStrings.get('favorite_questions'),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            color: colorScheme.onSurface,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          icon: Icon(
             Icons.arrow_back_ios_new,
             size: 20,
-            color: Color(0xFF475569),
+            color: colorScheme.onSurfaceVariant,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _favoriteQuestions.isEmpty
@@ -189,17 +158,19 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
   }
 
   Widget _buildEmptyFavoritesState(BuildContext context) {
+    final isRetro = AppTheme.isRetroFor(context);
     return EmptyStateView(
       icon: Icons.favorite_border_rounded,
       title: AppStrings.get('empty_favorites_title'),
       description: AppStrings.get('empty_favorites_description'),
       action: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2563EB),
-          foregroundColor: Colors.white,
+          backgroundColor: AppTheme.primaryFor(context),
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius:
+                isRetro ? BorderRadius.zero : BorderRadius.circular(24),
           ),
           elevation: 0,
         ),
@@ -230,6 +201,10 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
 
   /// 單張收藏卡片（與錯題 _buildQuestionCard 一致，左題號+綠圈無錯誤次數、中內容、右下三圖標）
   Widget _buildFavoriteCard(Question question, int index) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final cardRadius =
+        isRetro ? BorderRadius.zero : BorderRadius.circular(AppTheme.radiusXl);
     final questionId = question.id;
     final correctAnswer = question.answer;
     final questionText = question.getDisplayQuestionText(
@@ -240,20 +215,20 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
         question.imageName != null && question.imageName!.isNotEmpty;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: cardRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(
+          sigmaX: isRetro ? 0 : 20,
+          sigmaY: isRetro ? 0 : 20,
+        ),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: AppTheme.surfaceFor(context),
+            borderRadius: cardRadius,
+            border: Border.all(
+              color: AppTheme.lineFor(context).withOpacity(0.72),
+            ),
+            boxShadow: AppTheme.cardShadowFor(context),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -271,11 +246,13 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
                     children: [
                       Text(
                         questionText,
-                        style: const TextStyle(
+                        // 意大利语题干始终从左到右排版（包括乌尔都语界面）。
+                        textDirection: TextDirection.ltr,
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                           height: 1.5,
-                          color: Color(0xFF0D131B),
+                          color: colorScheme.onSurface,
                         ),
                       ),
                       if (hasImage) ...[
@@ -311,6 +288,7 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
   /// 左欄：題號 + 正確答案綠圈（收藏頁不顯示「錯誤 X 次」）
   Widget _buildLeftGutter(int index, bool correctAnswer) {
     final label = correctAnswer ? 'V' : 'F';
+    final isRetro = AppTheme.isRetroFor(context);
     return SizedBox(
       width: 46,
       child: Column(
@@ -321,9 +299,9 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
             child: Text(
               '${index + 1}',
               style: TextStyle(
-                fontSize: 9,
+                fontSize: isRetro ? 11 : 10,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[500],
+                color: AppTheme.mutedFor(context),
               ),
             ),
           ),
@@ -335,17 +313,19 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
   }
 
   Widget _buildAnswerCircle({required String label}) {
+    final isRetro = AppTheme.isRetroFor(context);
+    final successColor = AppTheme.successFor(context);
     return SizedBox(
-      width: 28,
-      height: 28,
+      width: 32,
+      height: 32,
       child: Container(
-        width: 28,
-        height: 28,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.green.withOpacity(0.1),
+          shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
+          color: AppTheme.successSoftFor(context),
           border: Border.all(
-            color: Colors.green[300]!,
+            color: successColor,
             width: 1.0,
           ),
         ),
@@ -356,7 +336,7 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
               fontSize: 14,
               fontWeight: FontWeight.w600,
               fontFeatures: const [FontFeature.tabularFigures()],
-              color: Colors.green[700]!,
+              color: successColor,
             ),
           ),
         ),
@@ -368,80 +348,87 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
   Widget _buildBottomActions(Question question) {
     final questionId = question.id;
     final isTranslationActive = _showTranslation[questionId] == true;
+    final primaryColor = AppTheme.primaryFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final isItalian = _currentLanguage == 'it';
 
     return Align(
       alignment: Alignment.centerRight,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          GestureDetector(
-            onTap: () => _unfavoriteAndRemove(questionId),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.grey[100]!.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.favorite,
-                size: 16,
-                color: Colors.red[400],
-              ),
-            ),
+          _buildActionButton(
+            tooltip: AppStrings.get('unfavorite'),
+            icon: Icons.favorite,
+            color: AppTheme.dangerFor(context),
+            onPressed: () => _unfavoriteAndRemove(questionId),
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: () async {
+          const SizedBox(width: 8),
+          _buildActionButton(
+            tooltip: AppStrings.get('btn_explanation'),
+            icon: Icons.menu_book_outlined,
+            color: mutedColor,
+            onPressed: () async {
               await _openExplanationModal(question);
             },
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.grey[100]!.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.menu_book_outlined,
-                size: 16,
-                color: Colors.grey[400],
-              ),
-            ),
           ),
-          const SizedBox(width: 12),
-          GestureDetector(
-            onTap: _currentLanguage == 'it'
-                ? null
-                : () => _toggleTranslation(questionId),
-            child: Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: Colors.grey[100]!.withOpacity(0.5),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.translate,
-                size: 16,
-                color: _currentLanguage == 'it'
-                    ? Colors.grey[300]
-                    : (isTranslationActive
-                        ? const Color(0xFF137FEC)
-                        : Colors.grey[400]),
-              ),
-            ),
+          const SizedBox(width: 8),
+          _buildActionButton(
+            tooltip: AppStrings.get('translation'),
+            icon: Icons.translate,
+            color: isItalian
+                ? mutedColor.withOpacity(0.45)
+                : isTranslationActive
+                    ? primaryColor
+                    : mutedColor,
+            isActive: isTranslationActive,
+            onPressed: isItalian ? null : () => _toggleTranslation(questionId),
           ),
         ],
       ),
     );
   }
 
+  Widget _buildActionButton({
+    required String tooltip,
+    required IconData icon,
+    required Color color,
+    required VoidCallback? onPressed,
+    bool isActive = false,
+  }) {
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 19, color: color),
+      style: IconButton.styleFrom(
+        minimumSize: const Size.square(44),
+        backgroundColor: isActive
+            ? AppTheme.primarySoftFor(context)
+            : AppTheme.surfaceFor(context),
+        shape: isRetro
+            ? const RoundedRectangleBorder(
+                borderRadius: BorderRadius.zero,
+              )
+            : const CircleBorder(),
+        side: isRetro
+            ? const BorderSide(color: AppTheme.retroLine)
+            : BorderSide(color: primaryColor.withOpacity(isActive ? 0.3 : 0.1)),
+      ),
+    );
+  }
+
   Widget _buildQuestionImage(String imagePath) {
+    final isRetro = AppTheme.isRetroFor(context);
     return GestureDetector(
       onTap: () => _showImagePreview(imagePath),
       child: Stack(
         alignment: Alignment.centerLeft,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius:
+                isRetro ? BorderRadius.zero : BorderRadius.circular(12),
             child: _buildImageWidget(imagePath),
           ),
           Positioned(
@@ -451,7 +438,8 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
               padding: const EdgeInsets.all(3.4),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.7),
-                borderRadius: BorderRadius.circular(5.1),
+                borderRadius:
+                    isRetro ? BorderRadius.zero : BorderRadius.circular(5.1),
                 border: Border.all(
                   color: Colors.white.withOpacity(0.9),
                   width: 1.0,
@@ -510,6 +498,7 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
                 top: 0,
                 right: 0,
                 child: IconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -548,20 +537,26 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
   }
 
   Widget _buildImageErrorPlaceholder() {
+    final isRetro = AppTheme.isRetroFor(context);
     return Container(
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.surfaceFor(context),
+        borderRadius: isRetro ? BorderRadius.zero : BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.lineFor(context)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.image_not_supported, size: 64, color: Colors.grey),
+          Icon(
+            Icons.image_not_supported,
+            size: 64,
+            color: AppTheme.mutedFor(context),
+          ),
           const SizedBox(height: 16),
           Text(
             AppStrings.get('failed_to_load'),
-            style: const TextStyle(color: Colors.grey),
+            style: TextStyle(color: AppTheme.mutedFor(context)),
           ),
         ],
       ),
@@ -570,48 +565,64 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
 
   Widget _buildKeyWordsChips(Question question) {
     final keywords = question.getKeyWords(_currentLanguage);
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     if (keywords.isEmpty) return const SizedBox.shrink();
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: keywords.map((keyword) {
-        final itWord = keyword['it'] ?? '';
-        final translation =
-            keyword[_currentLanguage] ?? keyword['en'] ?? keyword['zh'] ?? '';
+    return LayoutBuilder(
+      builder: (context, constraints) => Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: keywords.map((keyword) {
+          final itWord = keyword['it'] ?? '';
+          final translation =
+              keyword[_currentLanguage] ?? keyword['en'] ?? keyword['zh'] ?? '';
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[200]!, width: 0.5),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                itWord,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
-                ),
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceFor(context),
+                borderRadius:
+                    isRetro ? BorderRadius.zero : BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.lineFor(context)),
               ),
-              if (translation.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Text('•',
-                    style: TextStyle(fontSize: 9, color: Colors.grey[400])),
-                const SizedBox(width: 4),
-                Text(
-                  translation,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
-                ),
-              ],
-            ],
-          ),
-        );
-      }).toList(),
+              child: Wrap(
+                spacing: 5,
+                runSpacing: 2,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    itWord,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                  if (translation.isNotEmpty) ...[
+                    Text(
+                      '•',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      translation,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 }

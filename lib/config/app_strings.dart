@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 /// 应用界面文字多语言支持
 /// 定义所有界面文字的多语言版本
 class AppStrings {
@@ -7,8 +9,15 @@ class AppStrings {
   // 所有语言文字映射
   static const Map<String, Map<String, String>> _strings = {
     'it': {
+      'session_mistakes_expand': 'Mostra altri dettagli',
+      'session_mistakes_collapse': 'Nascondi dettagli',
+      'session_mistakes_button': 'Errori sessione · {count}',
+      'session_mistakes_title': 'Errori della sessione',
+      'session_mistakes_review': 'Ripassa errori: {count}',
+      'session_mistakes_reason': 'Perché questa risposta',
+      'session_mistakes_done': 'Chiudi ripasso',
       // 首页
-      'app_title': 'PatenteGo',
+      'app_title': 'LinguaPatente',
       'select_mode': 'Seleziona Modalità',
       'start_practice': 'Quiz per Argomento',
       'mock_test': 'Simulazione Esame',
@@ -23,12 +32,16 @@ class AppStrings {
       'question_id': 'ID Domanda',
       'correct': 'Corretto',
       'wrong': 'Errato',
+      'answer_streak_short': 'Serie ×{count}',
+      'question_mastery_progress_short': 'Padronanza {current}/{total}',
       'show_explanation': 'Mostra Spiegazione',
       'hide_explanation': 'Nascondi Spiegazione',
       'translation': 'Traduzione',
       'show_translation': 'Traduzione',
       'hide_translation': 'Nascondi Traduzione',
       'listen_question': 'Audio',
+      'speech_preparing': 'Attendi',
+      'speech_stop': 'Ferma',
       'speech_unavailable': 'Audio domanda non disponibile',
       'correct_answer': 'Corretto!',
       'wrong_answer': 'Errato :(',
@@ -79,6 +92,12 @@ class AppStrings {
       // 设置页面
       'settings_title': 'Impostazioni',
       'language': 'Lingua',
+      'theme_mode': 'Tema',
+      'theme_classic': 'Classico',
+      'theme_dark': 'Modalità notte',
+      'theme_retro': 'Tema retrò',
+      'theme_retro_preview': 'Anteprima tema retrò',
+      'theme_retro_preview_subtitle': 'Guarda lo stile verde vintage',
       'premium_status': 'Stato Premium',
       'premium_user': 'Utente Premium',
       'free_user': 'Utente Gratuito',
@@ -87,6 +106,61 @@ class AppStrings {
       'version': 'Versione',
       'select_language': 'Seleziona Lingua',
       'start_learning': 'Inizia a studiare',
+      'daily_goal_setup_title': 'Imposta il tuo obiettivo quotidiano',
+      'daily_goal_setup_subtitle':
+          'Scegli quante domande vuoi fare ogni giorno. Ti mostreremo quanti giorni servono per completare tutta la banca dati.',
+      'daily_goal_questions_per_day': 'domande al giorno',
+      'daily_goal_free_quota': 'quota gratuita',
+      'daily_goal_estimated_days':
+          'Giorni per completare tutte le domande: circa {days}',
+      'daily_goal_start_plan': 'Inizia il piano',
+      'daily_goal_manage_title': 'Modifica obiettivo giornaliero',
+      'daily_goal_settings_subtitle':
+          'Attuale: {goal} domande al giorno. Puoi modificarlo in qualsiasi momento.',
+      'daily_goal_finish_in': 'In quanto tempo vuoi completare il percorso?',
+      'daily_goal_duration_option': '{days} giorni',
+      'daily_goal_custom_label': 'Oppure inserisci le domande al giorno',
+      'daily_goal_remaining_questions': 'Domande rimanenti: {count}',
+      'daily_goal_quota_warning':
+          'Con il piano gratuito puoi salvare fino a {quota} domande al giorno. Passa a VIP per salvare e seguire questo piano da {goal} domande.',
+      'daily_goal_save_changes': 'Salva modifiche',
+      'daily_goal_today': 'Obiettivo di oggi',
+      'daily_goal_days_left':
+          'A questo ritmo, giorni per completare le domande rimanenti: circa {days}',
+      'daily_goal_all_done': 'Hai gia completato tutta la banca dati',
+      'daily_goal_new_questions': 'Nuove',
+      'daily_goal_review_questions': 'Ripasso',
+      'spaced_review_status':
+          'Ripassi in scadenza oggi: {count} · intervalli 3, 7, 14 e 30 giorni',
+      'daily_goal_dynamic_hint':
+          'Il piano si aggiorna automaticamente in base ai progressi e ai giorni rimanenti.',
+      'daily_goal_dynamic_short': 'Piano dinamico',
+      'daily_goal_start_today_plan': 'Inizia il piano di oggi',
+      'daily_goal_plan_complete': 'Hai completato il piano di oggi.',
+      'daily_goal_no_plan_questions':
+          'Nessuna domanda disponibile per il piano di oggi.',
+      'learning_streak_days': 'Giorni consecutivi: {count}',
+      'learning_streak_active_today': 'Continuità mantenuta',
+      'learning_streak_remaining': 'Ancora {count} per la continuità',
+      'growth_session_summary_title': 'Risultati della sessione',
+      'growth_session_answered': 'Risposte',
+      'growth_session_correct': 'Corrette',
+      'growth_newly_mastered': 'Nuove domande padroneggiate',
+      'growth_mistakes_resolved': 'Errori risolti',
+      'growth_continue_practice': 'Continua a esercitarti',
+      'growth_finish_session': 'Termina sessione',
+      'growth_today_recommendation': 'Consiglio di oggi',
+      'growth_recommend_mistakes':
+          'Ripassa gli errori per consolidare i punti deboli',
+      'growth_recommend_weak_chapter':
+          'Rafforza il capitolo che richiede piu attenzione',
+      'growth_recommend_random':
+          'Continua con alcune domande per costruire la base',
+      'growth_start': 'Inizia',
+      'growth_week_title': 'Crescita settimanale',
+      'growth_no_activity': 'Inizia oggi: ogni domanda conta',
+      'growth_study_days': 'Giorni di studio',
+      'growth_answered': 'Risposte',
       'login_to_sync_unlock_vip':
           'Accedi per sincronizzare i progressi e sbloccare il VIP',
       'guest_mode_status':
@@ -110,11 +184,85 @@ class AppStrings {
       'delete_cloud_data_on_signout_title':
           'Eliminare i dati cloud prima di uscire?',
       'delete_cloud_data_on_signout_message':
-          'Puoi uscire direttamente oppure eliminare anche i progressi cloud su Firestore.',
+          'Puoi uscire direttamente oppure eliminare anche i progressi salvati nel cloud.',
       'delete_cloud_data_option': 'Elimina i progressi cloud',
       'sign_out_only': 'Esci soltanto',
       'sign_out_and_delete_data': 'Esci ed elimina dati',
+      'delete_account': 'Elimina account',
+      'delete_account_subtitle': 'Elimina definitivamente l\'account e i dati nel cloud',
+      'delete_account_confirm_title': 'Eliminare l\'account?',
+      'delete_account_confirm_message': 'Il tuo account e i dati nel cloud (progressi, cronologia degli esami, utilizzo giornaliero) verranno eliminati in modo permanente e non potranno essere recuperati. L\'abbonamento NON viene annullato: puoi annullarlo nelle impostazioni degli abbonamenti dello store. I progressi salvati su questo dispositivo restano finché non li azzeri.',
+      'delete_account_confirm_action': 'Elimina definitivamente',
+      'delete_account_progress': 'Eliminazione account in corso…',
+      'delete_account_success': 'Account eliminato.',
+      'delete_account_failed': 'Impossibile eliminare l\'account. Riprova.',
+      'delete_account_cancelled': 'Eliminazione annullata.',
+      'delete_account_recent_login': 'Per sicurezza, esci, accedi di nuovo e riprova a eliminare l\'account.',
       'open_link_failed': 'Impossibile aprire il link',
+
+      // Pacchetti voce umana
+      'voice_pack_title': 'Pacchetti voce umana',
+      'voice_pack_settings_subtitle':
+          'Scarica tutte le voci con un solo tocco e ascoltale offline',
+      'voice_pack_intro':
+          'Un unico pacchetto contiene tutte le domande. Senza download puoi comunque usare la voce di sistema.',
+      'voice_pack_total_installed': 'Spazio installato totale: {size}',
+      'voice_pack_chapter_number': 'Capitolo {chapter}',
+      'voice_pack_uncategorized': 'Audio generale',
+      'voice_pack_all_questions': 'Voce umana per tutte le domande',
+      'voice_pack_question_count': '{count} domande',
+      'voice_pack_status_not_downloaded': 'Non scaricato',
+      'voice_pack_status_downloading': 'Download',
+      'voice_pack_status_paused': 'In pausa',
+      'voice_pack_status_installed': 'Scaricato',
+      'voice_pack_status_failed': 'Non riuscito',
+      'voice_pack_download': 'Scarica',
+      'voice_pack_download_all': 'Scarica tutte le voci',
+      'voice_pack_download_confirm_title': 'Scaricare tutte le voci?',
+      'voice_pack_download_confirm_wifi_message':
+          'Il pacchetto è di circa {size}. Per installarlo servono circa {required} di spazio libero. Vuoi iniziare il download?',
+      'voice_pack_download_confirm_mobile_message':
+          'Il pacchetto è di circa {size} e non sei connesso al Wi-Fi. Potrebbero essere usati dati mobili. Servono circa {required} di spazio libero. Continuare?',
+      'voice_pack_continue_download': 'Scarica',
+      'voice_pack_storage_insufficient_title': 'Spazio insufficiente',
+      'voice_pack_storage_insufficient_message':
+          'Spazio disponibile: {available}. Per scaricare e installare il pacchetto servono circa {required}. Libera spazio e riprova.',
+      'voice_pack_offline_title': 'Nessuna connessione',
+      'voice_pack_offline_message':
+          'Connettiti a Internet, preferibilmente tramite Wi-Fi, e riprova.',
+      'voice_pack_ok': 'OK',
+      'voice_pack_pause': 'Pausa',
+      'voice_pack_resume': 'Riprendi',
+      'voice_pack_cancel': 'Annulla',
+      'voice_pack_delete': 'Elimina',
+      'voice_pack_retry': 'Riprova',
+      'voice_pack_loading_catalog': 'Caricamento dei pacchetti vocali...',
+      'voice_pack_empty_catalog': 'Nessun pacchetto vocale disponibile',
+      'voice_pack_catalog_error':
+          'Impossibile caricare il catalogo dei pacchetti vocali',
+      'voice_pack_error_network':
+          'Download interrotto. Controlla la connessione e riprova.',
+      'voice_pack_error_unavailable':
+          'Questo pacchetto voce non è disponibile al momento. Riprova più tardi.',
+      'voice_pack_error_storage_full':
+          'Spazio di archiviazione insufficiente. Libera spazio e riprova.',
+      'voice_pack_error_storage':
+          'Impossibile salvare il pacchetto voce su questo dispositivo. Riprova.',
+      'voice_pack_error_corrupted':
+          'Il file scaricato è incompleto o danneggiato. Scaricalo di nuovo.',
+      'voice_pack_error_cancelled': 'Download annullato.',
+      'voice_pack_error_generic':
+          'Si è verificato un problema con il pacchetto voce. Riprova.',
+      'voice_pack_downloaded_of': '{downloaded} di {total}',
+      'voice_pack_delete_confirm_title': 'Eliminare il pacchetto vocale?',
+      'voice_pack_delete_confirm_message':
+          'Vuoi eliminare “{name}”? Potrai scaricarlo di nuovo in seguito.',
+      'voice_pack_delete_confirm': 'Elimina',
+      'voice_pack_prompt_title': 'Scaricare la voce umana?',
+      'voice_pack_prompt_message':
+          'Scarica il pacchetto voce umana per ascoltarlo offline oppure continua con la voce di sistema.',
+      'voice_pack_manage': 'Gestisci pacchetti vocali',
+      'voice_pack_use_system_voice': 'Continua con la voce di sistema',
 
       // 会员页面
       'upgrade_premium': 'Aggiorna a Premium',
@@ -135,22 +283,20 @@ class AppStrings {
       'quarterly_price': '€24.99/trimestre',
       'lifetime_price': '€59.99 una tantum',
       // 訂閱 Premium 專用文案
-      'sub_title': 'PatenteGo VIP',
+      'sub_title': 'LinguaPatente VIP',
       'sub_subtitle':
           'Accesso completo agli strumenti di studio per la patente italiana',
-      'sub_feature_unlimited_practice': 'Banca dati completa: 7139 domande',
+      'sub_feature_unlimited_practice': 'Tutti i capitoli e quiz senza limiti',
       'sub_feature_unlimited_practice_desc':
-          'Rimuove il limite gratuito di 30 domande al giorno',
+          'Sblocca tutti i capitoli e rimuove il limite di 30 domande al giorno',
       'sub_feature_unlimited_mock': 'Simulazioni d\'esame senza limiti',
       'sub_feature_unlimited_mock_desc':
           'Allenati più volte con prove in stile esame',
       'sub_feature_unlimited_mistake_review': 'Ripasso completo degli errori',
       'sub_feature_unlimited_mistake_review_desc':
           'Rivedi tutte le domande sbagliate, non solo l\'anteprima gratuita',
-      'sub_feature_deep_explanations':
-          'Spiegazioni complete per ogni domanda ✨',
-      'sub_feature_deep_explanations_desc':
-          'Logica, punti chiave e consigli di studio',
+      'sub_feature_deep_explanations': 'Spiegazioni complete gratuite',
+      'sub_feature_deep_explanations_desc': 'Logica, punti chiave e consigli gratuiti per tutti, senza limiti',
       'sub_feature_study_center': 'Statistiche e report di apprendimento',
       'sub_feature_study_center_desc':
           'Monitora copertura, padronanza e progressi',
@@ -172,11 +318,22 @@ class AppStrings {
           'L\'abbonamento si rinnova automaticamente ogni mese, salvo annullamento almeno 24 ore prima della fine del periodo corrente. '
               'Il pagamento viene addebitato al tuo account dello store dopo la conferma dell\'acquisto. '
               'Puoi gestire o annullare l\'abbonamento nelle impostazioni del tuo account dello store.',
+      'sub_disclaimer_text_play':
+          'L\'abbonamento si rinnova automaticamente ogni mese fino all\'annullamento. Il pagamento viene addebitato sul tuo account Google Play dopo la conferma dell\'acquisto. Puoi gestire o annullare l\'abbonamento in qualsiasi momento negli abbonamenti di Google Play: se lo annulli prima della data di rinnovo successiva non ti verrà addebitato altro e mantieni l\'accesso fino alla fine del periodo già pagato.',
+      'manage_subscription': 'Gestisci abbonamento',
+      'manage_subscription_subtitle':
+          'Visualizza, gestisci o annulla su Google Play',
+      'manage_subscription_play': 'Gestisci o annulla su Google Play',
+      'manage_subscription_subtitle_store': 'Visualizza, gestisci o annulla nell\'App Store',
+      'iap_product_unavailable_for_account':
+          'Questo abbonamento non può essere acquistato con l\'account Google Play attuale. L\'abbonamento è offerto solo in alcuni paesi o aree.',
+      'iap_product_unavailable_for_account_store':
+          'Questo abbonamento non può essere acquistato con l\'account App Store attuale. L\'abbonamento è offerto solo in alcuni paesi o aree.',
       'sub_service_terms': 'Termini di servizio',
       'sub_privacy_policy': 'Informativa sulla privacy',
       'sub_subscription_success_title': 'Abbonamento attivato',
       'sub_subscription_success_message':
-          'PatenteGo VIP è ora attivo. Puoi gestire o annullare l\'abbonamento nelle impostazioni del tuo account dello store.',
+          'LinguaPatente VIP è ora attivo. Puoi gestire o annullare l\'abbonamento nelle impostazioni del tuo account dello store.',
       'sub_restore_checking': 'Controllo degli acquisti precedenti in corso...',
       'sub_restore_success': 'Abbonamento ripristinato con successo',
       'sub_restore_not_found': 'Nessun abbonamento da ripristinare',
@@ -188,7 +345,14 @@ class AppStrings {
           'Abbonamento non ancora disponibile. Riprova più tardi.',
       'iap_purchase_start_failed': 'Impossibile avviare l\'acquisto.',
       'iap_purchase_failed': 'Acquisto non riuscito.',
+      'iap_sign_in_required': 'Accedi prima di abbonarti.',
       'iap_purchase_verification_failed': 'Impossibile verificare l\'acquisto.',
+      'iap_purchase_verification_pending':
+          'Google Play ha completato il pagamento. Stiamo ancora confermando l\'abbonamento e riproveremo automaticamente. Se non si attiva a breve, controlla la connessione e tocca "Ripristina Acquisto".',
+      'iap_purchase_verification_pending_store':
+          'App Store ha completato il pagamento. Stiamo ancora confermando l\'abbonamento e riproveremo automaticamente. Se non si attiva a breve, controlla la connessione e tocca "Ripristina Acquisto".',
+      'iap_purchase_verification_rejected':
+          'Questo acquisto non può essere usato con l\'account con cui hai effettuato l\'accesso. Se l\'hai acquistato con un altro account, accedi con quell\'account.',
       'sub_restore_please_login': 'Accedi prima',
 
       // 通用
@@ -321,10 +485,10 @@ class AppStrings {
       'auth_apple': 'Continua con Apple',
       'auth_guest_later': 'Continua come ospite per ora',
       'auth_error_firebase_unavailable':
-          'Accesso non disponibile. Controlla la configurazione Firebase.',
+          'L’accesso non è disponibile al momento. Riprova più tardi.',
       'auth_error_google_cancelled': 'Accesso annullato.',
       'auth_error_apple_identity_missing':
-          'Accesso Apple non riuscito: identity token mancante.',
+          'Accesso con Apple non completato. Riprova.',
       'auth_error_user_not_found':
           'Nessun account trovato per questo indirizzo email.',
       'auth_error_wrong_password': 'Password errata.',
@@ -337,7 +501,7 @@ class AppStrings {
       'auth_error_password_too_short':
           'La password deve contenere almeno 6 caratteri.',
       'auth_error_register_unavailable':
-          'Registrazione non disponibile. Controlla la configurazione Firebase.',
+          'La registrazione non è disponibile al momento. Riprova più tardi.',
       'auth_error_email_in_use':
           'Questo indirizzo email è già in uso. Accedi direttamente.',
       'auth_error_weak_password':
@@ -368,13 +532,30 @@ class AppStrings {
       'trend_chart_locked_desc':
           'Completa 1 simulazione per sbloccare il grafico trend',
       'focus_chapters_title': 'Capitoli da rafforzare',
+      'chapter_capability_title': 'Mappa competenze per capitolo',
+      'chapter_capability_show_all': 'Mostra tutti',
+      'chapter_capability_show_priority': 'Mostra priorità',
+      'chapter_capability_not_started': 'Da iniziare',
+      'chapter_capability_learning': 'In corso',
+      'chapter_capability_needs_attention': 'Da rafforzare',
+      'chapter_capability_stable': 'Consolidato',
+      'chapter_capability_stats':
+          'Copertura {practiced}/{total} · Padronanza {mastered} · Errori {mistakes}',
+      'chapter_capability_start': 'Inizia capitolo',
+      'chapter_capability_strengthen': 'Rafforza ora',
+      'chapter_capability_review': 'Ripassa',
+      'chapter_strengthening_completed': 'Rafforzamento completato',
+      'chapter_strengthening_mastered_change': 'Domande padroneggiate',
+      'chapter_strengthening_mistakes_change': 'Domande da correggere',
+      'chapter_strengthening_state_change': 'Stato del capitolo',
+      'chapter_strengthening_back_to_map': 'Torna alla mappa',
       'no_weak_chapters_placeholder':
           'Nessun punto debole evidente. Continua così!',
       'explanation_missing_short': 'Nessuna spiegazione disponibile',
       // Modalità eliminazione errori（專項複習）
       'mistake_mode_title': 'Modalità elimina errori',
       'mistake_mode_description':
-          'Verranno allenate in modo mirato le tue {count} domande sbagliate. Ogni risposta corretta riduce il contatore di 1, finché l\'errore sparisce.',
+          'Verranno allenate in modo mirato le domande che hai sbagliato ({count}). Ogni risposta corretta riduce il contatore di 1, finché l\'errore sparisce.',
       'mistake_mode_vip_suffix':
           '✨ Questa funzione è riservata agli utenti VIP e ti aiuta a colpire con precisione i tuoi punti deboli.',
       'remaining_free_explanations': 'Spiegazioni gratuite rimanenti oggi',
@@ -397,10 +578,92 @@ class AppStrings {
       'error_count_prefix': 'Errori: ',
       'ai_advice_cta': 'Ottieni consigli AI di livello esperto',
       'mock_exam_nth_prefix': 'Tentativo ',
+
+      // 网页端（WebAppScreen）
+      'web_sign_in': 'Accedi',
+      'web_start_chapter': 'Inizia il capitolo 1',
+      'web_continue_chapter': 'Continua il capitolo 1',
+      'web_guest_saved':
+          'I progressi da ospite sono salvati in questo browser.',
+      'web_cloud_saved':
+          'Accesso effettuato: i progressi ti seguono su tutti i dispositivi.',
+      'web_sync_unavailable':
+          'Accesso effettuato: i progressi locali sono al sicuro. La sincronizzazione cloud è momentaneamente non disponibile.',
+      'web_chapter_one': 'Capitolo 1 · Segnaletica stradale',
+      'web_chapter_question_count': '{count} domande',
+      'web_chapter_progress': 'Progresso del capitolo',
+      'web_landing_subhead':
+          'Segui lo stesso percorso dell’app: scegli il primo capitolo, rispondi alle domande e consolida la padronanza passo dopo passo.',
+      'web_available_tools': 'Disponibile durante l’esercitazione',
+      'web_hint_listen': 'Ascolta',
+      'web_hint_translate': 'Traduzione',
+      'web_hint_explanation': 'Spiegazione',
+      'web_hint_sync': 'Sincronizzazione tra dispositivi',
+      'web_sync_label': 'Progressi',
+      'web_sync_local': 'Locale',
+      'web_sync_active': 'Sincronizzato',
+      'web_overview': 'Panoramica',
+      'web_hub_subtitle':
+          'Scegli una modalità di studio e riprendi da dove eri rimasto.',
+      'web_random_practice_description':
+          '30 domande scelte a caso dall’intera banca dati.',
+      'web_chapter_practice_description':
+          'Studia i 25 capitoli ufficiali con i progressi per capitolo.',
+      'web_exam_description':
+          '30 domande · 20 minuti · superato con al massimo 3 errori.',
+      'web_mistake_description': 'Domande da ripassare: {count}.',
+      'web_no_mistake_description': 'Il quaderno degli errori è vuoto.',
+      'web_favorite_description': 'Domande salvate da ripassare: {count}.',
+      'web_no_favorite_description':
+          'Salva le domande utili mentre ti eserciti.',
+      'web_empty_favorites_description':
+          'Tocca il segnalibro durante l’esercitazione per creare la tua lista di ripasso.',
+      'web_skip_mastered_description':
+          'Escludi le domande già padroneggiate dai quiz casuali e per capitolo.',
+      'web_sign_in_to_sync':
+          'Accedi per sincronizzare i progressi tra dispositivi.',
+      'web_reset_progress_description':
+          'Elimina risposte, errori, padronanza, preferiti e utilizzo giornaliero.',
+      'web_mastery_report_description':
+          'Vedi copertura, padronanza e i capitoli su cui lavorare.',
+      'web_daily_plan_description':
+          'Bilancia domande nuove e ripasso con un obiettivo giornaliero chiaro.',
+      'web_choose_daily_goal': 'Scegli il tuo obiettivo giornaliero di domande',
+      'web_today_plan_progress': 'Piano di oggi',
+      'web_today_plan_complete': 'Piano di oggi completato',
+      'web_start_today_plan': 'Inizia le domande rimanenti ({count})',
+      'web_bank_coverage': 'Copertura della banca dati',
+      'web_start_mistake_practice': 'Esercitati sugli errori ({count})',
+      'web_submit_exam_confirmation':
+          'Domande senza risposta: {count}. Verranno contate come errori. Consegnare ora?',
+      'web_review_exam': 'Rivedi la prova',
+      'web_choose_sign_in_method': 'Scegli come accedere',
+      'web_browser_voice_title': 'Voce italiana del browser',
+      'web_browser_voice_description':
+          'Tocca «Audio» per riprodurre in streaming la stessa voce umana dell’app. Se l’audio online non è disponibile, subentra automaticamente la voce italiana del browser.',
+      'web_offline_title': 'Accesso offline',
+      'web_offline_description':
+          'La struttura dell’app e i capitoli già aperti vengono salvati nella cache del browser, così puoi riaprirli anche con una connessione instabile.',
+      'web_your_answer': 'La tua risposta',
+
+      // 错误提示展示层（UserErrorCopy）
+      'auth_error_sign_in_generic': 'Accesso non riuscito. Riprova.',
+      'auth_error_register_generic': 'Registrazione non riuscita. Riprova.',
+      'iap_error_generic':
+          'Non è stato possibile completare la richiesta allo store. Riprova più tardi.',
+      'sync_failed_generic':
+          'Sincronizzazione non riuscita. Controlla la connessione e riprova.',
     },
     'zh': {
+      'session_mistakes_expand': '展开更多解析',
+      'session_mistakes_collapse': '收起更多解析',
+      'session_mistakes_button': '本轮错题 · {count}',
+      'session_mistakes_title': '本轮错题',
+      'session_mistakes_review': '复盘这 {count} 道错题',
+      'session_mistakes_reason': '答案原因',
+      'session_mistakes_done': '结束回看',
       // 首页
-      'app_title': 'PatenteGo',
+      'app_title': 'LinguaPatente',
       'select_mode': '选择模式',
       'start_practice': '刷题模式',
       'mock_test': '模拟考试',
@@ -415,12 +678,16 @@ class AppStrings {
       'question_id': '题目 ID',
       'correct': '正确',
       'wrong': '错误',
+      'answer_streak_short': '连对 ×{count}',
+      'question_mastery_progress_short': '本题掌握 {current}/{total}',
       'show_explanation': '显示解析',
       'hide_explanation': '隐藏解析',
       'translation': '翻译',
       'show_translation': '翻译',
       'hide_translation': '隐藏翻译',
       'listen_question': '朗读',
+      'speech_preparing': '准备中',
+      'speech_stop': '停止',
       'speech_unavailable': '暂时无法朗读题目',
       'correct_answer': '正确！',
       'wrong_answer': '错误 :(',
@@ -459,7 +726,7 @@ class AppStrings {
       'buono': '良好',
       'riprova': '加油',
       'keep_trying': '仍需加油',
-      'congratulations': 'CONGRATULAZIONI',
+      'congratulations': '恭喜你',
       'correct_answers': '正确答案',
       'error_count': '错误题数',
       'max_allowed': '最多允许',
@@ -471,6 +738,12 @@ class AppStrings {
       // 设置页面
       'settings_title': '设置',
       'language': '语言',
+      'theme_mode': '主题模式',
+      'theme_classic': '经典主题',
+      'theme_dark': '夜间主题',
+      'theme_retro': '复古主题',
+      'theme_retro_preview': '复古主题预览',
+      'theme_retro_preview_subtitle': '查看诺基亚绿屏风格',
       'premium_status': '会员状态',
       'premium_user': '付费会员',
       'free_user': '免费用户',
@@ -479,6 +752,51 @@ class AppStrings {
       'version': '版本',
       'select_language': '选择你的语言',
       'start_learning': '开始学习',
+      'daily_goal_setup_title': '设置你的每日学习目标',
+      'daily_goal_setup_subtitle': '选择每天想刷多少题，我们会帮你估算刷完整个题库需要多久。',
+      'daily_goal_questions_per_day': '题 / 天',
+      'daily_goal_free_quota': '免费额度',
+      'daily_goal_estimated_days': '预计 {days} 天刷完整个题库',
+      'daily_goal_start_plan': '开始我的学习计划',
+      'daily_goal_manage_title': '修改每日目标',
+      'daily_goal_settings_subtitle': '当前每天 {goal} 题，可随时调整',
+      'daily_goal_finish_in': '你希望多久完成全部内容？',
+      'daily_goal_duration_option': '{days} 天',
+      'daily_goal_custom_label': '或者直接输入每天题数',
+      'daily_goal_remaining_questions': '剩余 {count} 题',
+      'daily_goal_quota_warning':
+          '当前为免费用户，每日目标最多保存 {quota} 题。升级 VIP 后可保存并执行每天 {goal} 题的计划。',
+      'daily_goal_save_changes': '保存修改',
+      'daily_goal_today': '今日目标',
+      'daily_goal_days_left': '按当前节奏，约 {days} 天刷完剩余题目',
+      'daily_goal_all_done': '你已经刷完整个题库',
+      'daily_goal_new_questions': '新题',
+      'daily_goal_review_questions': '复习',
+      'spaced_review_status': '今日到期 {count} 题 · 按 3、7、14、30 天间隔复习',
+      'daily_goal_dynamic_hint': '计划会根据剩余题量和剩余天数自动重算。',
+      'daily_goal_dynamic_short': '动态计划',
+      'daily_goal_start_today_plan': '开始今日计划',
+      'daily_goal_plan_complete': '今日计划已完成。',
+      'daily_goal_no_plan_questions': '今日计划暂无可用题目。',
+      'learning_streak_days': '连续学习 {count} 天',
+      'learning_streak_active_today': '今日已保持',
+      'learning_streak_remaining': '再做 {count} 题保持连续',
+      'growth_session_summary_title': '本次练习成果',
+      'growth_session_answered': '已答',
+      'growth_session_correct': '答对',
+      'growth_newly_mastered': '新掌握',
+      'growth_mistakes_resolved': '消灭错题',
+      'growth_continue_practice': '继续练习',
+      'growth_finish_session': '结束练习',
+      'growth_today_recommendation': '今日建议',
+      'growth_recommend_mistakes': '先复习错题，巩固容易混淆的内容',
+      'growth_recommend_weak_chapter': '加强当前最需要关注的章节',
+      'growth_recommend_random': '继续完成几道题，打好学习基础',
+      'growth_start': '开始',
+      'growth_week_title': '本周成长',
+      'growth_no_activity': '从今天开始，每一道题都算数',
+      'growth_study_days': '学习天数',
+      'growth_answered': '已答',
       'login_to_sync_unlock_vip': '登录以同步进度并解锁会员',
       'guest_mode_status': '当前状态：游客模式（每日限额 30 题/1次考试）',
       'sync_now': '立即同步',
@@ -486,7 +804,7 @@ class AppStrings {
       'last_sync_time_prefix': '上次同步时间：',
       'cloud_sync_title': '云端同步',
       'cloud_sync_subtitle_vip_only': '升级为 VIP 会员以使用云端同步功能',
-      'sign_out': '注销账号',
+      'sign_out': '退出登录',
       'sync_login_required': '请先登录以使用云端同步功能',
       'sync_timeout_retry': '网络连接不稳定，稍后将自动重试',
       'sync_success': '✅ 进度已成功同步到云端',
@@ -497,11 +815,73 @@ class AppStrings {
       'support_subtitle': '联系支持、订阅问题与数据请求',
       'delete_cloud_data_on_signout_title': '登出前是否删除云端学习数据？',
       'delete_cloud_data_on_signout_message':
-          '你可以仅登出，也可以同时删除 Firestore 中的学习进度数据。',
+          '你可以仅退出登录，也可以同时删除保存在云端的学习进度。',
       'delete_cloud_data_option': '删除云端学习数据',
       'sign_out_only': '仅登出',
       'sign_out_and_delete_data': '登出并删除数据',
+      'delete_account': '删除账号',
+      'delete_account_subtitle': '永久删除账号及云端数据',
+      'delete_account_confirm_title': '删除账号？',
+      'delete_account_confirm_message': '你的账号和云端数据（学习进度、考试记录、每日使用量）将被永久删除，无法恢复。订阅不会因此取消，请在应用商店的订阅管理中自行取消。本设备上保存的进度会保留，直到你重置为止。',
+      'delete_account_confirm_action': '永久删除',
+      'delete_account_progress': '正在删除账号…',
+      'delete_account_success': '账号已删除。',
+      'delete_account_failed': '无法删除账号，请重试。',
+      'delete_account_cancelled': '已取消删除。',
+      'delete_account_recent_login': '出于安全考虑，请先退出登录，重新登录后再删除账号。',
       'open_link_failed': '无法打开链接',
+
+      // 真人语音包
+      'voice_pack_title': '真人语音包',
+      'voice_pack_settings_subtitle': '一键下载全部真人语音，离线也能听',
+      'voice_pack_intro': '只需下载一个完整语音包，即可离线播放全部题目；未下载时仍可使用系统朗读。',
+      'voice_pack_total_installed': '已安装总大小：{size}',
+      'voice_pack_chapter_number': '第 {chapter} 章',
+      'voice_pack_uncategorized': '未分类语音',
+      'voice_pack_all_questions': '全部题目真人语音',
+      'voice_pack_question_count': '{count} 道题',
+      'voice_pack_status_not_downloaded': '未下载',
+      'voice_pack_status_downloading': '下载中',
+      'voice_pack_status_paused': '已暂停',
+      'voice_pack_status_installed': '已下载',
+      'voice_pack_status_failed': '下载失败',
+      'voice_pack_download': '下载',
+      'voice_pack_download_all': '下载全部语音',
+      'voice_pack_download_confirm_title': '下载全部语音？',
+      'voice_pack_download_confirm_wifi_message':
+          '语音包约 {size}，下载并安装时需要约 {required} 可用空间。现在开始下载吗？',
+      'voice_pack_download_confirm_mobile_message':
+          '语音包约 {size}，当前未连接 Wi-Fi，可能会消耗移动数据；下载并安装时需要约 {required} 可用空间。是否继续？',
+      'voice_pack_continue_download': '开始下载',
+      'voice_pack_storage_insufficient_title': '存储空间不足',
+      'voice_pack_storage_insufficient_message':
+          '当前可用空间为 {available}，下载并安装语音包需要约 {required}。请清理空间后重试。',
+      'voice_pack_offline_title': '当前没有网络',
+      'voice_pack_offline_message': '请连接网络后重试，建议使用 Wi-Fi。',
+      'voice_pack_ok': '知道了',
+      'voice_pack_pause': '暂停',
+      'voice_pack_resume': '继续',
+      'voice_pack_cancel': '取消',
+      'voice_pack_delete': '删除',
+      'voice_pack_retry': '重试',
+      'voice_pack_loading_catalog': '正在加载语音包…',
+      'voice_pack_empty_catalog': '暂无可用的真人语音包',
+      'voice_pack_catalog_error': '语音包目录加载失败',
+      'voice_pack_error_network': '下载中断，请检查网络后重试',
+      'voice_pack_error_unavailable': '该语音包暂时无法获取，请稍后再试',
+      'voice_pack_error_storage_full': '存储空间不足，请清理空间后重试',
+      'voice_pack_error_storage': '无法在本设备保存语音包，请重试',
+      'voice_pack_error_corrupted': '下载的文件不完整或已损坏，请重新下载',
+      'voice_pack_error_cancelled': '已取消下载',
+      'voice_pack_error_generic': '语音包出现问题，请重试',
+      'voice_pack_downloaded_of': '{downloaded} / {total}',
+      'voice_pack_delete_confirm_title': '删除语音包？',
+      'voice_pack_delete_confirm_message': '确定删除“{name}”？之后可重新下载。',
+      'voice_pack_delete_confirm': '确认删除',
+      'voice_pack_prompt_title': '下载真人语音包？',
+      'voice_pack_prompt_message': '下载真人语音包后可离线播放，也可以继续使用系统语音。',
+      'voice_pack_manage': '管理语音包',
+      'voice_pack_use_system_voice': '继续使用系统语音',
 
       // 会员页面
       'upgrade_premium': '升级会员',
@@ -522,16 +902,16 @@ class AppStrings {
       'quarterly_price': '€14.99/季',
       'lifetime_price': '€39.99 一次性',
       // 订阅 Premium 专用文案
-      'sub_title': 'PatenteGo VIP',
+      'sub_title': 'LinguaPatente VIP',
       'sub_subtitle': '完整解锁意大利驾照理论考试学习工具',
-      'sub_feature_unlimited_practice': '完整题库：7139 题',
-      'sub_feature_unlimited_practice_desc': '解除每日 30 题免费限制，按自己的节奏练习',
+      'sub_feature_unlimited_practice': '全部章节与不限次练习',
+      'sub_feature_unlimited_practice_desc': '解锁全部章节，解除每日 30 题免费限制',
       'sub_feature_unlimited_mock': '不限次数模拟考试',
       'sub_feature_unlimited_mock_desc': '反复进行接近正式考试节奏的训练',
       'sub_feature_unlimited_mistake_review': '完整错题复习',
       'sub_feature_unlimited_mistake_review_desc': '查看并复习全部错题，不受免费预览数量限制',
-      'sub_feature_deep_explanations': '每题完整解析 ✨',
-      'sub_feature_deep_explanations_desc': '包含判断逻辑、关键点和学习提示',
+      'sub_feature_deep_explanations': '完整解析免费不限次',
+      'sub_feature_deep_explanations_desc': '判断逻辑、考点总结和教练提示，所有用户均可免费查看',
       'sub_feature_study_center': '学习统计与分析报告',
       'sub_feature_study_center_desc': '跟踪覆盖率、掌握度和复习进度',
       'sub_feature_cloud_sync': '学习进度云端保存',
@@ -549,11 +929,21 @@ class AppStrings {
       'sub_disclaimer_text':
           '订阅会按月自动续订，除非您在当前订阅周期结束前至少 24 小时取消。确认购买后，费用将通过您的应用商店账户扣除。'
               '您可以在应用商店账户设置中管理或取消订阅。',
+      'sub_disclaimer_text_play':
+          '订阅按月自动续订，直到您取消为止。确认购买后，费用将通过您的 Google Play 账户扣除。您可以随时在 Google Play 的订阅页面管理或取消订阅：在下一个续订日之前取消，将不会再次扣费，会员权益保留至当前已付费周期结束。',
+      'manage_subscription': '管理订阅',
+      'manage_subscription_subtitle': '在 Google Play 中查看、管理或取消订阅',
+      'manage_subscription_play': '在 Google Play 管理或取消订阅',
+      'manage_subscription_subtitle_store': '在 App Store 中查看、管理或取消订阅',
+      'iap_product_unavailable_for_account':
+          '您当前的 Google Play 账号无法购买此订阅。订阅目前仅在部分国家/地区提供。',
+      'iap_product_unavailable_for_account_store':
+          '您当前的 App Store 账号无法购买此订阅。订阅目前仅在部分国家/地区提供。',
       'sub_service_terms': '服务协议',
       'sub_privacy_policy': '隐私政策',
       'sub_subscription_success_title': '订阅已开通',
       'sub_subscription_success_message':
-          'PatenteGo VIP 已生效。您可以在应用商店账户设置中管理或取消订阅。',
+          'LinguaPatente VIP 已生效。您可以在应用商店账户设置中管理或取消订阅。',
       'sub_restore_checking': '正在检查历史记录...',
       'sub_restore_success': '订阅已成功恢复',
       'sub_restore_not_found': '未找到可恢复的订阅',
@@ -562,7 +952,14 @@ class AppStrings {
       'iap_subscription_not_ready': '订阅尚未准备好，请稍后再试',
       'iap_purchase_start_failed': '无法启动购买流程',
       'iap_purchase_failed': '购买失败',
+      'iap_sign_in_required': '请先登录再订阅',
       'iap_purchase_verification_failed': '无法验证购买结果',
+      'iap_purchase_verification_pending':
+          'Google Play 已完成付款，正在确认会员，会自动重试。如果长时间未开通，请检查网络后点“恢复购买”。',
+      'iap_purchase_verification_pending_store':
+          'App Store 已完成付款，正在确认会员，会自动重试。如果长时间未开通，请检查网络后点“恢复购买”。',
+      'iap_purchase_verification_rejected':
+          '这笔购买无法在当前登录的账号下使用。如果是用其他账号购买的，请用该账号登录。',
       'sub_restore_please_login': '请先登录',
 
       // 通用
@@ -659,7 +1056,7 @@ class AppStrings {
       'secondary_chapters': '次要章节',
       'chapter_stat_bank': '题库: {count}题',
       'chapter_stat_covered': '已覆盖: {count}题',
-      'chapter_stat_mastered': '已精通: {count}题',
+      'chapter_stat_mastered': '已掌握: {count}题',
       'modal_correct_answer_label': '正确答案',
       'key_vocabulary': '重点词汇',
       'mastered_badge_short': '已精通',
@@ -675,9 +1072,9 @@ class AppStrings {
       'auth_google': '使用 Google 登录',
       'auth_apple': '使用 Apple 登录',
       'auth_guest_later': '稍后再登录，先以游客模式使用',
-      'auth_error_firebase_unavailable': '登录功能暂时不可用，请检查 Firebase 配置',
-      'auth_error_google_cancelled': '用户取消登录',
-      'auth_error_apple_identity_missing': 'Apple 登录失败，未取得 identity token',
+      'auth_error_firebase_unavailable': '登录功能暂时不可用，请稍后再试',
+      'auth_error_google_cancelled': '已取消登录',
+      'auth_error_apple_identity_missing': 'Apple 登录未完成，请重试',
       'auth_error_user_not_found': '找不到该邮箱地址对应的账号',
       'auth_error_wrong_password': '密码错误',
       'auth_error_invalid_email': '邮箱地址格式不正确',
@@ -686,7 +1083,7 @@ class AppStrings {
       'auth_error_network_failed': '网络连接失败，请检查网络设置',
       'auth_error_login_failed_prefix': '登录失败：',
       'auth_error_password_too_short': '密码长度至少需要 6 个字符',
-      'auth_error_register_unavailable': '注册功能暂时不可用，请检查 Firebase 配置',
+      'auth_error_register_unavailable': '注册功能暂时不可用，请稍后再试',
       'auth_error_email_in_use': '该邮箱地址已被使用，请直接登录',
       'auth_error_weak_password': '密码强度不足，请使用更复杂的密码',
       'auth_error_email_register_disabled': '邮箱注册功能未启用，请联系客服',
@@ -712,6 +1109,23 @@ class AppStrings {
       'trend_chart_locked_title': '趋势图暂未解锁',
       'trend_chart_locked_desc': '完成 1 次模考后解锁趋势图',
       'focus_chapters_title': '重点攻克章节',
+      'chapter_capability_title': '章节能力地图',
+      'chapter_capability_show_all': '查看全部',
+      'chapter_capability_show_priority': '只看优先项',
+      'chapter_capability_not_started': '未开始',
+      'chapter_capability_learning': '学习中',
+      'chapter_capability_needs_attention': '需要加强',
+      'chapter_capability_stable': '稳定掌握',
+      'chapter_capability_stats':
+          '覆盖 {practiced}/{total} · 掌握 {mastered} · 错题 {mistakes}',
+      'chapter_capability_start': '开始学习',
+      'chapter_capability_strengthen': '一键加强',
+      'chapter_capability_review': '复习巩固',
+      'chapter_strengthening_completed': '章节加强完成',
+      'chapter_strengthening_mastered_change': '掌握题目',
+      'chapter_strengthening_mistakes_change': '当前错题',
+      'chapter_strengthening_state_change': '章节状态',
+      'chapter_strengthening_back_to_map': '返回能力地图',
       'no_weak_chapters_placeholder': '恭喜！目前没有明显薄弱章节，继续保持！',
       'explanation_missing_short': '暂无详细解析',
       'remaining_free_explanations': '今日剩余免费解析次数',
@@ -738,10 +1152,73 @@ class AppStrings {
       'error_count_prefix': '错题数：',
       'ai_advice_cta': '获取名师级 AI 提升建议',
       'mock_exam_nth_prefix': '第 ',
+
+      // 网页端（WebAppScreen）
+      'web_sign_in': '登录',
+      'web_start_chapter': '开始第一章',
+      'web_continue_chapter': '继续第一章',
+      'web_guest_saved': '访客进度会保存在当前浏览器。',
+      'web_cloud_saved': '已登录，学习进度可同步到其他设备。',
+      'web_sync_unavailable': '已登录，本机进度正常；云端同步暂时不可用。',
+      'web_chapter_one': '第一章 · 交通标志',
+      'web_chapter_question_count': '{count} 道题',
+      'web_chapter_progress': '本章学习进度',
+      'web_landing_subhead': '按照手机 App 的学习逻辑，从第一章开始答题；每次练习都会保存你的掌握进度。',
+      'web_available_tools': '练习时可使用',
+      'web_hint_listen': '朗读题目',
+      'web_hint_translate': '按需翻译',
+      'web_hint_explanation': '查看解析',
+      'web_hint_sync': '跨设备同步',
+      'web_sync_label': '学习进度',
+      'web_sync_local': '本机',
+      'web_sync_active': '已同步',
+      'web_overview': '返回概览',
+      'web_hub_subtitle': '选择一种学习模式，继续你的驾考准备。',
+      'web_random_practice_description': '从完整题库随机抽取 30 道题。',
+      'web_chapter_practice_description': '按 25 个官方章节练习并查看每章进度。',
+      'web_exam_description': '30 道题 · 20 分钟 · 错误不超过 3 题即通过。',
+      'web_mistake_description': '还有 {count} 道错题需要复习。',
+      'web_no_mistake_description': '错题本目前是空的。',
+      'web_favorite_description': '已收藏 {count} 道题，可以随时回顾。',
+      'web_no_favorite_description': '做题时收藏重点题目，之后集中回顾。',
+      'web_empty_favorites_description': '练习时点击收藏图标，即可建立自己的重点题库。',
+      'web_skip_mastered_description': '自由练习和章节练习时跳过已经掌握的题目。',
+      'web_sign_in_to_sync': '登录后可在不同设备同步学习进度。',
+      'web_reset_progress_description': '删除答题、错题、掌握度、收藏和今日使用记录。',
+      'web_mastery_report_description': '查看题库覆盖率、掌握度和需要加强的章节。',
+      'web_daily_plan_description': '设定每日目标，合理分配新题和复习题。',
+      'web_choose_daily_goal': '选择每天的答题目标',
+      'web_today_plan_progress': '今日计划',
+      'web_today_plan_complete': '今日计划已完成',
+      'web_start_today_plan': '开始剩余 {count} 道题',
+      'web_bank_coverage': '完整题库覆盖率',
+      'web_start_mistake_practice': '开始练习 {count} 道错题',
+      'web_submit_exam_confirmation': '还有 {count} 道题未答，未答题将计为错误。现在交卷吗？',
+      'web_review_exam': '查看试卷',
+      'web_choose_sign_in_method': '选择登录方式',
+      'web_browser_voice_title': '网页意大利语朗读',
+      'web_browser_voice_description':
+          '点击朗读时会在线播放与 App 相同的真人语音；网络音频不可用时，自动使用浏览器的意大利语系统语音。',
+      'web_offline_title': '离线访问',
+      'web_offline_description': '网页框架和已经打开过的题库章节会由浏览器缓存，网络不稳定时仍可再次打开。',
+      'web_your_answer': '你的答案',
+
+      // 错误提示展示层（UserErrorCopy）
+      'auth_error_sign_in_generic': '登录未成功，请重试',
+      'auth_error_register_generic': '注册未成功，请重试',
+      'iap_error_generic': '暂时无法完成商店请求，请稍后再试',
+      'sync_failed_generic': '同步失败，请检查网络后重试',
     },
     'en': {
+      'session_mistakes_expand': 'Show more explanation',
+      'session_mistakes_collapse': 'Hide extra explanation',
+      'session_mistakes_button': 'Session mistakes · {count}',
+      'session_mistakes_title': 'Session mistakes',
+      'session_mistakes_review': 'Review mistakes: {count}',
+      'session_mistakes_reason': 'Why this answer',
+      'session_mistakes_done': 'Close review',
       // Home
-      'app_title': 'PatenteGo',
+      'app_title': 'LinguaPatente',
       'select_mode': 'Select Mode',
       'start_practice': 'Quiz Practice',
       'mock_test': 'Mock Test',
@@ -756,12 +1233,16 @@ class AppStrings {
       'question_id': 'Question ID',
       'correct': 'Correct',
       'wrong': 'Wrong',
+      'answer_streak_short': 'Streak ×{count}',
+      'question_mastery_progress_short': 'Mastery {current}/{total}',
       'show_explanation': 'Show Explanation',
       'hide_explanation': 'Hide Explanation',
       'translation': 'Translation',
       'show_translation': 'Translation',
       'hide_translation': 'Hide Translation',
       'listen_question': 'Listen',
+      'speech_preparing': 'Loading',
+      'speech_stop': 'Stop',
       'speech_unavailable': 'Question audio is unavailable',
       'correct_answer': 'Correct!',
       'wrong_answer': 'Wrong :(',
@@ -812,6 +1293,12 @@ class AppStrings {
       // Settings
       'settings_title': 'Settings',
       'language': 'Language',
+      'theme_mode': 'Theme',
+      'theme_classic': 'Classic theme',
+      'theme_dark': 'Night theme',
+      'theme_retro': 'Retro theme',
+      'theme_retro_preview': 'Retro theme preview',
+      'theme_retro_preview_subtitle': 'Preview the vintage green-screen style',
       'premium_status': 'Premium Status',
       'premium_user': 'Premium User',
       'free_user': 'Free User',
@@ -820,6 +1307,59 @@ class AppStrings {
       'version': 'Version',
       'select_language': 'Choose your language',
       'start_learning': 'Start Learning',
+      'daily_goal_setup_title': 'Set your daily study goal',
+      'daily_goal_setup_subtitle':
+          'Choose how many questions you want to answer each day. We will estimate how long it takes to finish the full question bank.',
+      'daily_goal_questions_per_day': 'questions per day',
+      'daily_goal_free_quota': 'free quota',
+      'daily_goal_estimated_days': 'Days to finish all questions: about {days}',
+      'daily_goal_start_plan': 'Start my study plan',
+      'daily_goal_manage_title': 'Change daily goal',
+      'daily_goal_settings_subtitle':
+          'Currently {goal} questions per day. Change it anytime.',
+      'daily_goal_finish_in': 'How soon do you want to finish?',
+      'daily_goal_duration_option': '{days} days',
+      'daily_goal_custom_label': 'Or enter questions per day',
+      'daily_goal_remaining_questions': 'Questions remaining: {count}',
+      'daily_goal_quota_warning':
+          'Your current free plan can save up to {quota} questions per day. Upgrade to VIP to save and follow this {goal}-question plan.',
+      'daily_goal_save_changes': 'Save changes',
+      'daily_goal_today': 'Today\'s goal',
+      'daily_goal_days_left':
+          'At this pace, days to finish the remaining questions: about {days}',
+      'daily_goal_all_done': 'You have finished the full question bank',
+      'daily_goal_new_questions': 'New',
+      'daily_goal_review_questions': 'Review',
+      'spaced_review_status':
+          'Reviews due today: {count} · 3, 7, 14, and 30-day intervals',
+      'daily_goal_dynamic_hint':
+          'The plan recalculates automatically from your progress and remaining days.',
+      'daily_goal_dynamic_short': 'Dynamic plan',
+      'daily_goal_start_today_plan': 'Start today\'s plan',
+      'daily_goal_plan_complete': 'Today\'s plan is complete.',
+      'daily_goal_no_plan_questions':
+          'No questions are available for today\'s plan.',
+      'learning_streak_days': '{count}-day learning streak',
+      'learning_streak_active_today': 'Streak maintained',
+      'learning_streak_remaining': '{count} more to keep your streak',
+      'growth_session_summary_title': 'Session results',
+      'growth_session_answered': 'Answered',
+      'growth_session_correct': 'Correct',
+      'growth_newly_mastered': 'Newly mastered',
+      'growth_mistakes_resolved': 'Mistakes resolved',
+      'growth_continue_practice': 'Keep practicing',
+      'growth_finish_session': 'Finish session',
+      'growth_today_recommendation': 'Today\'s recommendation',
+      'growth_recommend_mistakes': 'Review mistakes to strengthen weak points',
+      'growth_recommend_weak_chapter':
+          'Strengthen the chapter that needs attention most',
+      'growth_recommend_random':
+          'Keep building your foundation with a few questions',
+      'growth_start': 'Start',
+      'growth_week_title': 'This week\'s growth',
+      'growth_no_activity': 'Start today. Every question counts.',
+      'growth_study_days': 'Study days',
+      'growth_answered': 'Answered',
       'login_to_sync_unlock_vip':
           'Sign in to sync your progress and unlock VIP',
       'guest_mode_status':
@@ -842,11 +1382,84 @@ class AppStrings {
       'delete_cloud_data_on_signout_title':
           'Delete cloud study data before sign out?',
       'delete_cloud_data_on_signout_message':
-          'You can sign out directly, or also delete your Firestore study progress.',
+          'You can just sign out, or also delete the study progress saved in the cloud.',
       'delete_cloud_data_option': 'Delete cloud study data',
       'sign_out_only': 'Sign out only',
       'sign_out_and_delete_data': 'Sign out and delete data',
+      'delete_account': 'Delete account',
+      'delete_account_subtitle': 'Permanently delete your account and cloud data',
+      'delete_account_confirm_title': 'Delete account?',
+      'delete_account_confirm_message': 'Your account and cloud data (progress, exam history, daily usage) will be permanently deleted and cannot be recovered. Your subscription is NOT cancelled: cancel it in your store\'s subscription settings. Progress saved on this device is kept until you reset it.',
+      'delete_account_confirm_action': 'Delete permanently',
+      'delete_account_progress': 'Deleting account…',
+      'delete_account_success': 'Account deleted.',
+      'delete_account_failed': 'Could not delete the account. Please try again.',
+      'delete_account_cancelled': 'Deletion cancelled.',
+      'delete_account_recent_login': 'For security, sign out, sign in again, then retry deleting the account.',
       'open_link_failed': 'Cannot open link',
+
+      // Human voice packs
+      'voice_pack_title': 'Human voice packs',
+      'voice_pack_settings_subtitle':
+          'Download every voice with one tap for offline listening',
+      'voice_pack_intro':
+          'One complete pack contains every question. Without it, you can still use the system voice.',
+      'voice_pack_total_installed': 'Total installed size: {size}',
+      'voice_pack_chapter_number': 'Chapter {chapter}',
+      'voice_pack_uncategorized': 'General audio',
+      'voice_pack_all_questions': 'Human voice for all questions',
+      'voice_pack_question_count': '{count} questions',
+      'voice_pack_status_not_downloaded': 'Not downloaded',
+      'voice_pack_status_downloading': 'Downloading',
+      'voice_pack_status_paused': 'Paused',
+      'voice_pack_status_installed': 'Downloaded',
+      'voice_pack_status_failed': 'Failed',
+      'voice_pack_download': 'Download',
+      'voice_pack_download_all': 'Download all voices',
+      'voice_pack_download_confirm_title': 'Download all voices?',
+      'voice_pack_download_confirm_wifi_message':
+          'The pack is about {size}. Around {required} of free space is needed during installation. Start downloading now?',
+      'voice_pack_download_confirm_mobile_message':
+          'The pack is about {size} and you are not on Wi-Fi. Mobile data may be used. Around {required} of free space is needed. Continue?',
+      'voice_pack_continue_download': 'Download',
+      'voice_pack_storage_insufficient_title': 'Not enough storage',
+      'voice_pack_storage_insufficient_message':
+          'Available: {available}. About {required} is needed to download and install the pack. Free up space and try again.',
+      'voice_pack_offline_title': 'No connection',
+      'voice_pack_offline_message':
+          'Connect to the Internet, preferably over Wi-Fi, and try again.',
+      'voice_pack_ok': 'OK',
+      'voice_pack_pause': 'Pause',
+      'voice_pack_resume': 'Resume',
+      'voice_pack_cancel': 'Cancel',
+      'voice_pack_delete': 'Delete',
+      'voice_pack_retry': 'Retry',
+      'voice_pack_loading_catalog': 'Loading voice packs...',
+      'voice_pack_empty_catalog': 'No human voice packs are available',
+      'voice_pack_catalog_error': 'Could not load the voice pack catalog',
+      'voice_pack_error_network':
+          'Download interrupted. Check your connection and try again.',
+      'voice_pack_error_unavailable':
+          'This voice pack is not available right now. Please try again later.',
+      'voice_pack_error_storage_full':
+          'Not enough storage space. Free up space and try again.',
+      'voice_pack_error_storage':
+          'The voice pack could not be saved on this device. Please try again.',
+      'voice_pack_error_corrupted':
+          'The downloaded file is incomplete or damaged. Please download it again.',
+      'voice_pack_error_cancelled': 'Download cancelled.',
+      'voice_pack_error_generic':
+          'Something went wrong with the voice pack. Please try again.',
+      'voice_pack_downloaded_of': '{downloaded} of {total}',
+      'voice_pack_delete_confirm_title': 'Delete voice pack?',
+      'voice_pack_delete_confirm_message':
+          'Delete “{name}”? You can download it again later.',
+      'voice_pack_delete_confirm': 'Delete',
+      'voice_pack_prompt_title': 'Download the human voice pack?',
+      'voice_pack_prompt_message':
+          'Download the human voice pack for offline playback, or continue using the system voice.',
+      'voice_pack_manage': 'Manage voice packs',
+      'voice_pack_use_system_voice': 'Continue with system voice',
 
       // Premium
       'upgrade_premium': 'Upgrade Premium',
@@ -867,20 +1480,19 @@ class AppStrings {
       'quarterly_price': '\$24.99/quarter',
       'lifetime_price': '\$59.99 one-time',
       // Subscription page specific
-      'sub_title': 'PatenteGo VIP',
+      'sub_title': 'LinguaPatente VIP',
       'sub_subtitle': 'Full access to your Italian driving theory study tools',
-      'sub_feature_unlimited_practice': 'Full question bank: 7,139 questions',
+      'sub_feature_unlimited_practice': 'All chapters and unlimited practice',
       'sub_feature_unlimited_practice_desc':
-          'Remove the free daily 30-question limit',
+          'Unlock every chapter and remove the free 30-question daily limit',
       'sub_feature_unlimited_mock': 'Unlimited mock exams',
       'sub_feature_unlimited_mock_desc':
           'Practice repeatedly with exam-style sessions',
       'sub_feature_unlimited_mistake_review': 'Complete mistake review',
       'sub_feature_unlimited_mistake_review_desc':
           'Review all mistakes, not just the free preview',
-      'sub_feature_deep_explanations': 'Full explanations for every question ✨',
-      'sub_feature_deep_explanations_desc':
-          'Decision logic, key points, and study tips',
+      'sub_feature_deep_explanations': 'Free unlimited explanations',
+      'sub_feature_deep_explanations_desc': 'Decision logic, key points, and study tips are free for everyone',
       'sub_feature_study_center': 'Study statistics and reports',
       'sub_feature_study_center_desc': 'Track coverage, mastery, and progress',
       'sub_feature_cloud_sync': 'Progress saved to the cloud',
@@ -901,11 +1513,22 @@ class AppStrings {
           'The subscription renews monthly unless cancelled at least 24 hours before the end of the current period. '
               'Payment is charged to your app store account after purchase confirmation. '
               'You can manage or cancel your subscription in your app store account settings.',
+      'sub_disclaimer_text_play':
+          'The subscription renews monthly until you cancel. Payment is charged to your Google Play account after purchase confirmation. You can manage or cancel it at any time in Google Play subscriptions: if you cancel before the next renewal date, you won\'t be charged again and keep access until the end of the current paid period.',
+      'manage_subscription': 'Manage subscription',
+      'manage_subscription_subtitle':
+          'View, manage or cancel it in Google Play',
+      'manage_subscription_play': 'Manage or cancel in Google Play',
+      'manage_subscription_subtitle_store': 'View, manage or cancel it in the App Store',
+      'iap_product_unavailable_for_account':
+          'This subscription can\'t be purchased with your current Google Play account. The subscription is only offered in some countries or regions.',
+      'iap_product_unavailable_for_account_store':
+          'This subscription can\'t be purchased with your current App Store account. The subscription is only offered in some countries or regions.',
       'sub_service_terms': 'Terms of Service',
       'sub_privacy_policy': 'Privacy Policy',
       'sub_subscription_success_title': 'Subscription active',
       'sub_subscription_success_message':
-          'PatenteGo VIP is now active. You can manage or cancel your subscription in your app store account settings.',
+          'LinguaPatente VIP is now active. You can manage or cancel your subscription in your app store account settings.',
       'sub_restore_checking': 'Checking purchase history...',
       'sub_restore_success': 'Subscription restored successfully',
       'sub_restore_not_found': 'No subscription to restore',
@@ -916,7 +1539,14 @@ class AppStrings {
           'Subscription is not ready yet. Please try again later.',
       'iap_purchase_start_failed': 'Purchase could not be started.',
       'iap_purchase_failed': 'Purchase failed.',
+      'iap_sign_in_required': 'Please sign in before subscribing.',
       'iap_purchase_verification_failed': 'Purchase could not be verified.',
+      'iap_purchase_verification_pending':
+          'Google Play has completed the payment. We are still confirming your membership and will retry automatically. If it is not active soon, check your connection and tap "Restore Purchase".',
+      'iap_purchase_verification_pending_store':
+          'App Store has completed the payment. We are still confirming your membership and will retry automatically. If it is not active soon, check your connection and tap "Restore Purchase".',
+      'iap_purchase_verification_rejected':
+          'This purchase can\'t be used with the account you\'re signed in with. If you bought it with another account, sign in with that account.',
       'sub_restore_please_login': 'Please sign in first',
 
       // Common
@@ -959,7 +1589,7 @@ class AppStrings {
       'confirm_remove': 'Confirm removal',
       'removed_from_mistakes': 'Question removed from list',
       'failed_to_remove': 'Removal failed',
-      'error_times': '{count} Errors',
+      'error_times': 'Errors: {count}',
       'all_questions_mastered':
           'Congratulations! You have mastered all questions in this mode.',
       'review_mastered': 'Review Mastered Questions',
@@ -1047,10 +1677,10 @@ class AppStrings {
       'auth_apple': 'Continue with Apple',
       'auth_guest_later': 'Continue as guest for now',
       'auth_error_firebase_unavailable':
-          'Sign-in is unavailable. Check the Firebase configuration.',
+          'Sign-in is temporarily unavailable. Please try again later.',
       'auth_error_google_cancelled': 'Sign-in was cancelled.',
       'auth_error_apple_identity_missing':
-          'Apple sign-in failed: identity token was not returned.',
+          'Apple sign-in could not be completed. Please try again.',
       'auth_error_user_not_found': 'No account was found for this email.',
       'auth_error_wrong_password': 'Incorrect password.',
       'auth_error_invalid_email': 'Invalid email address format.',
@@ -1062,7 +1692,7 @@ class AppStrings {
       'auth_error_password_too_short':
           'Password must be at least 6 characters.',
       'auth_error_register_unavailable':
-          'Registration is unavailable. Check the Firebase configuration.',
+          'Registration is temporarily unavailable. Please try again later.',
       'auth_error_email_in_use':
           'This email is already in use. Please sign in instead.',
       'auth_error_weak_password':
@@ -1091,12 +1721,29 @@ class AppStrings {
       'trend_chart_locked_title': 'Trend chart locked',
       'trend_chart_locked_desc': 'Complete 1 mock exam to unlock trend chart',
       'focus_chapters_title': 'Chapters to focus on',
+      'chapter_capability_title': 'Chapter capability map',
+      'chapter_capability_show_all': 'Show all',
+      'chapter_capability_show_priority': 'Show priorities',
+      'chapter_capability_not_started': 'Not started',
+      'chapter_capability_learning': 'Learning',
+      'chapter_capability_needs_attention': 'Needs attention',
+      'chapter_capability_stable': 'Stable',
+      'chapter_capability_stats':
+          'Coverage {practiced}/{total} · Mastered {mastered} · Mistakes {mistakes}',
+      'chapter_capability_start': 'Start chapter',
+      'chapter_capability_strengthen': 'Strengthen now',
+      'chapter_capability_review': 'Review',
+      'chapter_strengthening_completed': 'Chapter strengthening complete',
+      'chapter_strengthening_mastered_change': 'Mastered questions',
+      'chapter_strengthening_mistakes_change': 'Current mistakes',
+      'chapter_strengthening_state_change': 'Chapter status',
+      'chapter_strengthening_back_to_map': 'Back to capability map',
       'no_weak_chapters_placeholder': 'No weak chapters. Keep it up!',
       'explanation_missing_short': 'No explanation available',
       // Mistake elimination mode
       'mistake_mode_title': 'Mistake elimination mode',
       'mistake_mode_description':
-          'We will focus on your {count} wrong questions in a dedicated drill. Each correct answer reduces the wrong count by 1 until it disappears completely.',
+          'We will drill the questions you got wrong ({count}) in a dedicated session. Each correct answer reduces the wrong count by 1 until it disappears completely.',
       'mistake_mode_vip_suffix':
           '✨ This feature is VIP‑only and helps you target your weak spots precisely.',
       'remaining_free_explanations': 'Remaining free explanations today',
@@ -1119,10 +1766,90 @@ class AppStrings {
       'error_count_prefix': 'Errors: ',
       'ai_advice_cta': 'Get expert-level AI improvement advice',
       'mock_exam_nth_prefix': 'Attempt ',
+
+      // 网页端（WebAppScreen）
+      'web_sign_in': 'Sign in',
+      'web_start_chapter': 'Start chapter 1',
+      'web_continue_chapter': 'Continue chapter 1',
+      'web_guest_saved': 'Guest progress is saved on this browser.',
+      'web_cloud_saved': 'Signed in — progress can follow you across devices.',
+      'web_sync_unavailable':
+          'Signed in — local progress is safe. Cloud sync is temporarily unavailable.',
+      'web_chapter_one': 'Chapter 1 · Road signs',
+      'web_chapter_question_count': '{count} questions',
+      'web_chapter_progress': 'Chapter progress',
+      'web_landing_subhead':
+          'Follow the same learning flow as the app: choose the first chapter, answer questions, and build mastery one step at a time.',
+      'web_available_tools': 'Available while you practice',
+      'web_hint_listen': 'Listen',
+      'web_hint_translate': 'Translation',
+      'web_hint_explanation': 'Explanation',
+      'web_hint_sync': 'Cross-device sync',
+      'web_sync_label': 'Progress',
+      'web_sync_local': 'Local',
+      'web_sync_active': 'Synced',
+      'web_overview': 'Overview',
+      'web_hub_subtitle': 'Choose a learning mode and continue your progress.',
+      'web_random_practice_description':
+          'A fresh mix of 30 questions from the full bank.',
+      'web_chapter_practice_description':
+          'Study the 25 official chapters with progress by chapter.',
+      'web_exam_description':
+          '30 questions · 20 minutes · pass with at most 3 errors.',
+      'web_mistake_description': 'Questions to review again: {count}.',
+      'web_no_mistake_description': 'Your mistake book is empty.',
+      'web_favorite_description': 'Saved questions ready to review: {count}.',
+      'web_no_favorite_description':
+          'Save useful questions while you practice.',
+      'web_empty_favorites_description':
+          'Tap the bookmark while practicing to build your review list.',
+      'web_skip_mastered_description':
+          'Leave mastered questions out of random and chapter practice.',
+      'web_sign_in_to_sync': 'Sign in to sync progress across devices.',
+      'web_reset_progress_description':
+          'Remove answers, mistakes, mastery, favorites and daily usage.',
+      'web_mastery_report_description':
+          'See coverage, mastery and the chapters that need attention.',
+      'web_daily_plan_description':
+          'Balance new questions and review with a clear daily target.',
+      'web_choose_daily_goal': 'Choose your daily question goal',
+      'web_today_plan_progress': 'Today\'s plan',
+      'web_today_plan_complete': 'Today\'s plan is complete',
+      'web_start_today_plan': 'Start remaining questions ({count})',
+      'web_bank_coverage': 'Question bank coverage',
+      'web_start_mistake_practice': 'Practice mistakes ({count})',
+      'web_submit_exam_confirmation':
+          'Unanswered questions: {count}. They will count as errors. Submit now?',
+      'web_review_exam': 'Review paper',
+      'web_choose_sign_in_method': 'Choose how to sign in',
+      'web_browser_voice_title': 'Italian browser voice',
+      'web_browser_voice_description':
+          'Tap Listen to stream the same human voice used by the App. If the network audio is unavailable, the Italian browser voice takes over automatically.',
+      'web_offline_title': 'Offline access',
+      'web_offline_description':
+          'The app shell and question chapters you open are cached by the browser, so they can be reopened when the connection is unstable.',
+      'web_your_answer': 'Your answer',
+
+      // 错误提示展示层（UserErrorCopy）
+      'auth_error_sign_in_generic':
+          'Sign-in didn\'t complete. Please try again.',
+      'auth_error_register_generic':
+          'Registration didn\'t complete. Please try again.',
+      'iap_error_generic':
+          'The store request couldn\'t be completed. Please try again later.',
+      'sync_failed_generic':
+          'Sync failed. Check your connection and try again.',
     },
     'ru': {
+      'session_mistakes_expand': 'Подробнее об ответе',
+      'session_mistakes_collapse': 'Скрыть подробности',
+      'session_mistakes_button': 'Ошибки · {count}',
+      'session_mistakes_title': 'Ошибки занятия',
+      'session_mistakes_review': 'Разобрать ошибки: {count}',
+      'session_mistakes_reason': 'Почему этот ответ',
+      'session_mistakes_done': 'Закрыть разбор',
       // Главная
-      'app_title': 'PatenteGo',
+      'app_title': 'LinguaPatente',
       'select_mode': 'Выберите режим',
       'start_practice': 'Практика',
       'mock_test': 'Моделирование экзамена',
@@ -1137,12 +1864,16 @@ class AppStrings {
       'question_id': 'ID вопроса',
       'correct': 'Правильно',
       'wrong': 'Неправильно',
+      'answer_streak_short': 'Серия ×{count}',
+      'question_mastery_progress_short': 'Освоение {current}/{total}',
       'show_explanation': 'Показать объяснение',
       'hide_explanation': 'Скрыть объяснение',
       'translation': 'Перевод',
       'show_translation': 'Перевод',
       'hide_translation': 'Скрыть перевод',
       'listen_question': 'Аудио',
+      'speech_preparing': 'Загрузка',
+      'speech_stop': 'Стоп',
       'speech_unavailable': 'Озвучивание вопроса недоступно',
       'correct_answer': 'Правильно!',
       'wrong_answer': 'Неправильно :(',
@@ -1161,7 +1892,7 @@ class AppStrings {
       'of': 'из',
       'mock_test_completed': 'Пробный тест завершен!',
       'submit_exam': 'CONSEGNA',
-      'questions_completed': 'Выполнено {count}/{total} вопросов',
+      'questions_completed': 'Вопросов выполнено: {count}/{total}',
       'test_result': 'Результат теста',
       'result': 'Результат',
       'passed': 'Сдан',
@@ -1193,6 +1924,12 @@ class AppStrings {
       // Настройки
       'settings_title': 'Настройки',
       'language': 'Язык',
+      'theme_mode': 'Тема',
+      'theme_classic': 'Классическая тема',
+      'theme_dark': 'Ночная тема',
+      'theme_retro': 'Ретро-тема',
+      'theme_retro_preview': 'Предпросмотр ретро-темы',
+      'theme_retro_preview_subtitle': 'Посмотреть стиль зелёного экрана',
       'premium_status': 'Статус премиум',
       'premium_user': 'Премиум пользователь',
       'free_user': 'Бесплатный пользователь',
@@ -1201,6 +1938,61 @@ class AppStrings {
       'version': 'Версия',
       'select_language': 'Выберите ваш язык',
       'start_learning': 'Начать обучение',
+      'daily_goal_setup_title': 'Задайте ежедневную цель',
+      'daily_goal_setup_subtitle':
+          'Выберите, сколько вопросов вы хотите проходить каждый день. Мы покажем, сколько дней нужно для всей базы.',
+      'daily_goal_questions_per_day': 'вопросов в день',
+      'daily_goal_free_quota': 'бесплатный лимит',
+      'daily_goal_estimated_days':
+          'Около {days} дн., чтобы пройти все вопросы',
+      'daily_goal_start_plan': 'Начать мой план',
+      'daily_goal_manage_title': 'Изменить ежедневную цель',
+      'daily_goal_settings_subtitle':
+          'Текущая цель в день: {goal}. Её можно изменить в любое время.',
+      'daily_goal_finish_in': 'За сколько времени вы хотите закончить?',
+      'daily_goal_duration_option': '{days} дн.',
+      'daily_goal_custom_label': 'Или введите число вопросов в день',
+      'daily_goal_remaining_questions': 'Осталось вопросов: {count}',
+      'daily_goal_quota_warning':
+          'В бесплатном плане дневная цель не может превышать {quota}. Перейдите на VIP, чтобы сохранить и выполнять план с целью {goal} в день.',
+      'daily_goal_save_changes': 'Сохранить изменения',
+      'daily_goal_today': 'Цель на сегодня',
+      'daily_goal_days_left':
+          'В этом темпе около {days} дн. до конца оставшихся вопросов',
+      'daily_goal_all_done': 'Вы уже прошли всю базу вопросов',
+      'daily_goal_new_questions': 'Новые',
+      'daily_goal_review_questions': 'Повторение',
+      'spaced_review_status':
+          'Сегодня к повторению: {count} · интервалы 3, 7, 14 и 30 дней',
+      'daily_goal_dynamic_hint':
+          'План автоматически пересчитывается по прогрессу и оставшимся дням.',
+      'daily_goal_dynamic_short': 'Динамический план',
+      'daily_goal_start_today_plan': 'Начать план на сегодня',
+      'daily_goal_plan_complete': 'План на сегодня выполнен.',
+      'daily_goal_no_plan_questions':
+          'Для плана на сегодня нет доступных вопросов.',
+      'learning_streak_days': 'Серия обучения: {count} дн.',
+      'learning_streak_active_today': 'Серия сохранена',
+      'learning_streak_remaining': 'Ещё {count}, чтобы сохранить серию',
+      'growth_session_summary_title': 'Результаты занятия',
+      'growth_session_answered': 'Отвечено',
+      'growth_session_correct': 'Верно',
+      'growth_newly_mastered': 'Освоено впервые',
+      'growth_mistakes_resolved': 'Ошибок устранено',
+      'growth_continue_practice': 'Продолжить занятия',
+      'growth_finish_session': 'Завершить занятие',
+      'growth_today_recommendation': 'Совет на сегодня',
+      'growth_recommend_mistakes':
+          'Повторите ошибки, чтобы укрепить слабые места',
+      'growth_recommend_weak_chapter':
+          'Уделите внимание главе, которая требует подготовки',
+      'growth_recommend_random':
+          'Продолжайте укреплять базу несколькими вопросами',
+      'growth_start': 'Начать',
+      'growth_week_title': 'Рост за неделю',
+      'growth_no_activity': 'Начните сегодня: каждый вопрос важен',
+      'growth_study_days': 'Дни обучения',
+      'growth_answered': 'Ответов',
 
       // Премиум
       'upgrade_premium': 'Обновить до премиум',
@@ -1259,7 +2051,7 @@ class AppStrings {
       'confirm_remove': 'Подтвердить удаление',
       'removed_from_mistakes': 'Вопрос удален из списка',
       'failed_to_remove': 'Не удалось удалить',
-      'error_times': '{count} Ошибок',
+      'error_times': 'Ошибок: {count}',
       'all_questions_mastered':
           'Поздравляем! Вы освоили все вопросы в этом режиме.',
       'review_mastered': 'Повторить Освоенные Вопросы',
@@ -1334,10 +2126,10 @@ class AppStrings {
       'auth_apple': 'Войти через Apple',
       'auth_guest_later': 'Пока продолжить как гость',
       'auth_error_firebase_unavailable':
-          'Вход недоступен. Проверьте конфигурацию Firebase.',
+          'Вход временно недоступен. Повторите попытку позже.',
       'auth_error_google_cancelled': 'Вход отменён.',
       'auth_error_apple_identity_missing':
-          'Вход через Apple не выполнен: identity token не получен.',
+          'Не удалось завершить вход через Apple. Попробуйте ещё раз.',
       'auth_error_user_not_found': 'Аккаунт с этим адресом email не найден.',
       'auth_error_wrong_password': 'Неверный пароль.',
       'auth_error_invalid_email': 'Неверный формат email.',
@@ -1349,7 +2141,7 @@ class AppStrings {
       'auth_error_password_too_short':
           'Пароль должен содержать минимум 6 символов.',
       'auth_error_register_unavailable':
-          'Регистрация недоступна. Проверьте конфигурацию Firebase.',
+          'Регистрация временно недоступна. Повторите попытку позже.',
       'auth_error_email_in_use':
           'Этот email уже используется. Войдите напрямую.',
       'auth_error_weak_password':
@@ -1391,6 +2183,23 @@ class AppStrings {
       'trend_chart_locked_desc':
           'Пройдите 1 пробный экзамен, чтобы открыть график тренда',
       'focus_chapters_title': 'Слабые главы',
+      'chapter_capability_title': 'Карта навыков по главам',
+      'chapter_capability_show_all': 'Показать все',
+      'chapter_capability_show_priority': 'Только приоритетные',
+      'chapter_capability_not_started': 'Не начато',
+      'chapter_capability_learning': 'В процессе',
+      'chapter_capability_needs_attention': 'Нужно усилить',
+      'chapter_capability_stable': 'Закреплено',
+      'chapter_capability_stats':
+          'Охват {practiced}/{total} · Освоено {mastered} · Ошибки {mistakes}',
+      'chapter_capability_start': 'Начать главу',
+      'chapter_capability_strengthen': 'Усилить',
+      'chapter_capability_review': 'Повторить',
+      'chapter_strengthening_completed': 'Усиление главы завершено',
+      'chapter_strengthening_mastered_change': 'Освоенные вопросы',
+      'chapter_strengthening_mistakes_change': 'Текущие ошибки',
+      'chapter_strengthening_state_change': 'Статус главы',
+      'chapter_strengthening_back_to_map': 'Вернуться к карте',
       'no_weak_chapters_placeholder': 'Нет слабых глав. Так держать!',
       'explanation_missing_short': 'Нет объяснения',
       'login_to_sync_unlock_vip':
@@ -1416,11 +2225,85 @@ class AppStrings {
       'delete_cloud_data_on_signout_title':
           'Удалить облачные учебные данные перед выходом?',
       'delete_cloud_data_on_signout_message':
-          'Можно просто выйти или также удалить прогресс обучения из Firestore.',
+          'Можно просто выйти или также удалить прогресс обучения, сохранённый в облаке.',
       'delete_cloud_data_option': 'Удалить облачные учебные данные',
       'sign_out_only': 'Только выйти',
       'sign_out_and_delete_data': 'Выйти и удалить данные',
+      'delete_account': 'Удалить аккаунт',
+      'delete_account_subtitle': 'Навсегда удалить аккаунт и данные в облаке',
+      'delete_account_confirm_title': 'Удалить аккаунт?',
+      'delete_account_confirm_message': 'Ваш аккаунт и данные в облаке (прогресс, история экзаменов, дневная статистика) будут удалены навсегда без возможности восстановления. Подписка НЕ отменяется: отмените её в настройках подписок магазина. Прогресс на этом устройстве сохраняется, пока вы его не сбросите.',
+      'delete_account_confirm_action': 'Удалить навсегда',
+      'delete_account_progress': 'Удаление аккаунта…',
+      'delete_account_success': 'Аккаунт удалён.',
+      'delete_account_failed': 'Не удалось удалить аккаунт. Попробуйте ещё раз.',
+      'delete_account_cancelled': 'Удаление отменено.',
+      'delete_account_recent_login': 'В целях безопасности выйдите, войдите снова и повторите удаление аккаунта.',
       'open_link_failed': 'Не удалось открыть ссылку',
+
+      // Пакеты человеческого голоса
+      'voice_pack_title': 'Пакеты живого голоса',
+      'voice_pack_settings_subtitle':
+          'Скачайте все озвучки одним нажатием для работы офлайн',
+      'voice_pack_intro':
+          'Один полный пакет содержит озвучку всех вопросов. Без него можно использовать системный голос.',
+      'voice_pack_total_installed': 'Всего установлено: {size}',
+      'voice_pack_chapter_number': 'Глава {chapter}',
+      'voice_pack_uncategorized': 'Общие аудиозаписи',
+      'voice_pack_all_questions': 'Озвучка всех вопросов',
+      'voice_pack_question_count': 'Вопросов: {count}',
+      'voice_pack_status_not_downloaded': 'Не скачано',
+      'voice_pack_status_downloading': 'Скачивание',
+      'voice_pack_status_paused': 'Приостановлено',
+      'voice_pack_status_installed': 'Скачано',
+      'voice_pack_status_failed': 'Ошибка',
+      'voice_pack_download': 'Скачать',
+      'voice_pack_download_all': 'Скачать все озвучки',
+      'voice_pack_download_confirm_title': 'Скачать все озвучки?',
+      'voice_pack_download_confirm_wifi_message':
+          'Размер пакета около {size}. Для установки требуется около {required} свободного места. Начать скачивание?',
+      'voice_pack_download_confirm_mobile_message':
+          'Размер пакета около {size}, Wi-Fi не подключён. Может использоваться мобильный интернет. Требуется около {required} свободного места. Продолжить?',
+      'voice_pack_continue_download': 'Скачать',
+      'voice_pack_storage_insufficient_title': 'Недостаточно места',
+      'voice_pack_storage_insufficient_message':
+          'Доступно: {available}. Для скачивания и установки требуется около {required}. Освободите место и повторите попытку.',
+      'voice_pack_offline_title': 'Нет подключения',
+      'voice_pack_offline_message':
+          'Подключитесь к Интернету, желательно по Wi-Fi, и повторите попытку.',
+      'voice_pack_ok': 'OK',
+      'voice_pack_pause': 'Пауза',
+      'voice_pack_resume': 'Продолжить',
+      'voice_pack_cancel': 'Отменить',
+      'voice_pack_delete': 'Удалить',
+      'voice_pack_retry': 'Повторить',
+      'voice_pack_loading_catalog': 'Загрузка голосовых пакетов...',
+      'voice_pack_empty_catalog': 'Нет доступных пакетов живого голоса',
+      'voice_pack_catalog_error':
+          'Не удалось загрузить каталог голосовых пакетов',
+      'voice_pack_error_network':
+          'Загрузка прервана. Проверьте подключение и повторите попытку.',
+      'voice_pack_error_unavailable':
+          'Этот пакет сейчас недоступен. Повторите попытку позже.',
+      'voice_pack_error_storage_full':
+          'Недостаточно места на устройстве. Освободите место и повторите попытку.',
+      'voice_pack_error_storage':
+          'Не удалось сохранить пакет на устройстве. Повторите попытку.',
+      'voice_pack_error_corrupted':
+          'Загруженный файл неполный или повреждён. Скачайте его заново.',
+      'voice_pack_error_cancelled': 'Загрузка отменена.',
+      'voice_pack_error_generic':
+          'С пакетом что-то пошло не так. Повторите попытку.',
+      'voice_pack_downloaded_of': '{downloaded} из {total}',
+      'voice_pack_delete_confirm_title': 'Удалить голосовой пакет?',
+      'voice_pack_delete_confirm_message':
+          'Удалить «{name}»? Позже его можно скачать снова.',
+      'voice_pack_delete_confirm': 'Удалить',
+      'voice_pack_prompt_title': 'Скачать пакет живого голоса?',
+      'voice_pack_prompt_message':
+          'Скачайте пакет живого голоса для офлайн-прослушивания или продолжайте использовать системный голос.',
+      'voice_pack_manage': 'Управление голосовыми пакетами',
+      'voice_pack_use_system_voice': 'Продолжить с системным голосом',
       'database_loading_please_wait':
           'Данные загружаются, попробуйте ещё раз немного позже',
       'empty_favorites_message':
@@ -1436,7 +2319,7 @@ class AppStrings {
           'Бесплатные объяснения на сегодня закончились. Перейдите на VIP, чтобы открыть подробные объяснения ко всем 7 139 вопросам.',
       'mistake_mode_title': 'Режим устранения ошибок',
       'mistake_mode_description':
-          'Мы целенаправленно отработаем ваши {count} ошибочных вопросов. Каждый правильный ответ уменьшает счётчик ошибок на 1, пока ошибка не исчезнет.',
+          'Мы целенаправленно отработаем ваши вопросы с ошибками ({count}). Каждый правильный ответ уменьшает счётчик ошибок на 1, пока ошибка не исчезнет.',
       'mistake_mode_vip_suffix':
           '✨ Эта функция доступна только VIP и помогает точечно закрывать слабые места.',
       'mistake_tab_practice': 'Целевая практика',
@@ -1454,22 +2337,20 @@ class AppStrings {
       'error_count_prefix': 'Ошибки: ',
       'ai_advice_cta': 'Получить экспертные советы AI',
       'mock_exam_nth_prefix': 'Попытка ',
-      'sub_title': 'PatenteGo VIP',
+      'sub_title': 'LinguaPatente VIP',
       'sub_subtitle':
           'Полный доступ к инструментам подготовки к итальянскому экзамену',
-      'sub_feature_unlimited_practice': 'Полная база: 7 139 вопросов',
+      'sub_feature_unlimited_practice': 'Все главы и неограниченная практика',
       'sub_feature_unlimited_practice_desc':
-          'Убирает бесплатный лимит 30 вопросов в день',
+          'Откройте все главы и снимите лимит 30 вопросов в день',
       'sub_feature_unlimited_mock': 'Пробные экзамены без ограничений',
       'sub_feature_unlimited_mock_desc':
           'Тренируйтесь несколько раз в формате экзамена',
       'sub_feature_unlimited_mistake_review': 'Полный разбор ошибок',
       'sub_feature_unlimited_mistake_review_desc':
           'Повторяйте все ошибки, а не только бесплатный предпросмотр',
-      'sub_feature_deep_explanations':
-          'Подробные объяснения к каждому вопросу ✨',
-      'sub_feature_deep_explanations_desc':
-          'Логика ответа, ключевые моменты и советы по учёбе',
+      'sub_feature_deep_explanations': 'Полные объяснения бесплатно',
+      'sub_feature_deep_explanations_desc': 'Логика ответа, ключевые моменты и советы доступны всем без ограничений',
       'sub_feature_study_center': 'Статистика и учебные отчёты',
       'sub_feature_study_center_desc':
           'Отслеживайте охват, освоение и прогресс',
@@ -1490,11 +2371,22 @@ class AppStrings {
       'sub_cta_subscribe_button': 'Продолжить с месячной подпиской',
       'sub_disclaimer_text':
           'Подписка продлевается каждый месяц, если её не отменить минимум за 24 часа до конца текущего периода. Оплата списывается через аккаунт магазина после подтверждения покупки. Управлять подпиской и отменять её можно в настройках аккаунта магазина.',
+      'sub_disclaimer_text_play':
+          'Подписка продлевается каждый месяц, пока вы её не отмените. Оплата списывается с аккаунта Google Play после подтверждения покупки. Управлять подпиской и отменить её можно в любой момент в разделе подписок Google Play: если отменить до следующей даты продления, новых списаний не будет, а доступ сохранится до конца оплаченного периода.',
+      'manage_subscription': 'Управление подпиской',
+      'manage_subscription_subtitle':
+          'Просмотр, управление и отмена в Google Play',
+      'manage_subscription_play': 'Управлять или отменить в Google Play',
+      'manage_subscription_subtitle_store': 'Просмотр, управление и отмена в App Store',
+      'iap_product_unavailable_for_account':
+          'С текущим аккаунтом Google Play эту подписку купить нельзя. Подписка предлагается только в некоторых странах и регионах.',
+      'iap_product_unavailable_for_account_store':
+          'С текущим аккаунтом App Store эту подписку купить нельзя. Подписка предлагается только в некоторых странах или регионах.',
       'sub_service_terms': 'Условия использования',
       'sub_privacy_policy': 'Политика конфиденциальности',
       'sub_subscription_success_title': 'Подписка активирована',
       'sub_subscription_success_message':
-          'PatenteGo VIP активен. Управлять подпиской или отменить её можно в настройках аккаунта магазина.',
+          'LinguaPatente VIP активен. Управлять подпиской или отменить её можно в настройках аккаунта магазина.',
       'sub_restore_checking': 'Проверяем историю покупок...',
       'sub_restore_success': 'Подписка успешно восстановлена',
       'sub_restore_not_found': 'Подписка для восстановления не найдена',
@@ -1504,12 +2396,102 @@ class AppStrings {
       'iap_subscription_not_ready': 'Подписка ещё не готова. Повторите позже.',
       'iap_purchase_start_failed': 'Не удалось начать покупку.',
       'iap_purchase_failed': 'Покупка не удалась.',
+      'iap_sign_in_required': 'Войдите в аккаунт перед оформлением подписки.',
       'iap_purchase_verification_failed': 'Не удалось подтвердить покупку.',
+      'iap_purchase_verification_pending':
+          'Google Play завершил оплату. Мы ещё подтверждаем подписку и автоматически повторим попытку. Если она скоро не активируется, проверьте подключение и нажмите «Восстановить покупку».',
+      'iap_purchase_verification_pending_store':
+          'App Store завершил оплату. Мы ещё подтверждаем подписку и автоматически повторим попытку. Если она скоро не активируется, проверьте подключение и нажмите «Восстановить покупку».',
+      'iap_purchase_verification_rejected':
+          'Эту покупку нельзя использовать с аккаунтом, в который вы вошли. Если вы купили её с другим аккаунтом, войдите в него.',
       'sub_restore_please_login': 'Сначала войдите',
+
+      // 网页端（WebAppScreen）
+      'web_sign_in': 'Войти',
+      'web_start_chapter': 'Начать главу 1',
+      'web_continue_chapter': 'Продолжить главу 1',
+      'web_guest_saved':
+          'Прогресс в гостевом режиме сохраняется в этом браузере.',
+      'web_cloud_saved':
+          'Вы вошли — прогресс доступен на всех ваших устройствах.',
+      'web_sync_unavailable':
+          'Вы вошли — прогресс на устройстве сохранён. Облачная синхронизация временно недоступна.',
+      'web_chapter_one': 'Глава 1 · Дорожные знаки',
+      'web_chapter_question_count': 'Вопросов: {count}',
+      'web_chapter_progress': 'Прогресс по главе',
+      'web_landing_subhead':
+          'Учитесь так же, как в приложении: выберите первую главу, отвечайте на вопросы и шаг за шагом закрепляйте знания.',
+      'web_available_tools': 'Доступно во время практики',
+      'web_hint_listen': 'Прослушать',
+      'web_hint_translate': 'Перевод',
+      'web_hint_explanation': 'Объяснение',
+      'web_hint_sync': 'Синхронизация между устройствами',
+      'web_sync_label': 'Прогресс',
+      'web_sync_local': 'На устройстве',
+      'web_sync_active': 'Синхронизировано',
+      'web_overview': 'Обзор',
+      'web_hub_subtitle':
+          'Выберите режим обучения и продолжите с того места, где остановились.',
+      'web_random_practice_description': '30 случайных вопросов из всей базы.',
+      'web_chapter_practice_description':
+          'Изучайте 25 официальных глав и следите за прогрессом по каждой.',
+      'web_exam_description':
+          '30 вопросов · 20 минут · для сдачи не более 3 ошибок.',
+      'web_mistake_description': 'Вопросов для повторения: {count}.',
+      'web_no_mistake_description': 'В списке ошибок пока пусто.',
+      'web_favorite_description':
+          'Сохранённых вопросов: {count}. Их можно повторить в любой момент.',
+      'web_no_favorite_description':
+          'Сохраняйте полезные вопросы во время практики.',
+      'web_empty_favorites_description':
+          'Нажимайте на закладку во время практики, чтобы собрать свой список для повторения.',
+      'web_skip_mastered_description':
+          'Не показывать освоенные вопросы в случайных тестах и тестах по главам.',
+      'web_sign_in_to_sync':
+          'Войдите, чтобы синхронизировать прогресс между устройствами.',
+      'web_reset_progress_description':
+          'Удалить ответы, ошибки, освоение, избранное и дневную статистику.',
+      'web_mastery_report_description':
+          'Охват базы, освоение и главы, которым нужно внимание.',
+      'web_daily_plan_description':
+          'Распределяйте новые вопросы и повторение с понятной ежедневной целью.',
+      'web_choose_daily_goal': 'Выберите, сколько вопросов решать в день',
+      'web_today_plan_progress': 'План на сегодня',
+      'web_today_plan_complete': 'План на сегодня выполнен',
+      'web_start_today_plan': 'Начать оставшиеся вопросы ({count})',
+      'web_bank_coverage': 'Охват базы вопросов',
+      'web_start_mistake_practice': 'Проработать ошибки ({count})',
+      'web_submit_exam_confirmation':
+          'Без ответа: {count}. Такие вопросы засчитываются как ошибки. Сдать сейчас?',
+      'web_review_exam': 'Разбор экзамена',
+      'web_choose_sign_in_method': 'Выберите способ входа',
+      'web_browser_voice_title': 'Итальянская озвучка в браузере',
+      'web_browser_voice_description':
+          'Нажмите «Аудио», чтобы воспроизвести ту же живую озвучку, что и в приложении. Если сетевое аудио недоступно, автоматически включится итальянский голос браузера.',
+      'web_offline_title': 'Офлайн-доступ',
+      'web_offline_description':
+          'Оболочка приложения и уже открытые главы кэшируются браузером, поэтому их можно открыть снова при нестабильном соединении.',
+      'web_your_answer': 'Ваш ответ',
+
+      // 错误提示展示层（UserErrorCopy）
+      'auth_error_sign_in_generic': 'Не удалось войти. Попробуйте ещё раз.',
+      'auth_error_register_generic':
+          'Не удалось зарегистрироваться. Попробуйте ещё раз.',
+      'iap_error_generic':
+          'Не удалось выполнить запрос к магазину. Повторите попытку позже.',
+      'sync_failed_generic':
+          'Не удалось синхронизировать. Проверьте подключение и повторите попытку.',
     },
     'ur': {
+      'session_mistakes_expand': 'مزید وضاحت دیکھیں',
+      'session_mistakes_collapse': 'مزید وضاحت چھپائیں',
+      'session_mistakes_button': 'اس نشست کی غلطیاں · {count}',
+      'session_mistakes_title': 'اس نشست کی غلطیاں',
+      'session_mistakes_review': 'غلطیوں کا جائزہ: {count}',
+      'session_mistakes_reason': 'اس جواب کی وجہ',
+      'session_mistakes_done': 'جائزہ بند کریں',
       // 首页
-      'app_title': 'PatenteGo',
+      'app_title': 'LinguaPatente',
       'select_mode': 'موڈ منتخب کریں',
       'start_practice': 'سوالات کی مشق',
       'mock_test': 'فرضی ٹیسٹ',
@@ -1524,12 +2506,16 @@ class AppStrings {
       'question_id': 'سوال ID',
       'correct': 'درست',
       'wrong': 'غلط',
+      'answer_streak_short': 'مسلسل درست ×{count}',
+      'question_mastery_progress_short': 'مہارت {current}/{total}',
       'show_explanation': 'وضاحت دکھائیں',
       'hide_explanation': 'وضاحت چھپائیں',
       'translation': 'ترجمہ',
       'show_translation': 'ترجمہ',
       'hide_translation': 'ترجمہ چھپائیں',
       'listen_question': 'آواز',
+      'speech_preparing': 'تیاری',
+      'speech_stop': 'روکیں',
       'speech_unavailable': 'سوال کی آواز دستیاب نہیں',
       'correct_answer': 'درست!',
       'wrong_answer': 'غلط :(',
@@ -1580,6 +2566,12 @@ class AppStrings {
       // 设置页面
       'settings_title': 'ترتیبات',
       'language': 'زبان',
+      'theme_mode': 'تھیم',
+      'theme_classic': 'کلاسک تھیم',
+      'theme_dark': 'نائٹ تھیم',
+      'theme_retro': 'ریٹرو تھیم',
+      'theme_retro_preview': 'ریٹرو تھیم کا پیش نظارہ',
+      'theme_retro_preview_subtitle': 'نوکیا طرز کی سبز اسکرین دیکھیں',
       'premium_status': 'پریمیم کی حیثیت',
       'premium_user': 'پریمیم صارف',
       'free_user': 'مفت صارف',
@@ -1588,13 +2580,66 @@ class AppStrings {
       'version': 'ورژن',
       'select_language': 'اپنی زبان منتخب کریں',
       'start_learning': 'سیکھنا شروع کریں',
+      'daily_goal_setup_title': 'اپنا روزانہ ہدف مقرر کریں',
+      'daily_goal_setup_subtitle':
+          'روزانہ کتنے سوالات حل کرنا چاہتے ہیں، منتخب کریں۔ ہم اندازہ دکھائیں گے کہ پوری فہرست مکمل کرنے میں کتنے دن لگیں گے۔',
+      'daily_goal_questions_per_day': 'سوالات روزانہ',
+      'daily_goal_free_quota': 'مفت حد',
+      'daily_goal_estimated_days': 'تمام سوالات مکمل کرنے میں تقریبا {days} دن',
+      'daily_goal_start_plan': 'میرا منصوبہ شروع کریں',
+      'daily_goal_manage_title': 'روزانہ ہدف تبدیل کریں',
+      'daily_goal_settings_subtitle':
+          'فی الحال روزانہ {goal} سوالات۔ آپ اسے کسی بھی وقت بدل سکتے ہیں۔',
+      'daily_goal_finish_in': 'آپ کتنے دنوں میں مکمل کرنا چاہتے ہیں؟',
+      'daily_goal_duration_option': '{days} دن',
+      'daily_goal_custom_label': 'یا روزانہ سوالات کی تعداد درج کریں',
+      'daily_goal_remaining_questions': 'باقی سوالات: {count}',
+      'daily_goal_quota_warning':
+          'مفت صارف روزانہ زیادہ سے زیادہ {quota} سوالات کا ہدف محفوظ کر سکتے ہیں۔ روزانہ {goal} سوالات کا یہ منصوبہ محفوظ کرنے کے لیے VIP اپ گریڈ کریں۔',
+      'daily_goal_save_changes': 'تبدیلیاں محفوظ کریں',
+      'daily_goal_today': 'آج کا ہدف',
+      'daily_goal_days_left':
+          'اس رفتار سے باقی سوالات مکمل کرنے میں تقریبا {days} دن',
+      'daily_goal_all_done': 'آپ پوری سوال فہرست مکمل کر چکے ہیں',
+      'daily_goal_new_questions': 'نئے سوال',
+      'daily_goal_review_questions': 'دہرائی',
+      'spaced_review_status':
+          'آج دہرائی کے لیے سوالات: {count} · وقفے 3، 7، 14 اور 30 دن',
+      'daily_goal_dynamic_hint':
+          'منصوبہ آپ کی پیش رفت اور باقی دنوں کے مطابق خود بخود دوبارہ حساب ہوتا ہے۔',
+      'daily_goal_dynamic_short': 'متحرک منصوبہ',
+      'daily_goal_start_today_plan': 'آج کا منصوبہ شروع کریں',
+      'daily_goal_plan_complete': 'آج کا منصوبہ مکمل ہے۔',
+      'daily_goal_no_plan_questions':
+          'آج کے منصوبے کے لیے کوئی سوال دستیاب نہیں۔',
+      'learning_streak_days': '{count} دن مسلسل سیکھا',
+      'learning_streak_active_today': 'آج کا سلسلہ مکمل',
+      'learning_streak_remaining': 'سلسلہ جاری رکھنے کے لیے {count} مزید',
+      'growth_session_summary_title': 'اس نشست کے نتائج',
+      'growth_session_answered': 'جواب دیے',
+      'growth_session_correct': 'درست',
+      'growth_newly_mastered': 'نئے سیکھے گئے',
+      'growth_mistakes_resolved': 'درست کی گئی غلطیاں',
+      'growth_continue_practice': 'مشق جاری رکھیں',
+      'growth_finish_session': 'نشست ختم کریں',
+      'growth_today_recommendation': 'آج کی تجویز',
+      'growth_recommend_mistakes':
+          'کمزور نکات مضبوط کرنے کے لیے غلطیاں دہرائیں',
+      'growth_recommend_weak_chapter':
+          'اس باب کو مضبوط کریں جس پر زیادہ توجہ چاہیے',
+      'growth_recommend_random': 'چند سوالات سے اپنی بنیاد مضبوط کریں',
+      'growth_start': 'شروع کریں',
+      'growth_week_title': 'اس ہفتے کی ترقی',
+      'growth_no_activity': 'آج سے شروع کریں، ہر سوال اہم ہے',
+      'growth_study_days': 'مطالعے کے دن',
+      'growth_answered': 'جواب دیے',
 
       // 会员页面
       'upgrade_premium': 'پریمیم اپ گریڈ',
       'upgrade_to_premium': 'پریمیم میں اپ گریڈ',
       'unlock_all_chapters': 'تمام ابواب کھولیں',
       'ad_free_experience': 'اشتہار سے پاک تجربہ',
-      'cloud_sync': 'کلاؤڈ سینک',
+      'cloud_sync': 'کلاؤڈ سنک',
       'detailed_stats': 'تفصیلی اعداد و شمار',
       'subscribe_now': 'اب سبسکرائب کریں',
       'restore_purchase': 'خریداری بحال کریں',
@@ -1638,7 +2683,7 @@ class AppStrings {
       'add_favorite': 'پسندیدہ میں شامل',
       'upgrade_premium_title': 'پریمیم ممبر میں اپ گریڈ',
       'no_mistakes': 'کوئی غلطی ریکارڈ نہیں',
-      'error_times': '{count} غلطیاں',
+      'error_times': 'غلطیاں: {count}',
       'all_questions_mastered':
           'مبارک ہو! آپ نے اس موڈ میں تمام سوالات میں مہارت حاصل کر لی ہے۔',
       'review_mastered': 'مہارت یافتہ سوالات کا جائزہ لیں',
@@ -1702,6 +2747,23 @@ class AppStrings {
       'trend_chart_locked_desc':
           'ٹرینڈ چارٹ کھولنے کے لیے 1 فرضی امتحان مکمل کریں',
       'focus_chapters_title': 'اہم ابواب',
+      'chapter_capability_title': 'ابواب کی مہارت کا نقشہ',
+      'chapter_capability_show_all': 'سب دکھائیں',
+      'chapter_capability_show_priority': 'صرف ترجیحات',
+      'chapter_capability_not_started': 'شروع نہیں کیا',
+      'chapter_capability_learning': 'سیکھ رہے ہیں',
+      'chapter_capability_needs_attention': 'مزید مشق درکار',
+      'chapter_capability_stable': 'مستحکم مہارت',
+      'chapter_capability_stats':
+          'کوریج {practiced}/{total} · مہارت {mastered} · غلطیاں {mistakes}',
+      'chapter_capability_start': 'باب شروع کریں',
+      'chapter_capability_strengthen': 'ابھی مضبوط کریں',
+      'chapter_capability_review': 'دہرائیں',
+      'chapter_strengthening_completed': 'باب کی مشق مکمل ہوگئی',
+      'chapter_strengthening_mastered_change': 'مہارت حاصل سوالات',
+      'chapter_strengthening_mistakes_change': 'موجودہ غلطیاں',
+      'chapter_strengthening_state_change': 'باب کی حالت',
+      'chapter_strengthening_back_to_map': 'مہارت کے نقشے پر واپس',
       'no_weak_chapters_placeholder':
           'کوئی کمزور باب نہیں۔ اسی طرح جاری رکھیں!',
       'explanation_missing_short': 'وضاحت دستیاب نہیں',
@@ -1717,14 +2779,14 @@ class AppStrings {
       'principal_chapters': 'اہم ابواب',
       'secondary_chapters': 'ذیلی ابواب',
       'chapter_stat_bank': 'بینک: {count} سوالات',
-      'chapter_stat_covered': 'ڈھانپا: {count}',
-      'chapter_stat_mastered': 'ماہر: {count}',
+      'chapter_stat_covered': 'کوریج: {count}',
+      'chapter_stat_mastered': 'مہارت حاصل: {count}',
       'modal_correct_answer_label': 'درست جواب',
       'detail_description_title': 'تفصیلی وضاحت',
       'key_points_title': 'اہم نکات',
       'study_tip_title': 'استاد کا مشورہ',
       'key_vocabulary': 'اہم الفاظ',
-      'mastered_badge_short': 'ماہر',
+      'mastered_badge_short': 'مہارت',
       'mistake_cleared_celebration': '🎉 غلطی مکمل طور پر ختم!',
       'merge_progress_title': 'سیکھنے کی پیشرفت ضم کریں',
       'merge_progress_message':
@@ -1740,10 +2802,10 @@ class AppStrings {
       'auth_apple': 'Apple سے جاری رکھیں',
       'auth_guest_later': 'ابھی مہمان کے طور پر جاری رکھیں',
       'auth_error_firebase_unavailable':
-          'سائن اِن دستیاب نہیں۔ Firebase ترتیب چیک کریں۔',
+          'سائن اِن عارضی طور پر دستیاب نہیں۔ براہ کرم بعد میں دوبارہ کوشش کریں۔',
       'auth_error_google_cancelled': 'سائن اِن منسوخ ہو گیا۔',
       'auth_error_apple_identity_missing':
-          'Apple سائن اِن ناکام: identity token نہیں ملا۔',
+          'Apple سے سائن اِن مکمل نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔',
       'auth_error_user_not_found': 'اس ای میل کے لیے کوئی اکاؤنٹ نہیں ملا۔',
       'auth_error_wrong_password': 'پاس ورڈ غلط ہے۔',
       'auth_error_invalid_email': 'ای میل کا فارمیٹ درست نہیں۔',
@@ -1755,7 +2817,7 @@ class AppStrings {
       'auth_error_login_failed_prefix': 'سائن اِن ناکام: ',
       'auth_error_password_too_short': 'پاس ورڈ کم از کم 6 حروف کا ہونا چاہیے۔',
       'auth_error_register_unavailable':
-          'رجسٹریشن دستیاب نہیں۔ Firebase ترتیب چیک کریں۔',
+          'رجسٹریشن عارضی طور پر دستیاب نہیں۔ براہ کرم بعد میں دوبارہ کوشش کریں۔',
       'auth_error_email_in_use':
           'یہ ای میل پہلے سے استعمال میں ہے۔ براہ راست سائن اِن کریں۔',
       'auth_error_weak_password':
@@ -1788,11 +2850,84 @@ class AppStrings {
       'delete_cloud_data_on_signout_title':
           'سائن آؤٹ سے پہلے کلاؤڈ سیکھنے کا ڈیٹا حذف کریں؟',
       'delete_cloud_data_on_signout_message':
-          'آپ صرف سائن آؤٹ کر سکتے ہیں، یا Firestore سے اپنی سیکھنے کی پیشرفت بھی حذف کر سکتے ہیں۔',
+          'آپ صرف سائن آؤٹ کر سکتے ہیں، یا کلاؤڈ میں محفوظ اپنی سیکھنے کی پیشرفت بھی حذف کر سکتے ہیں۔',
       'delete_cloud_data_option': 'کلاؤڈ سیکھنے کا ڈیٹا حذف کریں',
       'sign_out_only': 'صرف سائن آؤٹ',
       'sign_out_and_delete_data': 'سائن آؤٹ اور ڈیٹا حذف کریں',
+      'delete_account': 'اکاؤنٹ حذف کریں',
+      'delete_account_subtitle': 'اپنا اکاؤنٹ اور کلاؤڈ ڈیٹا مستقل طور پر حذف کریں',
+      'delete_account_confirm_title': 'اکاؤنٹ حذف کریں؟',
+      'delete_account_confirm_message': 'آپ کا اکاؤنٹ اور کلاؤڈ ڈیٹا (پیش رفت، امتحان کی تاریخ، روزانہ استعمال) مستقل طور پر حذف ہو جائے گا اور بحال نہیں ہو سکے گا۔ سبسکرپشن منسوخ نہیں ہوتی: اسے اسٹور کی سبسکرپشن سیٹنگز میں منسوخ کریں۔ اس ڈیوائس پر محفوظ پیش رفت اس وقت تک رہتی ہے جب تک آپ اسے ری سیٹ نہ کریں۔',
+      'delete_account_confirm_action': 'مستقل طور پر حذف کریں',
+      'delete_account_progress': 'اکاؤنٹ حذف کیا جا رہا ہے…',
+      'delete_account_success': 'اکاؤنٹ حذف ہو گیا۔',
+      'delete_account_failed': 'اکاؤنٹ حذف نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
+      'delete_account_cancelled': 'حذف کرنا منسوخ ہو گیا۔',
+      'delete_account_recent_login': 'سیکیورٹی کے لیے سائن آؤٹ کریں، دوبارہ سائن اِن کریں، پھر اکاؤنٹ حذف کرنے کی کوشش کریں۔',
       'open_link_failed': 'لنک نہیں کھل سکا',
+
+      // انسانی آواز کے پیک
+      'voice_pack_title': 'انسانی آواز کے پیک',
+      'voice_pack_settings_subtitle':
+          'آف لائن سننے کے لیے تمام آوازیں ایک بار میں ڈاؤن لوڈ کریں',
+      'voice_pack_intro':
+          'ایک مکمل پیک میں تمام سوالات کی آواز شامل ہے۔ اس کے بغیر بھی سسٹم کی آواز استعمال کی جا سکتی ہے۔',
+      'voice_pack_total_installed': 'کل انسٹال شدہ سائز: {size}',
+      'voice_pack_chapter_number': 'باب {chapter}',
+      'voice_pack_uncategorized': 'عام آڈیو',
+      'voice_pack_all_questions': 'تمام سوالات کی انسانی آواز',
+      'voice_pack_question_count': '{count} سوالات',
+      'voice_pack_status_not_downloaded': 'ڈاؤن لوڈ نہیں ہوا',
+      'voice_pack_status_downloading': 'ڈاؤن لوڈ ہو رہا ہے',
+      'voice_pack_status_paused': 'روکا ہوا',
+      'voice_pack_status_installed': 'ڈاؤن لوڈ شدہ',
+      'voice_pack_status_failed': 'ناکام',
+      'voice_pack_download': 'ڈاؤن لوڈ',
+      'voice_pack_download_all': 'تمام آوازیں ڈاؤن لوڈ کریں',
+      'voice_pack_download_confirm_title': 'تمام آوازیں ڈاؤن لوڈ کریں؟',
+      'voice_pack_download_confirm_wifi_message':
+          'پیک تقریباً {size} ہے۔ تنصیب کے دوران تقریباً {required} خالی جگہ درکار ہے۔ ڈاؤن لوڈ شروع کریں؟',
+      'voice_pack_download_confirm_mobile_message':
+          'پیک تقریباً {size} ہے اور Wi-Fi منسلک نہیں۔ موبائل ڈیٹا استعمال ہو سکتا ہے۔ تقریباً {required} خالی جگہ درکار ہے۔ جاری رکھیں؟',
+      'voice_pack_continue_download': 'ڈاؤن لوڈ کریں',
+      'voice_pack_storage_insufficient_title': 'جگہ ناکافی ہے',
+      'voice_pack_storage_insufficient_message':
+          'دستیاب جگہ: {available}۔ ڈاؤن لوڈ اور تنصیب کے لیے تقریباً {required} درکار ہے۔ جگہ خالی کرکے دوبارہ کوشش کریں۔',
+      'voice_pack_offline_title': 'انٹرنیٹ دستیاب نہیں',
+      'voice_pack_offline_message':
+          'انٹرنیٹ سے، بہتر ہے Wi-Fi کے ذریعے، منسلک ہو کر دوبارہ کوشش کریں۔',
+      'voice_pack_ok': 'ٹھیک ہے',
+      'voice_pack_pause': 'روکیں',
+      'voice_pack_resume': 'جاری رکھیں',
+      'voice_pack_cancel': 'منسوخ',
+      'voice_pack_delete': 'حذف کریں',
+      'voice_pack_retry': 'دوبارہ کوشش',
+      'voice_pack_loading_catalog': 'آواز کے پیک لوڈ ہو رہے ہیں...',
+      'voice_pack_empty_catalog': 'کوئی انسانی آواز کا پیک دستیاب نہیں',
+      'voice_pack_catalog_error': 'آواز کے پیک کی فہرست لوڈ نہیں ہو سکی',
+      'voice_pack_error_network':
+          'ڈاؤن لوڈ رک گیا۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔',
+      'voice_pack_error_unavailable':
+          'یہ آواز کا پیک اس وقت دستیاب نہیں۔ بعد میں دوبارہ کوشش کریں۔',
+      'voice_pack_error_storage_full':
+          'اسٹوریج میں کافی جگہ نہیں۔ جگہ خالی کرکے دوبارہ کوشش کریں۔',
+      'voice_pack_error_storage':
+          'آواز کا پیک اس آلے پر محفوظ نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
+      'voice_pack_error_corrupted':
+          'ڈاؤن لوڈ کی گئی فائل نامکمل یا خراب ہے۔ براہ کرم دوبارہ ڈاؤن لوڈ کریں۔',
+      'voice_pack_error_cancelled': 'ڈاؤن لوڈ منسوخ کر دیا گیا۔',
+      'voice_pack_error_generic':
+          'آواز کے پیک میں کوئی مسئلہ پیش آیا۔ دوبارہ کوشش کریں۔',
+      'voice_pack_downloaded_of': '{downloaded} از {total}',
+      'voice_pack_delete_confirm_title': 'آواز کا پیک حذف کریں؟',
+      'voice_pack_delete_confirm_message':
+          '“{name}” حذف کریں؟ اسے بعد میں دوبارہ ڈاؤن لوڈ کیا جا سکتا ہے۔',
+      'voice_pack_delete_confirm': 'حذف کریں',
+      'voice_pack_prompt_title': 'انسانی آواز کا پیک ڈاؤن لوڈ کریں؟',
+      'voice_pack_prompt_message':
+          'آف لائن چلانے کے لیے انسانی آواز کا پیک ڈاؤن لوڈ کریں، یا سسٹم کی آواز استعمال کرتے رہیں۔',
+      'voice_pack_manage': 'آواز کے پیک منظم کریں',
+      'voice_pack_use_system_voice': 'سسٹم کی آواز استعمال کریں',
       'database_loading_please_wait':
           'ڈیٹا لوڈ ہو رہا ہے، تھوڑی دیر بعد دوبارہ کوشش کریں',
       'confirm_remove': 'ہٹانے کی تصدیق',
@@ -1819,7 +2954,7 @@ class AppStrings {
           'آج کی تمام مفت وضاحتیں استعمال ہو چکی ہیں۔ تمام 7,139 سوالات کی گہری وضاحتیں کھولنے کے لیے VIP پر جائیں۔',
       'mistake_mode_title': 'غلطی ختم کرنے کا موڈ',
       'mistake_mode_description':
-          'آپ کے {count} غلط سوالات پر خاص مشق ہو گی۔ ہر درست جواب غلطی گنتی کو 1 کم کرتا ہے، یہاں تک کہ غلطی ختم ہو جائے۔',
+          'آپ کے غلط جواب والے سوالات ({count}) پر خاص مشق ہو گی۔ ہر درست جواب غلطی گنتی کو 1 کم کرتا ہے، یہاں تک کہ غلطی ختم ہو جائے۔',
       'mistake_mode_vip_suffix':
           '✨ یہ فیچر صرف VIP کے لیے ہے اور کمزور نکات کو ٹھیک نشانہ بنانے میں مدد کرتا ہے۔',
       'mistake_tab_practice': 'ہدفی مشق',
@@ -1836,21 +2971,20 @@ class AppStrings {
       'error_count_prefix': 'غلطیاں: ',
       'ai_advice_cta': 'ماہر سطح کی AI بہتری تجاویز حاصل کریں',
       'mock_exam_nth_prefix': 'کوشش ',
-      'sub_title': 'PatenteGo VIP',
+      'sub_title': 'LinguaPatente VIP',
       'sub_subtitle':
           'اطالوی ڈرائیونگ تھیوری کی تیاری کے تمام ٹولز تک مکمل رسائی',
-      'sub_feature_unlimited_practice': 'مکمل سوال بینک: 7,139 سوالات',
+      'sub_feature_unlimited_practice': 'تمام ابواب اور لامحدود مشق',
       'sub_feature_unlimited_practice_desc':
-          'روزانہ 30 سوالات کی مفت حد ختم کریں',
+          'تمام ابواب کھولیں اور روزانہ 30 سوالات کی مفت حد ختم کریں',
       'sub_feature_unlimited_mock': 'لامحدود فرضی امتحانات',
       'sub_feature_unlimited_mock_desc':
           'امتحان جیسے سیشنز کے ساتھ بار بار مشق کریں',
       'sub_feature_unlimited_mistake_review': 'مکمل غلطی جائزہ',
       'sub_feature_unlimited_mistake_review_desc':
           'صرف مفت جھلک نہیں، تمام غلطیاں دوبارہ دیکھیں',
-      'sub_feature_deep_explanations': 'ہر سوال کی مکمل وضاحت ✨',
-      'sub_feature_deep_explanations_desc':
-          'فیصلہ منطق، اہم نکات اور مطالعہ ٹپس',
+      'sub_feature_deep_explanations': 'مکمل وضاحتیں مفت اور لامحدود',
+      'sub_feature_deep_explanations_desc': 'جواب کی وجہ، اہم نکات اور مطالعے کے مشورے سب کے لیے مفت ہیں',
       'sub_feature_study_center': 'مطالعہ اعداد و شمار اور رپورٹس',
       'sub_feature_study_center_desc': 'کوریج، مہارت اور پیشرفت کو ٹریک کریں',
       'sub_feature_cloud_sync': 'پیشرفت کلاؤڈ میں محفوظ',
@@ -1869,11 +3003,22 @@ class AppStrings {
       'sub_cta_subscribe_button': 'ماہانہ سبسکرپشن کے ساتھ جاری رکھیں',
       'sub_disclaimer_text':
           'سبسکرپشن ہر ماہ خود بخود تجدید ہوتی ہے، جب تک موجودہ مدت ختم ہونے سے کم از کم 24 گھنٹے پہلے منسوخ نہ کی جائے۔ خریداری کی تصدیق کے بعد ادائیگی آپ کے اسٹور اکاؤنٹ سے کٹتی ہے۔ آپ اپنے اسٹور اکاؤنٹ کی ترتیبات میں سبسکرپشن منظم یا منسوخ کر سکتے ہیں۔',
+      'sub_disclaimer_text_play':
+          'سبسکرپشن ہر ماہ خود بخود تجدید ہوتی ہے جب تک آپ اسے منسوخ نہ کریں۔ خریداری کی تصدیق کے بعد ادائیگی آپ کے Google Play اکاؤنٹ سے کٹتی ہے۔ آپ کسی بھی وقت Google Play کی سبسکرپشنز میں اسے منظم یا منسوخ کر سکتے ہیں: اگلی تجدید کی تاریخ سے پہلے منسوخ کرنے پر دوبارہ رقم نہیں کٹے گی، اور موجودہ ادا شدہ مدت کے اختتام تک رسائی برقرار رہے گی۔',
+      'manage_subscription': 'سبسکرپشن کا انتظام',
+      'manage_subscription_subtitle':
+          'Google Play میں دیکھیں، منظم کریں یا منسوخ کریں',
+      'manage_subscription_play': 'Google Play میں منظم یا منسوخ کریں',
+      'manage_subscription_subtitle_store': 'App Store میں دیکھیں، منظم کریں یا منسوخ کریں',
+      'iap_product_unavailable_for_account':
+          'آپ کے موجودہ Google Play اکاؤنٹ سے یہ سبسکرپشن نہیں خریدی جا سکتی۔ سبسکرپشن صرف کچھ ممالک یا علاقوں میں پیش کی جاتی ہے۔',
+      'iap_product_unavailable_for_account_store':
+          'آپ کے موجودہ App Store اکاؤنٹ سے یہ سبسکرپشن نہیں خریدی جا سکتی۔ سبسکرپشن صرف کچھ ممالک یا علاقوں میں پیش کی جاتی ہے۔',
       'sub_service_terms': 'سروس کی شرائط',
       'sub_privacy_policy': 'پرائیویسی پالیسی',
       'sub_subscription_success_title': 'سبسکرپشن فعال ہو گئی',
       'sub_subscription_success_message':
-          'PatenteGo VIP فعال ہے۔ آپ اسٹور اکاؤنٹ ترتیبات میں سبسکرپشن منظم یا منسوخ کر سکتے ہیں۔',
+          'LinguaPatente VIP فعال ہے۔ آپ اسٹور اکاؤنٹ ترتیبات میں سبسکرپشن منظم یا منسوخ کر سکتے ہیں۔',
       'sub_restore_checking': 'خریداری کی تاریخ چیک ہو رہی ہے...',
       'sub_restore_success': 'سبسکرپشن کامیابی سے بحال ہو گئی',
       'sub_restore_not_found': 'بحال کرنے کے لیے کوئی سبسکرپشن نہیں ملی',
@@ -1884,12 +3029,101 @@ class AppStrings {
           'سبسکرپشن ابھی تیار نہیں۔ بعد میں دوبارہ کوشش کریں۔',
       'iap_purchase_start_failed': 'خریداری شروع نہیں ہو سکی۔',
       'iap_purchase_failed': 'خریداری ناکام ہو گئی۔',
+      'iap_sign_in_required': 'سبسکرائب کرنے سے پہلے سائن ان کریں۔',
       'iap_purchase_verification_failed': 'خریداری کی تصدیق نہیں ہو سکی۔',
+      'iap_purchase_verification_pending':
+          'Google Play نے ادائیگی مکمل کر لی ہے۔ ہم ابھی آپ کی رکنیت کی تصدیق کر رہے ہیں اور خود بخود دوبارہ کوشش کریں گے۔ اگر جلد فعال نہ ہو تو اپنا کنکشن چیک کریں اور "خریداری بحال کریں" پر ٹیپ کریں۔',
+      'iap_purchase_verification_pending_store':
+          'App Store نے ادائیگی مکمل کر لی ہے۔ ہم ابھی آپ کی رکنیت کی تصدیق کر رہے ہیں اور خود بخود دوبارہ کوشش کریں گے۔ اگر جلد فعال نہ ہو تو اپنا کنکشن چیک کریں اور "خریداری بحال کریں" پر ٹیپ کریں۔',
+      'iap_purchase_verification_rejected':
+          'یہ خریداری اس اکاؤنٹ کے ساتھ استعمال نہیں ہو سکتی جس سے آپ نے سائن ان کیا ہے۔ اگر آپ نے یہ کسی دوسرے اکاؤنٹ سے خریدی تھی تو اسی اکاؤنٹ سے سائن ان کریں۔',
       'sub_restore_please_login': 'پہلے سائن ان کریں',
+
+      // 网页端（WebAppScreen）
+      'web_sign_in': 'سائن ان',
+      'web_start_chapter': 'باب 1 شروع کریں',
+      'web_continue_chapter': 'باب 1 جاری رکھیں',
+      'web_guest_saved': 'مہمان موڈ کی پیشرفت اسی براؤزر میں محفوظ ہوتی ہے۔',
+      'web_cloud_saved':
+          'آپ سائن ان ہیں — آپ کی پیشرفت دوسرے آلات پر بھی دستیاب ہوگی۔',
+      'web_sync_unavailable':
+          'آپ سائن ان ہیں — اس آلے کی پیشرفت محفوظ ہے۔ کلاؤڈ سنک عارضی طور پر دستیاب نہیں۔',
+      'web_chapter_one': 'باب 1 · سڑک کے نشانات',
+      'web_chapter_question_count': '{count} سوالات',
+      'web_chapter_progress': 'باب کی پیشرفت',
+      'web_landing_subhead':
+          'ایپ کی طرح ہی سیکھیں: پہلا باب منتخب کریں، سوالات کے جواب دیں اور قدم بہ قدم مہارت بڑھائیں۔',
+      'web_available_tools': 'مشق کے دوران دستیاب',
+      'web_hint_listen': 'سنیں',
+      'web_hint_translate': 'ترجمہ',
+      'web_hint_explanation': 'وضاحت',
+      'web_hint_sync': 'آلات کے درمیان سنک',
+      'web_sync_label': 'پیشرفت',
+      'web_sync_local': 'اس آلے پر',
+      'web_sync_active': 'سنک ہو گیا',
+      'web_overview': 'مرکزی صفحہ',
+      'web_hub_subtitle':
+          'سیکھنے کا طریقہ منتخب کریں اور جہاں چھوڑا تھا وہیں سے جاری رکھیں۔',
+      'web_random_practice_description':
+          'پورے سوالیہ بینک سے 30 بے ترتیب سوالات۔',
+      'web_chapter_practice_description':
+          '25 سرکاری ابواب پڑھیں اور ہر باب کی پیشرفت دیکھیں۔',
+      'web_exam_description':
+          '30 سوالات · 20 منٹ · زیادہ سے زیادہ 3 غلطیوں کے ساتھ پاس۔',
+      'web_mistake_description': 'دہرائی کے لیے سوالات: {count}۔',
+      'web_no_mistake_description': 'غلطیوں کی فہرست ابھی خالی ہے۔',
+      'web_favorite_description': 'محفوظ سوالات: {count}۔ کسی بھی وقت دہرائیں۔',
+      'web_no_favorite_description': 'مشق کے دوران مفید سوالات محفوظ کریں۔',
+      'web_empty_favorites_description':
+          'اپنی دہرائی کی فہرست بنانے کے لیے مشق کے دوران بک مارک پر ٹیپ کریں۔',
+      'web_skip_mastered_description':
+          'بے ترتیب اور باب کی مشق میں مہارت یافتہ سوالات نہ دکھائیں۔',
+      'web_sign_in_to_sync':
+          'آلات کے درمیان پیشرفت سنک کرنے کے لیے سائن ان کریں۔',
+      'web_reset_progress_description':
+          'جوابات، غلطیاں، مہارت یافتہ سوالات، پسندیدہ اور آج کا استعمال حذف کریں۔',
+      'web_mastery_report_description':
+          'سوالیہ بینک کی کوریج، مہارت یافتہ سوالات اور توجہ طلب ابواب دیکھیں۔',
+      'web_daily_plan_description':
+          'واضح روزانہ ہدف کے ساتھ نئے سوالات اور دہرائی میں توازن رکھیں۔',
+      'web_choose_daily_goal': 'روزانہ سوالات کا ہدف منتخب کریں',
+      'web_today_plan_progress': 'آج کا منصوبہ',
+      'web_today_plan_complete': 'آج کا منصوبہ مکمل ہو گیا',
+      'web_start_today_plan': 'باقی سوالات شروع کریں ({count})',
+      'web_bank_coverage': 'سوالیہ بینک کی کوریج',
+      'web_start_mistake_practice': 'غلطیوں کی مشق ({count})',
+      'web_submit_exam_confirmation':
+          'بغیر جواب کے سوالات: {count}۔ انہیں غلط شمار کیا جائے گا۔ ابھی جمع کرائیں؟',
+      'web_review_exam': 'پرچہ دیکھیں',
+      'web_choose_sign_in_method': 'سائن ان کرنے کا طریقہ منتخب کریں',
+      'web_browser_voice_title': 'براؤزر میں اطالوی آواز',
+      'web_browser_voice_description':
+          '"آواز" پر ٹیپ کر کے ایپ والی وہی انسانی آواز آن لائن سنیں۔ اگر آن لائن آڈیو دستیاب نہ ہو تو براؤزر کی اطالوی آواز خود بخود چلے گی۔',
+      'web_offline_title': 'آف لائن رسائی',
+      'web_offline_description':
+          'ایپ کا ڈھانچہ اور پہلے کھولے گئے ابواب براؤزر محفوظ کر لیتا ہے، اس لیے کمزور کنکشن پر بھی یہ دوبارہ کھل سکتے ہیں۔',
+      'web_your_answer': 'آپ کا جواب',
+
+      // 错误提示展示层（UserErrorCopy）
+      'auth_error_sign_in_generic':
+          'سائن اِن نہیں ہو سکا۔ براہ کرم دوبارہ کوشش کریں۔',
+      'auth_error_register_generic':
+          'رجسٹریشن نہیں ہو سکی۔ براہ کرم دوبارہ کوشش کریں۔',
+      'iap_error_generic':
+          'اسٹور کی درخواست مکمل نہیں ہو سکی۔ براہ کرم بعد میں دوبارہ کوشش کریں۔',
+      'sync_failed_generic':
+          'سنک نہیں ہو سکا۔ اپنا کنکشن چیک کریں اور دوبارہ کوشش کریں۔',
     },
     'pa': {
+      'session_mistakes_expand': 'ਹੋਰ ਵਿਆਖਿਆ ਵੇਖੋ',
+      'session_mistakes_collapse': 'ਹੋਰ ਵਿਆਖਿਆ ਲੁਕਾਓ',
+      'session_mistakes_button': 'ਇਸ ਸੈਸ਼ਨ ਦੀਆਂ ਗਲਤੀਆਂ · {count}',
+      'session_mistakes_title': 'ਇਸ ਸੈਸ਼ਨ ਦੀਆਂ ਗਲਤੀਆਂ',
+      'session_mistakes_review': 'ਗਲਤੀਆਂ ਦੀ ਸਮੀਖਿਆ: {count}',
+      'session_mistakes_reason': 'ਇਸ ਜਵਾਬ ਦਾ ਕਾਰਨ',
+      'session_mistakes_done': 'ਸਮੀਖਿਆ ਬੰਦ ਕਰੋ',
       // 首页
-      'app_title': 'PatenteGo',
+      'app_title': 'LinguaPatente',
       'select_mode': 'ਮੋਡ ਚੁਣੋ',
       'start_practice': 'ਸਵਾਲਾਂ ਦਾ ਅਭਿਆਸ',
       'mock_test': 'ਮੌਕ ਟੈਸਟ',
@@ -1904,16 +3138,20 @@ class AppStrings {
       'question_id': 'ਸਵਾਲ ID',
       'correct': 'ਸਹੀ',
       'wrong': 'ਗਲਤ',
-      'show_explanation': 'ਸਮਝਾਓ ਦਿਖਾਓ',
+      'answer_streak_short': 'ਲਗਾਤਾਰ ਸਹੀ ×{count}',
+      'question_mastery_progress_short': 'ਮਹਾਰਤ {current}/{total}',
+      'show_explanation': 'ਵਿਆਖਿਆ ਦਿਖਾਓ',
       'hide_explanation': 'ਸਮਝਾਓ ਲੁਕਾਓ',
       'translation': 'ਅਨੁਵਾਦ',
       'show_translation': 'ਅਨੁਵਾਦ',
       'hide_translation': 'ਅਨੁਵਾਦ ਲੁਕਾਓ',
       'listen_question': 'ਸੁਣੋ',
+      'speech_preparing': 'ਤਿਆਰੀ',
+      'speech_stop': 'ਰੋਕੋ',
       'speech_unavailable': 'ਸਵਾਲ ਦੀ ਆਵਾਜ਼ ਉਪਲਬਧ ਨਹੀਂ',
       'correct_answer': 'ਸਹੀ!',
       'wrong_answer': 'ਗਲਤ :(',
-      'question_mastered': 'ਸਵਾਲ ਵਿੱਚ ਮਾਹਰ!',
+      'question_mastered': 'ਸਵਾਲ ਪੱਕਾ ਹੋ ਗਿਆ!',
       'favorite': 'ਪਸੰਦੀਦਾ',
       'unfavorite': 'ਪਸੰਦੀਦਾ ਤੋਂ ਹਟਾਓ',
       'favorited': 'ਪਸੰਦੀਦਾ ਵਿੱਚ ਸ਼ਾਮਿਲ',
@@ -1960,6 +3198,12 @@ class AppStrings {
       // 设置页面
       'settings_title': 'ਸੈਟਿੰਗਾਂ',
       'language': 'ਭਾਸ਼ਾ',
+      'theme_mode': 'ਥੀਮ',
+      'theme_classic': 'ਕਲਾਸਿਕ ਥੀਮ',
+      'theme_dark': 'ਨਾਈਟ ਥੀਮ',
+      'theme_retro': 'ਰੈਟਰੋ ਥੀਮ',
+      'theme_retro_preview': 'ਰੈਟਰੋ ਥੀਮ ਝਲਕ',
+      'theme_retro_preview_subtitle': 'ਨੋਕੀਆ-ਸ਼ੈਲੀ ਹਰੀ ਸਕ੍ਰੀਨ ਵੇਖੋ',
       'premium_status': 'ਪ੍ਰੀਮੀਅਮ ਸਥਿਤੀ',
       'premium_user': 'ਪ੍ਰੀਮੀਅਮ ਉਪਭੋਗਤਾ',
       'free_user': 'ਮੁਫ਼ਤ ਉਪਭੋਗਤਾ',
@@ -1968,6 +3212,57 @@ class AppStrings {
       'version': 'ਵਰਜਨ',
       'select_language': 'ਆਪਣੀ ਭਾਸ਼ਾ ਚੁਣੋ',
       'start_learning': 'ਸਿੱਖਣਾ ਸ਼ੁਰੂ ਕਰੋ',
+      'daily_goal_setup_title': 'ਆਪਣਾ ਰੋਜ਼ਾਨਾ ਟੀਚਾ ਸੈੱਟ ਕਰੋ',
+      'daily_goal_setup_subtitle':
+          'ਚੁਣੋ ਕਿ ਤੁਸੀਂ ਹਰ ਰੋਜ਼ ਕਿੰਨੇ ਸਵਾਲ ਕਰਨੇ ਹਨ। ਅਸੀਂ ਦਿਖਾਵਾਂਗੇ ਕਿ ਪੂਰੀ ਸਵਾਲ ਸੂਚੀ ਖਤਮ ਕਰਨ ਲਈ ਕਿੰਨੇ ਦਿਨ ਲੱਗਣਗੇ।',
+      'daily_goal_questions_per_day': 'ਸਵਾਲ ਪ੍ਰਤੀ ਦਿਨ',
+      'daily_goal_free_quota': 'ਮੁਫ਼ਤ ਸੀਮਾ',
+      'daily_goal_estimated_days': 'ਸਾਰੇ ਸਵਾਲ ਮੁਕੰਮਲ ਕਰਨ ਲਈ ਲਗਭਗ {days} ਦਿਨ',
+      'daily_goal_start_plan': 'ਮੇਰਾ ਪਲਾਨ ਸ਼ੁਰੂ ਕਰੋ',
+      'daily_goal_manage_title': 'ਰੋਜ਼ਾਨਾ ਟੀਚਾ ਬਦਲੋ',
+      'daily_goal_settings_subtitle':
+          'ਇਸ ਵੇਲੇ ਰੋਜ਼ {goal} ਸਵਾਲ। ਤੁਸੀਂ ਇਸਨੂੰ ਕਿਸੇ ਵੀ ਵੇਲੇ ਬਦਲ ਸਕਦੇ ਹੋ।',
+      'daily_goal_finish_in': 'ਤੁਸੀਂ ਕਿੰਨੇ ਦਿਨਾਂ ਵਿੱਚ ਪੂਰਾ ਕਰਨਾ ਚਾਹੁੰਦੇ ਹੋ?',
+      'daily_goal_duration_option': '{days} ਦਿਨ',
+      'daily_goal_custom_label': 'ਜਾਂ ਰੋਜ਼ਾਨਾ ਸਵਾਲਾਂ ਦੀ ਗਿਣਤੀ ਲਿਖੋ',
+      'daily_goal_remaining_questions': '{count} ਸਵਾਲ ਬਾਕੀ',
+      'daily_goal_quota_warning':
+          'ਮੁਫ਼ਤ ਵਰਤੋਂਕਾਰ ਰੋਜ਼ ਵੱਧ ਤੋਂ ਵੱਧ {quota} ਸਵਾਲਾਂ ਦਾ ਟੀਚਾ ਸੰਭਾਲ ਸਕਦੇ ਹਨ। ਰੋਜ਼ {goal} ਸਵਾਲਾਂ ਵਾਲਾ ਇਹ ਪਲਾਨ ਸੰਭਾਲਣ ਲਈ VIP ਅੱਪਗ੍ਰੇਡ ਕਰੋ।',
+      'daily_goal_save_changes': 'ਤਬਦੀਲੀਆਂ ਸੰਭਾਲੋ',
+      'daily_goal_today': 'ਅੱਜ ਦਾ ਟੀਚਾ',
+      'daily_goal_days_left':
+          'ਇਸ ਰਫ਼ਤਾਰ ਨਾਲ ਬਾਕੀ ਸਵਾਲ ਮੁਕੰਮਲ ਕਰਨ ਲਈ ਲਗਭਗ {days} ਦਿਨ',
+      'daily_goal_all_done': 'ਤੁਸੀਂ ਪੂਰੀ ਸਵਾਲ ਸੂਚੀ ਮੁਕੰਮਲ ਕਰ ਲਈ ਹੈ',
+      'daily_goal_new_questions': 'ਨਵੇਂ',
+      'daily_goal_review_questions': 'ਦੁਹਰਾਈ',
+      'spaced_review_status':
+          'ਅੱਜ ਦੁਹਰਾਈ ਲਈ ਸਵਾਲ: {count} · 3, 7, 14 ਅਤੇ 30 ਦਿਨਾਂ ਦੇ ਅੰਤਰ',
+      'daily_goal_dynamic_hint':
+          'ਤੁਹਾਡੀ ਤਰੱਕੀ ਅਤੇ ਬਾਕੀ ਦਿਨਾਂ ਅਨੁਸਾਰ ਯੋਜਨਾ ਆਪੇ ਮੁੜ ਗਿਣੀ ਜਾਂਦੀ ਹੈ।',
+      'daily_goal_dynamic_short': 'ਗਤੀਸ਼ੀਲ ਯੋਜਨਾ',
+      'daily_goal_start_today_plan': 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਸ਼ੁਰੂ ਕਰੋ',
+      'daily_goal_plan_complete': 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਪੂਰੀ ਹੋ ਗਈ।',
+      'daily_goal_no_plan_questions': 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਲਈ ਕੋਈ ਸਵਾਲ ਉਪਲਬਧ ਨਹੀਂ।',
+      'learning_streak_days': '{count} ਦਿਨ ਦੀ ਸਿੱਖਣ ਲੜੀ',
+      'learning_streak_active_today': 'ਅੱਜ ਲੜੀ ਬਣੀ ਰਹੀ',
+      'learning_streak_remaining': 'ਲੜੀ ਰੱਖਣ ਲਈ ਹੋਰ {count}',
+      'growth_session_summary_title': 'ਇਸ ਸੈਸ਼ਨ ਦੇ ਨਤੀਜੇ',
+      'growth_session_answered': 'ਜਵਾਬ ਦਿੱਤੇ',
+      'growth_session_correct': 'ਸਹੀ',
+      'growth_newly_mastered': 'ਨਵੇਂ ਸਿੱਖੇ',
+      'growth_mistakes_resolved': 'ਸੁਧਾਰੀਆਂ ਗਲਤੀਆਂ',
+      'growth_continue_practice': 'ਅਭਿਆਸ ਜਾਰੀ ਰੱਖੋ',
+      'growth_finish_session': 'ਸੈਸ਼ਨ ਸਮਾਪਤ ਕਰੋ',
+      'growth_today_recommendation': 'ਅੱਜ ਦੀ ਸਿਫ਼ਾਰਸ਼',
+      'growth_recommend_mistakes': 'ਕਮਜ਼ੋਰ ਬਿੰਦੂ ਮਜ਼ਬੂਤ ਕਰਨ ਲਈ ਗਲਤੀਆਂ ਦੁਹਰਾਓ',
+      'growth_recommend_weak_chapter':
+          'ਉਸ ਅਧਿਆਇ ਨੂੰ ਮਜ਼ਬੂਤ ਕਰੋ ਜਿਸ ਨੂੰ ਵੱਧ ਧਿਆਨ ਚਾਹੀਦਾ ਹੈ',
+      'growth_recommend_random': 'ਕੁਝ ਸਵਾਲਾਂ ਨਾਲ ਆਪਣੀ ਬੁਨਿਆਦ ਮਜ਼ਬੂਤ ਕਰੋ',
+      'growth_start': 'ਸ਼ੁਰੂ ਕਰੋ',
+      'growth_week_title': 'ਇਸ ਹਫ਼ਤੇ ਦੀ ਤਰੱਕੀ',
+      'growth_no_activity': 'ਅੱਜ ਤੋਂ ਸ਼ੁਰੂ ਕਰੋ, ਹਰ ਸਵਾਲ ਮਹੱਤਵਪੂਰਨ ਹੈ',
+      'growth_study_days': 'ਪੜ੍ਹਾਈ ਦੇ ਦਿਨ',
+      'growth_answered': 'ਜਵਾਬ ਦਿੱਤੇ',
 
       // 会员页面
       'upgrade_premium': 'ਪ੍ਰੀਮੀਅਮ ਅਪਗ੍ਰੇਡ',
@@ -2018,17 +3313,17 @@ class AppStrings {
       'add_favorite': 'ਪਸੰਦੀਦਾ ਵਿੱਚ ਸ਼ਾਮਿਲ',
       'upgrade_premium_title': 'ਪ੍ਰੀਮੀਅਮ ਮੈਂਬਰ ਵਿੱਚ ਅਪਗ੍ਰੇਡ',
       'no_mistakes': 'ਕੋਈ ਗਲਤੀ ਰਿਕਾਰਡ ਨਹੀਂ',
-      'error_times': '{count} ਗਲਤੀਆਂ',
+      'error_times': 'ਗਲਤੀਆਂ: {count}',
       'all_questions_mastered':
           'ਵਧਾਈਆਂ! ਤੁਸੀਂ ਇਸ ਮੋਡ ਵਿੱਚ ਸਾਰੇ ਸਵਾਲਾਂ ਵਿੱਚ ਮਾਹਰ ਹੋ ਗਏ ਹੋ।',
-      'review_mastered': 'ਮਾਹਰ ਸਵਾਲਾਂ ਦੀ ਸਮੀਖਿਆ ਕਰੋ',
+      'review_mastered': 'ਪੱਕੇ ਕੀਤੇ ਸਵਾਲ ਦੁਹਰਾਓ',
       'study_progress': 'ਸਿੱਖਣ ਦੀ ਤਰੱਕੀ',
       'questions_answered_label': 'ਜਵਾਬ ਦਿੱਤੇ ਸਵਾਲ',
-      'mastered_label': 'ਮਾਹਰ',
+      'mastered_label': 'ਪੱਕੇ ਕੀਤੇ',
       'best_mock_test_score': 'ਸਭ ਤੋਂ ਵਧੀਆ ਮੌਕ ਟੈਸਟ ਸਕੋਰ',
       'no_score_yet': 'ਅਜੇ ਤੱਕ ਕੋਈ ਸਕੋਰ ਨਹੀਂ',
       'random_practice': 'ਬੇਤਰਤੀਬ ਅਭਿਆਸ',
-      'skip_mastered_questions': 'ਮਾਹਰ ਸਵਾਲਾਂ ਨੂੰ ਛੱਡੋ',
+      'skip_mastered_questions': 'ਪੱਕੇ ਕੀਤੇ ਸਵਾਲ ਛੱਡੋ',
       'chapter_practice': 'ਅਧਿਆਇ ਅਭਿਆਸ',
       'official_mock_test': 'ਸਰਕਾਰੀ ਮੌਕ ਟੈਸਟ',
       'favorite_questions': 'ਪਸੰਦੀਦਾ ਸਵਾਲ',
@@ -2046,7 +3341,7 @@ class AppStrings {
 
       // ਪ੍ਰਗਤੀ ਕਾਰਡ
       'covered_questions': 'ਕਵਰ',
-      'mastered_questions': 'ਮਾਹਰ',
+      'mastered_questions': 'ਪੱਕੇ ਕੀਤੇ',
 
       // ਸੀਮਾ ਸੁਨੇਹੇ
       'quiz_limit_reached': 'ਰੋਜ਼ਾਨਾ ਕੁਇਜ਼ ਸੀਮਾ ਪਹੁੰਚ ਗਈ (30)',
@@ -2069,14 +3364,14 @@ class AppStrings {
       'principal_chapters': 'ਮੁੱਖ ਅਧਿਆਏ',
       'secondary_chapters': 'ਗੌਣ ਅਧਿਆਏ',
       'chapter_stat_bank': 'ਬੈਂਕ: {count} ਸਵਾਲ',
-      'chapter_stat_covered': 'ਕਵਰ: {count}',
-      'chapter_stat_mastered': 'ਮਾਹਰ: {count}',
+      'chapter_stat_covered': 'ਕਵਰੇਜ: {count}',
+      'chapter_stat_mastered': 'ਪੱਕੇ: {count}',
       'modal_correct_answer_label': 'ਸਹੀ ਜਵਾਬ',
       'detail_description_title': 'ਵਿਸਥਾਰਪੂਰਵਕ ਵਿਆਖਿਆ',
       'key_points_title': 'ਮੁੱਖ ਬਿੰਦੂ',
       'study_tip_title': 'ਕੋਚ ਦੀ ਟਿੱਪ',
       'key_vocabulary': 'ਮੁੱਖ ਸ਼ਬਦ',
-      'mastered_badge_short': 'ਮਾਹਰ',
+      'mastered_badge_short': 'ਪੱਕਾ',
       'mistake_cleared_celebration': '🎉 ਗਲਤੀ ਪੂਰੀ ਤਰ੍ਹਾਂ ਮਿਟ ਗਈ!',
       'merge_progress_title': 'ਸਿੱਖਣ ਦੀ ਤਰੱਕੀ ਮਿਲਾਓ',
       'merge_progress_message':
@@ -2092,10 +3387,10 @@ class AppStrings {
       'auth_apple': 'Apple ਨਾਲ ਜਾਰੀ ਰੱਖੋ',
       'auth_guest_later': 'ਹੁਣ ਮਹਿਮਾਨ ਵਜੋਂ ਜਾਰੀ ਰੱਖੋ',
       'auth_error_firebase_unavailable':
-          'ਸਾਈਨ ਇਨ ਉਪਲਬਧ ਨਹੀਂ। Firebase ਸੰਰਚਨਾ ਚੈੱਕ ਕਰੋ।',
+          'ਸਾਈਨ ਇਨ ਇਸ ਵੇਲੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
       'auth_error_google_cancelled': 'ਸਾਈਨ ਇਨ ਰੱਦ ਹੋ ਗਿਆ।',
       'auth_error_apple_identity_missing':
-          'Apple ਸਾਈਨ ਇਨ ਅਸਫਲ: identity token ਨਹੀਂ ਮਿਲਿਆ।',
+          'Apple ਨਾਲ ਸਾਈਨ ਇਨ ਪੂਰਾ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
       'auth_error_user_not_found': 'ਇਸ ਈਮੇਲ ਲਈ ਕੋਈ ਖਾਤਾ ਨਹੀਂ ਮਿਲਿਆ।',
       'auth_error_wrong_password': 'ਪਾਸਵਰਡ ਗਲਤ ਹੈ।',
       'auth_error_invalid_email': 'ਈਮੇਲ ਫਾਰਮੈਟ ਠੀਕ ਨਹੀਂ।',
@@ -2108,7 +3403,7 @@ class AppStrings {
       'auth_error_password_too_short':
           'ਪਾਸਵਰਡ ਘੱਟੋ-ਘੱਟ 6 ਅੱਖਰਾਂ ਦਾ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ।',
       'auth_error_register_unavailable':
-          'ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਉਪਲਬਧ ਨਹੀਂ। Firebase ਸੰਰਚਨਾ ਚੈੱਕ ਕਰੋ।',
+          'ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਇਸ ਵੇਲੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
       'auth_error_email_in_use':
           'ਇਹ ਈਮੇਲ ਪਹਿਲਾਂ ਹੀ ਵਰਤੀ ਜਾ ਰਹੀ ਹੈ। ਸਿੱਧਾ ਸਾਈਨ ਇਨ ਕਰੋ।',
       'auth_error_weak_password': 'ਪਾਸਵਰਡ ਕਮਜ਼ੋਰ ਹੈ। ਹੋਰ ਮਜ਼ਬੂਤ ਪਾਸਵਰਡ ਵਰਤੋ।',
@@ -2147,6 +3442,23 @@ class AppStrings {
       'trend_chart_locked_title': 'ਟਰੈਂਡ ਚਾਰਟ ਉਪਲਬਧ ਨਹੀਂ',
       'trend_chart_locked_desc': 'ਟਰੈਂਡ ਚਾਰਟ ਖੋਲ੍ਹਣ ਲਈ 1 ਮੌਕ ਇਮਤਿਹਾਨ ਪੂਰਾ ਕਰੋ',
       'focus_chapters_title': 'ਧਿਆਨ ਦੇਣ ਵਾਲੇ ਅਧਿਆਏ',
+      'chapter_capability_title': 'ਅਧਿਆਇ ਯੋਗਤਾ ਨਕਸ਼ਾ',
+      'chapter_capability_show_all': 'ਸਾਰੇ ਵੇਖੋ',
+      'chapter_capability_show_priority': 'ਸਿਰਫ਼ ਤਰਜੀਹਾਂ',
+      'chapter_capability_not_started': 'ਸ਼ੁਰੂ ਨਹੀਂ ਕੀਤਾ',
+      'chapter_capability_learning': 'ਸਿੱਖ ਰਹੇ ਹੋ',
+      'chapter_capability_needs_attention': 'ਹੋਰ ਅਭਿਆਸ ਚਾਹੀਦਾ',
+      'chapter_capability_stable': 'ਪੱਕੀ ਪਕੜ',
+      'chapter_capability_stats':
+          'ਕਵਰੇਜ {practiced}/{total} · ਪੱਕੇ {mastered} · ਗਲਤੀਆਂ {mistakes}',
+      'chapter_capability_start': 'ਅਧਿਆਇ ਸ਼ੁਰੂ ਕਰੋ',
+      'chapter_capability_strengthen': 'ਹੁਣੇ ਮਜ਼ਬੂਤ ਕਰੋ',
+      'chapter_capability_review': 'ਦੁਹਰਾਓ',
+      'chapter_strengthening_completed': 'ਅਧਿਆਇ ਮਜ਼ਬੂਤੀ ਪੂਰੀ ਹੋਈ',
+      'chapter_strengthening_mastered_change': 'ਪੱਕੇ ਕੀਤੇ ਸਵਾਲ',
+      'chapter_strengthening_mistakes_change': 'ਮੌਜੂਦਾ ਗਲਤੀਆਂ',
+      'chapter_strengthening_state_change': 'ਅਧਿਆਇ ਦੀ ਸਥਿਤੀ',
+      'chapter_strengthening_back_to_map': 'ਯੋਗਤਾ ਨਕਸ਼ੇ ਤੇ ਵਾਪਸ',
       'no_weak_chapters_placeholder': 'ਕੋਈ ਕਮਜ਼ੋਰ ਅਧਿਆਇ ਨਹੀਂ। ਜਾਰੀ ਰੱਖੋ!',
       'explanation_missing_short': 'ਕੋਈ ਸਮਝਾਓ ਉਪਲਬਧ ਨਹੀਂ',
       'login_to_sync_unlock_vip':
@@ -2171,11 +3483,84 @@ class AppStrings {
       'delete_cloud_data_on_signout_title':
           'ਸਾਈਨ ਆਉਟ ਤੋਂ ਪਹਿਲਾਂ ਕਲਾਉਡ ਸਿੱਖਣ ਡਾਟਾ ਮਿਟਾਉਣਾ ਹੈ?',
       'delete_cloud_data_on_signout_message':
-          'ਤੁਸੀਂ ਸਿਰਫ਼ ਸਾਈਨ ਆਉਟ ਕਰ ਸਕਦੇ ਹੋ, ਜਾਂ Firestore ਤੋਂ ਆਪਣੀ ਸਿੱਖਣ ਤਰੱਕੀ ਵੀ ਮਿਟਾ ਸਕਦੇ ਹੋ।',
+          'ਤੁਸੀਂ ਸਿਰਫ਼ ਸਾਈਨ ਆਉਟ ਕਰ ਸਕਦੇ ਹੋ, ਜਾਂ ਕਲਾਉਡ ਵਿੱਚ ਸੰਭਾਲੀ ਆਪਣੀ ਸਿੱਖਣ ਦੀ ਪ੍ਰਗਤੀ ਵੀ ਮਿਟਾ ਸਕਦੇ ਹੋ।',
       'delete_cloud_data_option': 'ਕਲਾਉਡ ਸਿੱਖਣ ਡਾਟਾ ਮਿਟਾਓ',
       'sign_out_only': 'ਸਿਰਫ਼ ਸਾਈਨ ਆਉਟ',
       'sign_out_and_delete_data': 'ਸਾਈਨ ਆਉਟ ਅਤੇ ਡਾਟਾ ਮਿਟਾਓ',
+      'delete_account': 'ਖਾਤਾ ਮਿਟਾਓ',
+      'delete_account_subtitle': 'ਆਪਣਾ ਖਾਤਾ ਅਤੇ ਕਲਾਉਡ ਡਾਟਾ ਹਮੇਸ਼ਾ ਲਈ ਮਿਟਾਓ',
+      'delete_account_confirm_title': 'ਖਾਤਾ ਮਿਟਾਉਣਾ ਹੈ?',
+      'delete_account_confirm_message': 'ਤੁਹਾਡਾ ਖਾਤਾ ਅਤੇ ਕਲਾਉਡ ਡਾਟਾ (ਤਰੱਕੀ, ਪ੍ਰੀਖਿਆ ਇਤਿਹਾਸ, ਰੋਜ਼ਾਨਾ ਵਰਤੋਂ) ਹਮੇਸ਼ਾ ਲਈ ਮਿਟਾ ਦਿੱਤਾ ਜਾਵੇਗਾ ਅਤੇ ਵਾਪਸ ਨਹੀਂ ਆ ਸਕੇਗਾ। ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਰੱਦ ਨਹੀਂ ਹੁੰਦੀ: ਇਸਨੂੰ ਸਟੋਰ ਦੀਆਂ ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਰੱਦ ਕਰੋ। ਇਸ ਡਿਵਾਈਸ ਉੱਤੇ ਸੰਭਾਲੀ ਤਰੱਕੀ ਉਦੋਂ ਤੱਕ ਰਹਿੰਦੀ ਹੈ ਜਦੋਂ ਤੱਕ ਤੁਸੀਂ ਇਸਨੂੰ ਰੀਸੈੱਟ ਨਹੀਂ ਕਰਦੇ।',
+      'delete_account_confirm_action': 'ਹਮੇਸ਼ਾ ਲਈ ਮਿਟਾਓ',
+      'delete_account_progress': 'ਖਾਤਾ ਮਿਟਾਇਆ ਜਾ ਰਿਹਾ ਹੈ…',
+      'delete_account_success': 'ਖਾਤਾ ਮਿਟਾ ਦਿੱਤਾ ਗਿਆ।',
+      'delete_account_failed': 'ਖਾਤਾ ਨਹੀਂ ਮਿਟਾਇਆ ਜਾ ਸਕਿਆ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'delete_account_cancelled': 'ਮਿਟਾਉਣਾ ਰੱਦ ਕੀਤਾ ਗਿਆ।',
+      'delete_account_recent_login': 'ਸੁਰੱਖਿਆ ਲਈ ਸਾਈਨ ਆਉਟ ਕਰੋ, ਦੁਬਾਰਾ ਸਾਈਨ ਇਨ ਕਰੋ, ਫਿਰ ਖਾਤਾ ਮਿਟਾਉਣ ਦੀ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
       'open_link_failed': 'ਲਿੰਕ ਨਹੀਂ ਖੁਲ੍ਹ ਸਕਿਆ',
+
+      // ਮਨੁੱਖੀ ਆਵਾਜ਼ ਪੈਕ
+      'voice_pack_title': 'ਮਨੁੱਖੀ ਆਵਾਜ਼ ਪੈਕ',
+      'voice_pack_settings_subtitle':
+          'ਆਫਲਾਈਨ ਸੁਣਨ ਲਈ ਸਾਰੀਆਂ ਆਵਾਜ਼ਾਂ ਇੱਕ ਵਾਰ ਡਾਊਨਲੋਡ ਕਰੋ',
+      'voice_pack_intro':
+          'ਇੱਕ ਪੂਰੇ ਪੈਕ ਵਿੱਚ ਸਾਰੇ ਸਵਾਲਾਂ ਦੀ ਆਵਾਜ਼ ਹੈ। ਇਸ ਤੋਂ ਬਿਨਾਂ ਵੀ ਸਿਸਟਮ ਦੀ ਆਵਾਜ਼ ਵਰਤੀ ਜਾ ਸਕਦੀ ਹੈ।',
+      'voice_pack_total_installed': 'ਕੁੱਲ ਇੰਸਟਾਲ ਆਕਾਰ: {size}',
+      'voice_pack_chapter_number': 'ਅਧਿਆਇ {chapter}',
+      'voice_pack_uncategorized': 'ਆਮ ਆਡੀਓ',
+      'voice_pack_all_questions': 'ਸਾਰੇ ਸਵਾਲਾਂ ਲਈ ਮਨੁੱਖੀ ਆਵਾਜ਼',
+      'voice_pack_question_count': '{count} ਸਵਾਲ',
+      'voice_pack_status_not_downloaded': 'ਡਾਊਨਲੋਡ ਨਹੀਂ',
+      'voice_pack_status_downloading': 'ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ',
+      'voice_pack_status_paused': 'ਰੋਕਿਆ ਹੋਇਆ',
+      'voice_pack_status_installed': 'ਡਾਊਨਲੋਡ ਹੋਇਆ',
+      'voice_pack_status_failed': 'ਅਸਫਲ',
+      'voice_pack_download': 'ਡਾਊਨਲੋਡ',
+      'voice_pack_download_all': 'ਸਾਰੀਆਂ ਆਵਾਜ਼ਾਂ ਡਾਊਨਲੋਡ ਕਰੋ',
+      'voice_pack_download_confirm_title': 'ਸਾਰੀਆਂ ਆਵਾਜ਼ਾਂ ਡਾਊਨਲੋਡ ਕਰਨੀਆਂ ਹਨ?',
+      'voice_pack_download_confirm_wifi_message':
+          'ਪੈਕ ਲਗਭਗ {size} ਹੈ। ਇੰਸਟਾਲ ਕਰਨ ਦੌਰਾਨ ਲਗਭਗ {required} ਖਾਲੀ ਥਾਂ ਚਾਹੀਦੀ ਹੈ। ਡਾਊਨਲੋਡ ਸ਼ੁਰੂ ਕਰਨਾ ਹੈ?',
+      'voice_pack_download_confirm_mobile_message':
+          'ਪੈਕ ਲਗਭਗ {size} ਹੈ ਅਤੇ Wi-Fi ਨਹੀਂ ਜੁੜਿਆ। ਮੋਬਾਈਲ ਡਾਟਾ ਵਰਤਿਆ ਜਾ ਸਕਦਾ ਹੈ। ਲਗਭਗ {required} ਖਾਲੀ ਥਾਂ ਚਾਹੀਦੀ ਹੈ। ਜਾਰੀ ਰੱਖਣਾ ਹੈ?',
+      'voice_pack_continue_download': 'ਡਾਊਨਲੋਡ ਕਰੋ',
+      'voice_pack_storage_insufficient_title': 'ਸਟੋਰੇਜ ਘੱਟ ਹੈ',
+      'voice_pack_storage_insufficient_message':
+          'ਉਪਲਬਧ: {available}। ਪੈਕ ਡਾਊਨਲੋਡ ਅਤੇ ਇੰਸਟਾਲ ਕਰਨ ਲਈ ਲਗਭਗ {required} ਚਾਹੀਦਾ ਹੈ। ਥਾਂ ਖਾਲੀ ਕਰਕੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'voice_pack_offline_title': 'ਕੋਈ ਕਨੈਕਸ਼ਨ ਨਹੀਂ',
+      'voice_pack_offline_message':
+          'ਇੰਟਰਨੈੱਟ ਨਾਲ, ਬਿਹਤਰ ਹੈ Wi-Fi ਰਾਹੀਂ, ਜੁੜ ਕੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'voice_pack_ok': 'ਠੀਕ ਹੈ',
+      'voice_pack_pause': 'ਰੋਕੋ',
+      'voice_pack_resume': 'ਜਾਰੀ ਰੱਖੋ',
+      'voice_pack_cancel': 'ਰੱਦ ਕਰੋ',
+      'voice_pack_delete': 'ਮਿਟਾਓ',
+      'voice_pack_retry': 'ਮੁੜ ਕੋਸ਼ਿਸ਼',
+      'voice_pack_loading_catalog': 'ਆਵਾਜ਼ ਪੈਕ ਲੋਡ ਹੋ ਰਹੇ ਹਨ...',
+      'voice_pack_empty_catalog': 'ਕੋਈ ਮਨੁੱਖੀ ਆਵਾਜ਼ ਪੈਕ ਉਪਲਬਧ ਨਹੀਂ',
+      'voice_pack_catalog_error': 'ਆਵਾਜ਼ ਪੈਕ ਸੂਚੀ ਲੋਡ ਨਹੀਂ ਹੋ ਸਕੀ',
+      'voice_pack_error_network':
+          'ਡਾਊਨਲੋਡ ਰੁਕ ਗਿਆ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'voice_pack_error_unavailable':
+          'ਇਹ ਆਵਾਜ਼ ਪੈਕ ਇਸ ਵੇਲੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ। ਬਾਅਦ ਵਿੱਚ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'voice_pack_error_storage_full':
+          'ਸਟੋਰੇਜ ਵਿੱਚ ਕਾਫ਼ੀ ਥਾਂ ਨਹੀਂ ਹੈ। ਥਾਂ ਖਾਲੀ ਕਰਕੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'voice_pack_error_storage':
+          'ਆਵਾਜ਼ ਪੈਕ ਇਸ ਡਿਵਾਈਸ ’ਤੇ ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'voice_pack_error_corrupted':
+          'ਡਾਊਨਲੋਡ ਕੀਤੀ ਫ਼ਾਈਲ ਅਧੂਰੀ ਜਾਂ ਖਰਾਬ ਹੈ। ਕਿਰਪਾ ਕਰਕੇ ਮੁੜ ਡਾਊਨਲੋਡ ਕਰੋ।',
+      'voice_pack_error_cancelled': 'ਡਾਊਨਲੋਡ ਰੱਦ ਕੀਤਾ ਗਿਆ।',
+      'voice_pack_error_generic':
+          'ਆਵਾਜ਼ ਪੈਕ ਵਿੱਚ ਕੋਈ ਸਮੱਸਿਆ ਆਈ। ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'voice_pack_downloaded_of': '{downloaded} ਵਿੱਚੋਂ {total}',
+      'voice_pack_delete_confirm_title': 'ਆਵਾਜ਼ ਪੈਕ ਮਿਟਾਉਣਾ ਹੈ?',
+      'voice_pack_delete_confirm_message':
+          '“{name}” ਨੂੰ ਮਿਟਾਉਣਾ ਹੈ? ਤੁਸੀਂ ਇਸਨੂੰ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਡਾਊਨਲੋਡ ਕਰ ਸਕਦੇ ਹੋ।',
+      'voice_pack_delete_confirm': 'ਮਿਟਾਓ',
+      'voice_pack_prompt_title': 'ਮਨੁੱਖੀ ਆਵਾਜ਼ ਪੈਕ ਡਾਊਨਲੋਡ ਕਰਨਾ ਹੈ?',
+      'voice_pack_prompt_message':
+          'ਆਫਲਾਈਨ ਚਲਾਉਣ ਲਈ ਮਨੁੱਖੀ ਆਵਾਜ਼ ਪੈਕ ਡਾਊਨਲੋਡ ਕਰੋ, ਜਾਂ ਸਿਸਟਮ ਦੀ ਆਵਾਜ਼ ਵਰਤਦੇ ਰਹੋ।',
+      'voice_pack_manage': 'ਆਵਾਜ਼ ਪੈਕ ਪ੍ਰਬੰਧਿਤ ਕਰੋ',
+      'voice_pack_use_system_voice': 'ਸਿਸਟਮ ਦੀ ਆਵਾਜ਼ ਵਰਤੋ',
       'database_loading_please_wait':
           'ਡਾਟਾ ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ, ਥੋੜ੍ਹੀ ਦੇਰ ਬਾਅਦ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ',
       'confirm_remove': 'ਹਟਾਉਣ ਦੀ ਪੁਸ਼ਟੀ',
@@ -2198,7 +3583,7 @@ class AppStrings {
           'ਅੱਜ ਦੇ ਸਾਰੇ ਮੁਫ਼ਤ ਸਮਝਾਓ ਵਰਤੇ ਜਾ ਚੁੱਕੇ ਹਨ। ਸਾਰੇ 7,139 ਸਵਾਲਾਂ ਦੇ ਡੂੰਘੇ ਸਮਝਾਓ ਖੋਲ੍ਹਣ ਲਈ VIP ਤੇ ਜਾਓ।',
       'mistake_mode_title': 'ਗਲਤੀ ਖਤਮ ਕਰਨ ਮੋਡ',
       'mistake_mode_description':
-          'ਤੁਹਾਡੇ {count} ਗਲਤ ਸਵਾਲਾਂ ਤੇ ਖਾਸ ਅਭਿਆਸ ਹੋਵੇਗਾ। ਹਰ ਸਹੀ ਜਵਾਬ ਗਲਤੀ ਗਿਣਤੀ ਨੂੰ 1 ਘਟਾਉਂਦਾ ਹੈ, ਜਦ ਤੱਕ ਗਲਤੀ ਗਾਇਬ ਨਾ ਹੋ ਜਾਵੇ।',
+          'ਤੁਹਾਡੇ ਗਲਤ ਜਵਾਬ ਵਾਲੇ ਸਵਾਲਾਂ ({count}) ’ਤੇ ਖਾਸ ਅਭਿਆਸ ਹੋਵੇਗਾ। ਹਰ ਸਹੀ ਜਵਾਬ ਗਲਤੀ ਗਿਣਤੀ ਨੂੰ 1 ਘਟਾਉਂਦਾ ਹੈ, ਜਦ ਤੱਕ ਗਲਤੀ ਗਾਇਬ ਨਾ ਹੋ ਜਾਵੇ।',
       'mistake_mode_vip_suffix':
           '✨ ਇਹ ਫੀਚਰ ਸਿਰਫ਼ VIP ਲਈ ਹੈ ਅਤੇ ਕਮਜ਼ੋਰ ਬਿੰਦੂਆਂ ਨੂੰ ਸਹੀ ਤਰੀਕੇ ਨਾਲ ਸੁਧਾਰਨ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ।',
       'mistake_tab_practice': 'ਟੀਚੇਬੱਧ ਅਭਿਆਸ',
@@ -2215,21 +3600,20 @@ class AppStrings {
       'error_count_prefix': 'ਗਲਤੀਆਂ: ',
       'ai_advice_cta': 'ਮਾਹਰ ਪੱਧਰ ਦੀਆਂ AI ਸੁਧਾਰ ਸਲਾਹਾਂ ਲਵੋ',
       'mock_exam_nth_prefix': 'ਕੋਸ਼ਿਸ਼ ',
-      'sub_title': 'PatenteGo VIP',
+      'sub_title': 'LinguaPatente VIP',
       'sub_subtitle':
           'ਇਤਾਲਵੀ ਡਰਾਈਵਿੰਗ ਥਿਊਰੀ ਤਿਆਰੀ ਦੇ ਸਾਰੇ ਟੂਲਾਂ ਤੱਕ ਪੂਰੀ ਪਹੁੰਚ',
-      'sub_feature_unlimited_practice': 'ਪੂਰਾ ਸਵਾਲ ਬੈਂਕ: 7,139 ਸਵਾਲ',
+      'sub_feature_unlimited_practice': 'ਸਾਰੇ ਅਧਿਆਇ ਅਤੇ ਅਸੀਮਿਤ ਅਭਿਆਸ',
       'sub_feature_unlimited_practice_desc':
-          'ਰੋਜ਼ਾਨਾ 30 ਸਵਾਲਾਂ ਦੀ ਮੁਫ਼ਤ ਸੀਮਾ ਹਟਾਓ',
+          'ਸਾਰੇ ਅਧਿਆਇ ਖੋਲ੍ਹੋ ਅਤੇ ਰੋਜ਼ਾਨਾ 30 ਸਵਾਲਾਂ ਦੀ ਮੁਫ਼ਤ ਸੀਮਾ ਹਟਾਓ',
       'sub_feature_unlimited_mock': 'ਅਸੀਮਿਤ ਮੌਕ ਇਮਤਿਹਾਨ',
       'sub_feature_unlimited_mock_desc':
           'ਇਮਤਿਹਾਨ ਵਰਗੇ ਸੈਸ਼ਨਾਂ ਨਾਲ ਵਾਰ ਵਾਰ ਅਭਿਆਸ ਕਰੋ',
       'sub_feature_unlimited_mistake_review': 'ਪੂਰੀ ਗਲਤੀ ਸਮੀਖਿਆ',
       'sub_feature_unlimited_mistake_review_desc':
           'ਸਿਰਫ਼ ਮੁਫ਼ਤ ਝਲਕ ਨਹੀਂ, ਸਾਰੀਆਂ ਗਲਤੀਆਂ ਦੁਬਾਰਾ ਦੇਖੋ',
-      'sub_feature_deep_explanations': 'ਹਰ ਸਵਾਲ ਦਾ ਪੂਰਾ ਸਮਝਾਓ ✨',
-      'sub_feature_deep_explanations_desc':
-          'ਫੈਸਲਾ ਤਰਕ, ਮੁੱਖ ਬਿੰਦੂ ਅਤੇ ਸਿੱਖਣ ਟਿੱਪਾਂ',
+      'sub_feature_deep_explanations': 'ਪੂਰੀਆਂ ਵਿਆਖਿਆਵਾਂ ਮੁਫ਼ਤ ਅਤੇ ਅਸੀਮਿਤ',
+      'sub_feature_deep_explanations_desc': 'ਜਵਾਬ ਦਾ ਕਾਰਨ, ਮੁੱਖ ਨੁਕਤੇ ਅਤੇ ਪੜ੍ਹਾਈ ਦੇ ਸੁਝਾਅ ਸਾਰਿਆਂ ਲਈ ਮੁਫ਼ਤ ਹਨ',
       'sub_feature_study_center': 'ਸਿੱਖਣ ਅੰਕੜੇ ਅਤੇ ਰਿਪੋਰਟਾਂ',
       'sub_feature_study_center_desc': 'ਕਵਰੇਜ, ਮਾਹਰਤਾ ਅਤੇ ਤਰੱਕੀ ਟਰੈਕ ਕਰੋ',
       'sub_feature_cloud_sync': 'ਤਰੱਕੀ ਕਲਾਉਡ ਵਿੱਚ ਸੁਰੱਖਿਅਤ',
@@ -2247,11 +3631,22 @@ class AppStrings {
       'sub_cta_subscribe_button': 'ਮਹੀਨਾਵਾਰ ਗਾਹਕੀ ਨਾਲ ਜਾਰੀ ਰੱਖੋ',
       'sub_disclaimer_text':
           'ਗਾਹਕੀ ਹਰ ਮਹੀਨੇ ਆਪਣੇ ਆਪ ਨਵੀਨੀਕਰਿਤ ਹੁੰਦੀ ਹੈ, ਜਦ ਤੱਕ ਮੌਜੂਦਾ ਮਿਆਦ ਦੇ ਅੰਤ ਤੋਂ ਘੱਟੋ ਘੱਟ 24 ਘੰਟੇ ਪਹਿਲਾਂ ਰੱਦ ਨਾ ਕੀਤੀ ਜਾਵੇ। ਖਰੀਦ ਪੁਸ਼ਟੀ ਤੋਂ ਬਾਅਦ ਭੁਗਤਾਨ ਤੁਹਾਡੇ ਸਟੋਰ ਖਾਤੇ ਤੋਂ ਲਿਆ ਜਾਂਦਾ ਹੈ। ਤੁਸੀਂ ਸਟੋਰ ਖਾਤੇ ਦੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਗਾਹਕੀ ਸੰਭਾਲ ਜਾਂ ਰੱਦ ਕਰ ਸਕਦੇ ਹੋ।',
+      'sub_disclaimer_text_play':
+          'ਗਾਹਕੀ ਹਰ ਮਹੀਨੇ ਆਪਣੇ ਆਪ ਨਵੀਨੀਕਰਿਤ ਹੁੰਦੀ ਹੈ, ਜਦ ਤੱਕ ਤੁਸੀਂ ਇਸਨੂੰ ਰੱਦ ਨਹੀਂ ਕਰਦੇ। ਖਰੀਦ ਪੁਸ਼ਟੀ ਤੋਂ ਬਾਅਦ ਭੁਗਤਾਨ ਤੁਹਾਡੇ Google Play ਖਾਤੇ ਤੋਂ ਲਿਆ ਜਾਂਦਾ ਹੈ। ਤੁਸੀਂ ਕਿਸੇ ਵੀ ਸਮੇਂ Google Play ਦੀਆਂ ਗਾਹਕੀਆਂ ਵਿੱਚ ਇਸਨੂੰ ਸੰਭਾਲ ਜਾਂ ਰੱਦ ਕਰ ਸਕਦੇ ਹੋ: ਅਗਲੀ ਨਵੀਨੀਕਰਨ ਮਿਤੀ ਤੋਂ ਪਹਿਲਾਂ ਰੱਦ ਕਰਨ ਤੇ ਦੁਬਾਰਾ ਖਰਚਾ ਨਹੀਂ ਲਿਆ ਜਾਵੇਗਾ, ਅਤੇ ਮੌਜੂਦਾ ਭੁਗਤਾਨ ਕੀਤੀ ਮਿਆਦ ਦੇ ਅੰਤ ਤੱਕ ਪਹੁੰਚ ਬਣੀ ਰਹੇਗੀ।',
+      'manage_subscription': 'ਗਾਹਕੀ ਸੰਭਾਲੋ',
+      'manage_subscription_subtitle':
+          'Google Play ਵਿੱਚ ਵੇਖੋ, ਸੰਭਾਲੋ ਜਾਂ ਰੱਦ ਕਰੋ',
+      'manage_subscription_play': 'Google Play ਵਿੱਚ ਸੰਭਾਲੋ ਜਾਂ ਰੱਦ ਕਰੋ',
+      'manage_subscription_subtitle_store': 'App Store ਵਿੱਚ ਵੇਖੋ, ਸੰਭਾਲੋ ਜਾਂ ਰੱਦ ਕਰੋ',
+      'iap_product_unavailable_for_account':
+          'ਤੁਹਾਡੇ ਮੌਜੂਦਾ Google Play ਖਾਤੇ ਨਾਲ ਇਹ ਗਾਹਕੀ ਨਹੀਂ ਖਰੀਦੀ ਜਾ ਸਕਦੀ। ਗਾਹਕੀ ਸਿਰਫ਼ ਕੁਝ ਦੇਸ਼ਾਂ ਜਾਂ ਖੇਤਰਾਂ ਵਿੱਚ ਪੇਸ਼ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।',
+      'iap_product_unavailable_for_account_store':
+          'ਤੁਹਾਡੇ ਮੌਜੂਦਾ App Store ਖਾਤੇ ਨਾਲ ਇਹ ਗਾਹਕੀ ਨਹੀਂ ਖਰੀਦੀ ਜਾ ਸਕਦੀ। ਗਾਹਕੀ ਸਿਰਫ਼ ਕੁਝ ਦੇਸ਼ਾਂ ਜਾਂ ਖੇਤਰਾਂ ਵਿੱਚ ਉਪਲਬਧ ਹੈ।',
       'sub_service_terms': 'ਸੇਵਾ ਦੀਆਂ ਸ਼ਰਤਾਂ',
       'sub_privacy_policy': 'ਪਰਾਈਵੇਸੀ ਨੀਤੀ',
       'sub_subscription_success_title': 'ਗਾਹਕੀ ਸਰਗਰਮ ਹੋ ਗਈ',
       'sub_subscription_success_message':
-          'PatenteGo VIP ਸਰਗਰਮ ਹੈ। ਤੁਸੀਂ ਸਟੋਰ ਖਾਤੇ ਦੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਗਾਹਕੀ ਸੰਭਾਲ ਜਾਂ ਰੱਦ ਕਰ ਸਕਦੇ ਹੋ।',
+          'LinguaPatente VIP ਸਰਗਰਮ ਹੈ। ਤੁਸੀਂ ਸਟੋਰ ਖਾਤੇ ਦੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਗਾਹਕੀ ਸੰਭਾਲ ਜਾਂ ਰੱਦ ਕਰ ਸਕਦੇ ਹੋ।',
       'sub_restore_checking': 'ਖਰੀਦ ਇਤਿਹਾਸ ਚੈਕ ਹੋ ਰਿਹਾ ਹੈ...',
       'sub_restore_success': 'ਗਾਹਕੀ ਸਫਲਤਾਪੂਰਵਕ ਬਹਾਲ ਹੋ ਗਈ',
       'sub_restore_not_found': 'ਬਹਾਲ ਕਰਨ ਲਈ ਕੋਈ ਗਾਹਕੀ ਨਹੀਂ ਮਿਲੀ',
@@ -2262,12 +3657,101 @@ class AppStrings {
           'ਸਬਸਕ੍ਰਿਪਸ਼ਨ ਹਾਲੇ ਤਿਆਰ ਨਹੀਂ ਹੈ। ਬਾਅਦ ਵਿੱਚ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
       'iap_purchase_start_failed': 'ਖਰੀਦ ਸ਼ੁਰੂ ਨਹੀਂ ਹੋ ਸਕੀ।',
       'iap_purchase_failed': 'ਖਰੀਦ ਅਸਫਲ ਰਹੀ।',
+      'iap_sign_in_required': 'ਗਾਹਕੀ ਲੈਣ ਤੋਂ ਪਹਿਲਾਂ ਸਾਈਨ ਇਨ ਕਰੋ।',
       'iap_purchase_verification_failed': 'ਖਰੀਦ ਦੀ ਪੁਸ਼ਟੀ ਨਹੀਂ ਹੋ ਸਕੀ।',
+      'iap_purchase_verification_pending':
+          'Google Play ਨੇ ਭੁਗਤਾਨ ਪੂਰਾ ਕਰ ਲਿਆ ਹੈ। ਅਸੀਂ ਅਜੇ ਤੁਹਾਡੀ ਮੈਂਬਰਸ਼ਿਪ ਦੀ ਪੁਸ਼ਟੀ ਕਰ ਰਹੇ ਹਾਂ ਅਤੇ ਆਪਣੇ ਆਪ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰਾਂਗੇ। ਜੇ ਇਹ ਜਲਦੀ ਚਾਲੂ ਨਾ ਹੋਵੇ ਤਾਂ ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ "ਖਰੀਦ ਬਹਾਲ ਕਰੋ" ਤੇ ਟੈਪ ਕਰੋ।',
+      'iap_purchase_verification_pending_store':
+          'App Store ਨੇ ਭੁਗਤਾਨ ਪੂਰਾ ਕਰ ਲਿਆ ਹੈ। ਅਸੀਂ ਅਜੇ ਤੁਹਾਡੀ ਮੈਂਬਰਸ਼ਿਪ ਦੀ ਪੁਸ਼ਟੀ ਕਰ ਰਹੇ ਹਾਂ ਅਤੇ ਆਪਣੇ ਆਪ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰਾਂਗੇ। ਜੇ ਇਹ ਜਲਦੀ ਚਾਲੂ ਨਾ ਹੋਵੇ ਤਾਂ ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ "ਖਰੀਦ ਬਹਾਲ ਕਰੋ" ਤੇ ਟੈਪ ਕਰੋ।',
+      'iap_purchase_verification_rejected':
+          'ਇਹ ਖਰੀਦ ਉਸ ਖਾਤੇ ਨਾਲ ਵਰਤੀ ਨਹੀਂ ਜਾ ਸਕਦੀ ਜਿਸ ਨਾਲ ਤੁਸੀਂ ਸਾਈਨ ਇਨ ਕੀਤਾ ਹੈ। ਜੇ ਤੁਸੀਂ ਇਹ ਕਿਸੇ ਹੋਰ ਖਾਤੇ ਨਾਲ ਖਰੀਦੀ ਸੀ, ਤਾਂ ਉਸ ਖਾਤੇ ਨਾਲ ਸਾਈਨ ਇਨ ਕਰੋ।',
       'sub_restore_please_login': 'ਪਹਿਲਾਂ ਸਾਈਨ ਇਨ ਕਰੋ',
+
+      // 网页端（WebAppScreen）
+      'web_sign_in': 'ਸਾਈਨ ਇਨ',
+      'web_start_chapter': 'ਅਧਿਆਇ 1 ਸ਼ੁਰੂ ਕਰੋ',
+      'web_continue_chapter': 'ਅਧਿਆਇ 1 ਜਾਰੀ ਰੱਖੋ',
+      'web_guest_saved':
+          'ਮਹਿਮਾਨ ਮੋਡ ਦੀ ਪ੍ਰਗਤੀ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸੁਰੱਖਿਅਤ ਹੁੰਦੀ ਹੈ।',
+      'web_cloud_saved':
+          'ਸਾਈਨ ਇਨ ਹੋ ਗਿਆ — ਤੁਹਾਡੀ ਪ੍ਰਗਤੀ ਦੂਜੇ ਡਿਵਾਈਸਾਂ ’ਤੇ ਵੀ ਮਿਲੇਗੀ।',
+      'web_sync_unavailable':
+          'ਸਾਈਨ ਇਨ ਹੋ ਗਿਆ — ਇਸ ਡਿਵਾਈਸ ਦੀ ਪ੍ਰਗਤੀ ਸੁਰੱਖਿਅਤ ਹੈ। ਕਲਾਉਡ ਸਿੰਕ ਇਸ ਵੇਲੇ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।',
+      'web_chapter_one': 'ਅਧਿਆਇ 1 · ਸੜਕ ਦੇ ਨਿਸ਼ਾਨ',
+      'web_chapter_question_count': '{count} ਸਵਾਲ',
+      'web_chapter_progress': 'ਅਧਿਆਇ ਦੀ ਪ੍ਰਗਤੀ',
+      'web_landing_subhead':
+          'ਐਪ ਵਾਂਗ ਹੀ ਸਿੱਖੋ: ਪਹਿਲਾ ਅਧਿਆਇ ਚੁਣੋ, ਸਵਾਲਾਂ ਦੇ ਜਵਾਬ ਦਿਓ ਅਤੇ ਕਦਮ-ਦਰ-ਕਦਮ ਪੱਕਾ ਕਰੋ।',
+      'web_available_tools': 'ਅਭਿਆਸ ਦੌਰਾਨ ਉਪਲਬਧ',
+      'web_hint_listen': 'ਸੁਣੋ',
+      'web_hint_translate': 'ਅਨੁਵਾਦ',
+      'web_hint_explanation': 'ਵਿਆਖਿਆ',
+      'web_hint_sync': 'ਡਿਵਾਈਸਾਂ ਵਿਚਕਾਰ ਸਿੰਕ',
+      'web_sync_label': 'ਪ੍ਰਗਤੀ',
+      'web_sync_local': 'ਇਸ ਡਿਵਾਈਸ ’ਤੇ',
+      'web_sync_active': 'ਸਿੰਕ ਹੋ ਗਿਆ',
+      'web_overview': 'ਮੁੱਖ ਪੰਨਾ',
+      'web_hub_subtitle':
+          'ਸਿੱਖਣ ਦਾ ਢੰਗ ਚੁਣੋ ਅਤੇ ਜਿੱਥੇ ਛੱਡਿਆ ਸੀ ਉੱਥੋਂ ਜਾਰੀ ਰੱਖੋ।',
+      'web_random_practice_description':
+          'ਪੂਰੇ ਪ੍ਰਸ਼ਨ ਬੈਂਕ ਵਿੱਚੋਂ 30 ਬੇਤਰਤੀਬ ਸਵਾਲ।',
+      'web_chapter_practice_description':
+          '25 ਸਰਕਾਰੀ ਅਧਿਆਇ ਪੜ੍ਹੋ ਅਤੇ ਹਰ ਅਧਿਆਇ ਦੀ ਪ੍ਰਗਤੀ ਵੇਖੋ।',
+      'web_exam_description':
+          '30 ਸਵਾਲ · 20 ਮਿੰਟ · ਵੱਧ ਤੋਂ ਵੱਧ 3 ਗਲਤੀਆਂ ਨਾਲ ਪਾਸ।',
+      'web_mistake_description': 'ਦੁਹਰਾਈ ਲਈ ਸਵਾਲ: {count}।',
+      'web_no_mistake_description': 'ਗਲਤੀਆਂ ਦੀ ਸੂਚੀ ਹਾਲੇ ਖਾਲੀ ਹੈ।',
+      'web_favorite_description': 'ਸੰਭਾਲੇ ਸਵਾਲ: {count}। ਕਦੇ ਵੀ ਦੁਹਰਾਓ।',
+      'web_no_favorite_description': 'ਅਭਿਆਸ ਦੌਰਾਨ ਲਾਭਦਾਇਕ ਸਵਾਲ ਸੰਭਾਲੋ।',
+      'web_empty_favorites_description':
+          'ਆਪਣੀ ਦੁਹਰਾਈ ਸੂਚੀ ਬਣਾਉਣ ਲਈ ਅਭਿਆਸ ਦੌਰਾਨ ਬੁੱਕਮਾਰਕ ’ਤੇ ਟੈਪ ਕਰੋ।',
+      'web_skip_mastered_description':
+          'ਬੇਤਰਤੀਬ ਅਤੇ ਅਧਿਆਇ ਅਭਿਆਸ ਵਿੱਚ ਪੱਕੇ ਕੀਤੇ ਸਵਾਲ ਨਾ ਦਿਖਾਓ।',
+      'web_sign_in_to_sync': 'ਡਿਵਾਈਸਾਂ ਵਿਚਕਾਰ ਪ੍ਰਗਤੀ ਸਿੰਕ ਕਰਨ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
+      'web_reset_progress_description':
+          'ਜਵਾਬ, ਗਲਤੀਆਂ, ਪੱਕੇ ਕੀਤੇ ਸਵਾਲ, ਪਸੰਦੀਦਾ ਅਤੇ ਅੱਜ ਦੀ ਵਰਤੋਂ ਮਿਟਾਓ।',
+      'web_mastery_report_description':
+          'ਪ੍ਰਸ਼ਨ ਬੈਂਕ ਦੀ ਕਵਰੇਜ, ਪੱਕੇ ਕੀਤੇ ਸਵਾਲ ਅਤੇ ਧਿਆਨ ਮੰਗਦੇ ਅਧਿਆਇ ਵੇਖੋ।',
+      'web_daily_plan_description':
+          'ਸਪੱਸ਼ਟ ਰੋਜ਼ਾਨਾ ਟੀਚੇ ਨਾਲ ਨਵੇਂ ਸਵਾਲ ਅਤੇ ਦੁਹਰਾਈ ਸੰਤੁਲਿਤ ਕਰੋ।',
+      'web_choose_daily_goal': 'ਰੋਜ਼ਾਨਾ ਸਵਾਲਾਂ ਦਾ ਟੀਚਾ ਚੁਣੋ',
+      'web_today_plan_progress': 'ਅੱਜ ਦੀ ਯੋਜਨਾ',
+      'web_today_plan_complete': 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਪੂਰੀ ਹੋ ਗਈ',
+      'web_start_today_plan': 'ਬਾਕੀ ਸਵਾਲ ਸ਼ੁਰੂ ਕਰੋ ({count})',
+      'web_bank_coverage': 'ਪ੍ਰਸ਼ਨ ਬੈਂਕ ਦੀ ਕਵਰੇਜ',
+      'web_start_mistake_practice': 'ਗਲਤੀਆਂ ਦਾ ਅਭਿਆਸ ({count})',
+      'web_submit_exam_confirmation':
+          'ਬਿਨਾਂ ਜਵਾਬ ਵਾਲੇ ਸਵਾਲ: {count}। ਇਹ ਗਲਤੀਆਂ ਵਜੋਂ ਗਿਣੇ ਜਾਣਗੇ। ਹੁਣੇ ਜਮ੍ਹਾਂ ਕਰੋ?',
+      'web_review_exam': 'ਪਰਚਾ ਵੇਖੋ',
+      'web_choose_sign_in_method': 'ਸਾਈਨ ਇਨ ਕਰਨ ਦਾ ਤਰੀਕਾ ਚੁਣੋ',
+      'web_browser_voice_title': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਇਤਾਲਵੀ ਆਵਾਜ਼',
+      'web_browser_voice_description':
+          '“ਸੁਣੋ” ’ਤੇ ਟੈਪ ਕਰਕੇ ਐਪ ਵਾਲੀ ਉਹੀ ਮਨੁੱਖੀ ਆਵਾਜ਼ ਆਨਲਾਈਨ ਸੁਣੋ। ਜੇ ਆਨਲਾਈਨ ਆਡੀਓ ਉਪਲਬਧ ਨਾ ਹੋਵੇ, ਤਾਂ ਬ੍ਰਾਊਜ਼ਰ ਦੀ ਇਤਾਲਵੀ ਆਵਾਜ਼ ਆਪਣੇ ਆਪ ਚੱਲੇਗੀ।',
+      'web_offline_title': 'ਆਫਲਾਈਨ ਪਹੁੰਚ',
+      'web_offline_description':
+          'ਐਪ ਦਾ ਢਾਂਚਾ ਅਤੇ ਪਹਿਲਾਂ ਖੋਲ੍ਹੇ ਅਧਿਆਇ ਬ੍ਰਾਊਜ਼ਰ ਸੰਭਾਲ ਲੈਂਦਾ ਹੈ, ਇਸ ਲਈ ਕਮਜ਼ੋਰ ਕਨੈਕਸ਼ਨ ’ਤੇ ਵੀ ਇਹ ਮੁੜ ਖੁੱਲ੍ਹ ਸਕਦੇ ਹਨ।',
+      'web_your_answer': 'ਤੁਹਾਡਾ ਜਵਾਬ',
+
+      // 错误提示展示层（UserErrorCopy）
+      'auth_error_sign_in_generic':
+          'ਸਾਈਨ ਇਨ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'auth_error_register_generic':
+          'ਰਜਿਸਟ੍ਰੇਸ਼ਨ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'iap_error_generic':
+          'ਸਟੋਰ ਦੀ ਬੇਨਤੀ ਪੂਰੀ ਨਹੀਂ ਹੋ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਬਾਅਦ ਵਿੱਚ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
+      'sync_failed_generic':
+          'ਸਿੰਕ ਨਹੀਂ ਹੋ ਸਕਿਆ। ਆਪਣਾ ਕਨੈਕਸ਼ਨ ਜਾਂਚੋ ਅਤੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
     },
     'uk': {
+      'session_mistakes_expand': 'Докладніше про відповідь',
+      'session_mistakes_collapse': 'Згорнути подробиці',
+      'session_mistakes_button': 'Помилки · {count}',
+      'session_mistakes_title': 'Помилки заняття',
+      'session_mistakes_review': 'Розібрати помилки: {count}',
+      'session_mistakes_reason': 'Чому ця відповідь',
+      'session_mistakes_done': 'Закрити розбір',
       // Головна
-      'app_title': 'PatenteGo',
+      'app_title': 'LinguaPatente',
       'select_mode': 'Виберіть режим',
       'start_practice': 'Тренування',
       'mock_test': 'Імітація іспиту',
@@ -2282,12 +3766,16 @@ class AppStrings {
       'question_id': 'ID питання',
       'correct': 'Правильно',
       'wrong': 'Неправильно',
+      'answer_streak_short': 'Серія ×{count}',
+      'question_mastery_progress_short': 'Засвоєння {current}/{total}',
       'show_explanation': 'Показати пояснення',
       'hide_explanation': 'Приховати пояснення',
       'translation': 'Переклад',
       'show_translation': 'Переклад',
       'hide_translation': 'Приховати переклад',
       'listen_question': 'Аудіо',
+      'speech_preparing': 'Завантаження',
+      'speech_stop': 'Стоп',
       'speech_unavailable': 'Озвучення питання недоступне',
       'correct_answer': 'Правильно!',
       'wrong_answer': 'Неправильно :(',
@@ -2306,7 +3794,7 @@ class AppStrings {
       'of': 'з',
       'mock_test_completed': 'Імітація іспиту завершена!',
       'submit_exam': 'CONSEGNA',
-      'questions_completed': 'Виконано {count}/{total} питань',
+      'questions_completed': 'Питань виконано: {count}/{total}',
       'test_result': 'Результат тесту',
       'result': 'Результат',
       'passed': 'Складено',
@@ -2338,6 +3826,12 @@ class AppStrings {
       // Налаштування
       'settings_title': 'Налаштування',
       'language': 'Мова',
+      'theme_mode': 'Тема',
+      'theme_classic': 'Класична тема',
+      'theme_dark': 'Нічна тема',
+      'theme_retro': 'Ретро-тема',
+      'theme_retro_preview': 'Попередній перегляд ретро-теми',
+      'theme_retro_preview_subtitle': 'Переглянути стиль зеленого екрана',
       'premium_status': 'Статус преміум',
       'premium_user': 'Преміум користувач',
       'free_user': 'Безкоштовний користувач',
@@ -2346,6 +3840,60 @@ class AppStrings {
       'version': 'Версія',
       'select_language': 'Виберіть свою мову',
       'start_learning': 'Почати навчання',
+      'daily_goal_setup_title': 'Задайте щоденну ціль',
+      'daily_goal_setup_subtitle':
+          'Виберіть, скільки питань хочете проходити щодня. Ми покажемо, скільки днів потрібно для всієї бази.',
+      'daily_goal_questions_per_day': 'питань на день',
+      'daily_goal_free_quota': 'безкоштовний ліміт',
+      'daily_goal_estimated_days':
+          'Близько {days} дн., щоб пройти всі питання',
+      'daily_goal_start_plan': 'Почати мій план',
+      'daily_goal_manage_title': 'Змінити щоденну ціль',
+      'daily_goal_settings_subtitle':
+          'Поточна щоденна ціль: {goal}. Її можна змінити будь-коли.',
+      'daily_goal_finish_in': 'За скільки часу ви хочете завершити?',
+      'daily_goal_duration_option': '{days} дн.',
+      'daily_goal_custom_label': 'Або введіть кількість питань на день',
+      'daily_goal_remaining_questions': 'Залишилося питань: {count}',
+      'daily_goal_quota_warning':
+          'У безкоштовному плані щоденна ціль не може перевищувати {quota}. Перейдіть на VIP, щоб зберегти й виконувати план із ціллю {goal} на день.',
+      'daily_goal_save_changes': 'Зберегти зміни',
+      'daily_goal_today': 'Ціль на сьогодні',
+      'daily_goal_days_left':
+          'У цьому темпі близько {days} дн. до кінця решти питань',
+      'daily_goal_all_done': 'Ви вже пройшли всю базу питань',
+      'daily_goal_new_questions': 'Нові',
+      'daily_goal_review_questions': 'Повторення',
+      'spaced_review_status':
+          'Сьогодні до повторення: {count} · інтервали 3, 7, 14 і 30 днів',
+      'daily_goal_dynamic_hint':
+          'План автоматично перераховується за прогресом і днями, що залишилися.',
+      'daily_goal_dynamic_short': 'Динамічний план',
+      'daily_goal_start_today_plan': 'Почати план на сьогодні',
+      'daily_goal_plan_complete': 'План на сьогодні виконано.',
+      'daily_goal_no_plan_questions':
+          'Для плану на сьогодні немає доступних питань.',
+      'learning_streak_days': 'Серія навчання: {count} дн.',
+      'learning_streak_active_today': 'Серію збережено',
+      'learning_streak_remaining': 'Ще {count}, щоб зберегти серію',
+      'growth_session_summary_title': 'Результати заняття',
+      'growth_session_answered': 'Відповідей',
+      'growth_session_correct': 'Правильно',
+      'growth_newly_mastered': 'Ново освоєно',
+      'growth_mistakes_resolved': 'Виправлено помилок',
+      'growth_continue_practice': 'Продовжити навчання',
+      'growth_finish_session': 'Завершити заняття',
+      'growth_today_recommendation': 'Рекомендація на сьогодні',
+      'growth_recommend_mistakes':
+          'Повторіть помилки, щоб зміцнити слабкі місця',
+      'growth_recommend_weak_chapter':
+          'Зміцніть розділ, який потребує найбільше уваги',
+      'growth_recommend_random': 'Продовжуйте будувати базу кількома питаннями',
+      'growth_start': 'Почати',
+      'growth_week_title': 'Прогрес за тиждень',
+      'growth_no_activity': 'Почніть сьогодні: кожне питання має значення',
+      'growth_study_days': 'Дні навчання',
+      'growth_answered': 'Відповідей',
 
       // Преміум
       'upgrade_premium': 'Оновити до преміум',
@@ -2397,7 +3945,7 @@ class AppStrings {
       'add_favorite': 'Додано до обраного',
       'upgrade_premium_title': 'Оновити до преміум-члена',
       'no_mistakes': 'Помилок не зареєстровано',
-      'error_times': '{count} Помилок',
+      'error_times': 'Помилок: {count}',
       'all_questions_mastered':
           'Вітаємо! Ви освоїли всі питання в цьому режимі.',
       'review_mastered': 'Повторити Освоєні Питання',
@@ -2472,10 +4020,10 @@ class AppStrings {
       'auth_apple': 'Продовжити з Apple',
       'auth_guest_later': 'Поки що як гість',
       'auth_error_firebase_unavailable':
-          'Вхід недоступний. Перевірте конфігурацію Firebase.',
+          'Вхід тимчасово недоступний. Спробуйте пізніше.',
       'auth_error_google_cancelled': 'Вхід скасовано.',
       'auth_error_apple_identity_missing':
-          'Вхід через Apple не виконано: identity token не отримано.',
+          'Не вдалося завершити вхід через Apple. Спробуйте ще раз.',
       'auth_error_user_not_found':
           'Обліковий запис для цієї email-адреси не знайдено.',
       'auth_error_wrong_password': 'Неправильний пароль.',
@@ -2488,7 +4036,7 @@ class AppStrings {
       'auth_error_password_too_short':
           'Пароль має містити щонайменше 6 символів.',
       'auth_error_register_unavailable':
-          'Реєстрація недоступна. Перевірте конфігурацію Firebase.',
+          'Реєстрація тимчасово недоступна. Спробуйте пізніше.',
       'auth_error_email_in_use':
           'Ця email-адреса вже використовується. Увійдіть напряму.',
       'auth_error_weak_password':
@@ -2530,6 +4078,23 @@ class AppStrings {
       'trend_chart_locked_desc':
           'Завершіть 1 пробний іспит, щоб відкрити графік тренду',
       'focus_chapters_title': 'Слабкі розділи',
+      'chapter_capability_title': 'Мапа навичок за розділами',
+      'chapter_capability_show_all': 'Показати всі',
+      'chapter_capability_show_priority': 'Лише пріоритетні',
+      'chapter_capability_not_started': 'Не розпочато',
+      'chapter_capability_learning': 'У процесі',
+      'chapter_capability_needs_attention': 'Потребує уваги',
+      'chapter_capability_stable': 'Закріплено',
+      'chapter_capability_stats':
+          'Охоплення {practiced}/{total} · Засвоєно {mastered} · Помилки {mistakes}',
+      'chapter_capability_start': 'Почати розділ',
+      'chapter_capability_strengthen': 'Посилити',
+      'chapter_capability_review': 'Повторити',
+      'chapter_strengthening_completed': 'Посилення розділу завершено',
+      'chapter_strengthening_mastered_change': 'Засвоєні питання',
+      'chapter_strengthening_mistakes_change': 'Поточні помилки',
+      'chapter_strengthening_state_change': 'Статус розділу',
+      'chapter_strengthening_back_to_map': 'Повернутися до мапи',
       'no_weak_chapters_placeholder': 'Немає слабких розділів. Так тримати!',
       'explanation_missing_short': 'Немає пояснення',
       'login_to_sync_unlock_vip':
@@ -2556,11 +4121,85 @@ class AppStrings {
       'delete_cloud_data_on_signout_title':
           'Видалити хмарні навчальні дані перед виходом?',
       'delete_cloud_data_on_signout_message':
-          'Можна просто вийти або також видалити прогрес навчання з Firestore.',
+          'Можна просто вийти або також видалити прогрес навчання, збережений у хмарі.',
       'delete_cloud_data_option': 'Видалити хмарні навчальні дані',
       'sign_out_only': 'Тільки вийти',
       'sign_out_and_delete_data': 'Вийти й видалити дані',
+      'delete_account': 'Видалити акаунт',
+      'delete_account_subtitle': 'Назавжди видалити акаунт і дані в хмарі',
+      'delete_account_confirm_title': 'Видалити акаунт?',
+      'delete_account_confirm_message': 'Ваш акаунт і дані в хмарі (прогрес, історія іспитів, щоденна статистика) буде видалено назавжди без можливості відновлення. Підписку НЕ скасовано: скасуйте її в налаштуваннях підписок магазину. Прогрес на цьому пристрої зберігається, доки ви його не скинете.',
+      'delete_account_confirm_action': 'Видалити назавжди',
+      'delete_account_progress': 'Видалення акаунта…',
+      'delete_account_success': 'Акаунт видалено.',
+      'delete_account_failed': 'Не вдалося видалити акаунт. Спробуйте ще раз.',
+      'delete_account_cancelled': 'Видалення скасовано.',
+      'delete_account_recent_login': 'З міркувань безпеки вийдіть, увійдіть знову й повторіть видалення акаунта.',
       'open_link_failed': 'Не вдалося відкрити посилання',
+
+      // Пакети людського голосу
+      'voice_pack_title': 'Пакети живого голосу',
+      'voice_pack_settings_subtitle':
+          'Завантажте всі озвучення одним натисканням для роботи офлайн',
+      'voice_pack_intro':
+          'Один повний пакет містить озвучення всіх питань. Без нього можна використовувати системний голос.',
+      'voice_pack_total_installed': 'Загальний встановлений розмір: {size}',
+      'voice_pack_chapter_number': 'Розділ {chapter}',
+      'voice_pack_uncategorized': 'Загальні аудіозаписи',
+      'voice_pack_all_questions': 'Озвучення всіх питань',
+      'voice_pack_question_count': 'Питань: {count}',
+      'voice_pack_status_not_downloaded': 'Не завантажено',
+      'voice_pack_status_downloading': 'Завантаження',
+      'voice_pack_status_paused': 'Призупинено',
+      'voice_pack_status_installed': 'Завантажено',
+      'voice_pack_status_failed': 'Помилка',
+      'voice_pack_download': 'Завантажити',
+      'voice_pack_download_all': 'Завантажити всі озвучення',
+      'voice_pack_download_confirm_title': 'Завантажити всі озвучення?',
+      'voice_pack_download_confirm_wifi_message':
+          'Розмір пакета близько {size}. Для встановлення потрібно близько {required} вільного місця. Почати завантаження?',
+      'voice_pack_download_confirm_mobile_message':
+          'Розмір пакета близько {size}, Wi-Fi не підключено. Можуть використовуватися мобільні дані. Потрібно близько {required} вільного місця. Продовжити?',
+      'voice_pack_continue_download': 'Завантажити',
+      'voice_pack_storage_insufficient_title': 'Недостатньо місця',
+      'voice_pack_storage_insufficient_message':
+          'Доступно: {available}. Для завантаження й встановлення потрібно близько {required}. Звільніть місце та повторіть спробу.',
+      'voice_pack_offline_title': 'Немає з’єднання',
+      'voice_pack_offline_message':
+          'Підключіться до Інтернету, бажано через Wi-Fi, і повторіть спробу.',
+      'voice_pack_ok': 'OK',
+      'voice_pack_pause': 'Пауза',
+      'voice_pack_resume': 'Продовжити',
+      'voice_pack_cancel': 'Скасувати',
+      'voice_pack_delete': 'Видалити',
+      'voice_pack_retry': 'Повторити',
+      'voice_pack_loading_catalog': 'Завантаження голосових пакетів...',
+      'voice_pack_empty_catalog': 'Немає доступних пакетів живого голосу',
+      'voice_pack_catalog_error':
+          'Не вдалося завантажити каталог голосових пакетів',
+      'voice_pack_error_network':
+          'Завантаження перервано. Перевірте з’єднання та повторіть спробу.',
+      'voice_pack_error_unavailable':
+          'Цей пакет зараз недоступний. Повторіть спробу пізніше.',
+      'voice_pack_error_storage_full':
+          'Недостатньо місця на пристрої. Звільніть місце та повторіть спробу.',
+      'voice_pack_error_storage':
+          'Не вдалося зберегти пакет на пристрої. Повторіть спробу.',
+      'voice_pack_error_corrupted':
+          'Завантажений файл неповний або пошкоджений. Завантажте його знову.',
+      'voice_pack_error_cancelled': 'Завантаження скасовано.',
+      'voice_pack_error_generic':
+          'З пакетом щось пішло не так. Повторіть спробу.',
+      'voice_pack_downloaded_of': '{downloaded} із {total}',
+      'voice_pack_delete_confirm_title': 'Видалити голосовий пакет?',
+      'voice_pack_delete_confirm_message':
+          'Видалити «{name}»? Його можна буде завантажити знову.',
+      'voice_pack_delete_confirm': 'Видалити',
+      'voice_pack_prompt_title': 'Завантажити пакет живого голосу?',
+      'voice_pack_prompt_message':
+          'Завантажте пакет живого голосу для офлайн-відтворення або продовжуйте використовувати системний голос.',
+      'voice_pack_manage': 'Керувати голосовими пакетами',
+      'voice_pack_use_system_voice': 'Продовжити із системним голосом',
       'database_loading_please_wait':
           'Дані завантажуються, спробуйте ще раз трохи пізніше',
       'confirm_remove': 'Підтвердити видалення',
@@ -2584,7 +4223,7 @@ class AppStrings {
           'Безкоштовні пояснення на сьогодні закінчилися. Перейдіть на VIP, щоб відкрити глибокі пояснення до всіх 7 139 питань.',
       'mistake_mode_title': 'Режим усунення помилок',
       'mistake_mode_description':
-          'Ми цілеспрямовано відпрацюємо ваші {count} помилкових питань. Кожна правильна відповідь зменшує лічильник помилок на 1, доки помилка не зникне.',
+          'Ми цілеспрямовано відпрацюємо ваші питання з помилками ({count}). Кожна правильна відповідь зменшує лічильник помилок на 1, доки помилка не зникне.',
       'mistake_mode_vip_suffix':
           '✨ Ця функція доступна лише VIP і допомагає точно закривати слабкі місця.',
       'mistake_tab_practice': 'Цільова практика',
@@ -2602,21 +4241,20 @@ class AppStrings {
       'error_count_prefix': 'Помилки: ',
       'ai_advice_cta': 'Отримати експертні AI-поради для покращення',
       'mock_exam_nth_prefix': 'Спроба ',
-      'sub_title': 'PatenteGo VIP',
+      'sub_title': 'LinguaPatente VIP',
       'sub_subtitle':
           'Повний доступ до інструментів підготовки до італійського іспиту',
-      'sub_feature_unlimited_practice': 'Повна база: 7 139 питань',
+      'sub_feature_unlimited_practice': 'Усі розділи та необмежена практика',
       'sub_feature_unlimited_practice_desc':
-          'Прибирає безкоштовний ліміт 30 питань на день',
+          'Відкрийте всі розділи й приберіть ліміт 30 питань на день',
       'sub_feature_unlimited_mock': 'Пробні іспити без обмежень',
       'sub_feature_unlimited_mock_desc':
           'Тренуйтеся багато разів у форматі іспиту',
       'sub_feature_unlimited_mistake_review': 'Повний розбір помилок',
       'sub_feature_unlimited_mistake_review_desc':
           'Повторюйте всі помилки, а не лише безкоштовний перегляд',
-      'sub_feature_deep_explanations': 'Повні пояснення до кожного питання ✨',
-      'sub_feature_deep_explanations_desc':
-          'Логіка відповіді, ключові моменти та навчальні поради',
+      'sub_feature_deep_explanations': 'Повні пояснення безкоштовно',
+      'sub_feature_deep_explanations_desc': 'Логіка відповіді, ключові моменти й поради безкоштовні для всіх',
       'sub_feature_study_center': 'Статистика й навчальні звіти',
       'sub_feature_study_center_desc':
           'Відстежуйте охоплення, засвоєння та прогрес',
@@ -2636,11 +4274,22 @@ class AppStrings {
       'sub_cta_subscribe_button': 'Продовжити з місячною підпискою',
       'sub_disclaimer_text':
           'Підписка поновлюється щомісяця, якщо її не скасувати щонайменше за 24 години до кінця поточного періоду. Після підтвердження покупки оплата списується через акаунт магазину. Керувати підпискою або скасувати її можна в налаштуваннях акаунта магазину.',
+      'sub_disclaimer_text_play':
+          'Підписка поновлюється щомісяця, доки ви її не скасуєте. Після підтвердження покупки оплата списується з акаунта Google Play. Керувати підпискою або скасувати її можна будь-коли в розділі підписок Google Play: якщо скасувати до наступної дати поновлення, нових списань не буде, а доступ збережеться до кінця оплаченого періоду.',
+      'manage_subscription': 'Керування підпискою',
+      'manage_subscription_subtitle':
+          'Перегляд, керування та скасування в Google Play',
+      'manage_subscription_play': 'Керувати або скасувати в Google Play',
+      'manage_subscription_subtitle_store': 'Перегляд, керування та скасування в App Store',
+      'iap_product_unavailable_for_account':
+          'З поточним акаунтом Google Play цю підписку придбати не можна. Підписка пропонується лише в деяких країнах і регіонах.',
+      'iap_product_unavailable_for_account_store':
+          'З поточним акаунтом App Store цю підписку придбати не можна. Підписка пропонується лише в деяких країнах або регіонах.',
       'sub_service_terms': 'Умови використання',
       'sub_privacy_policy': 'Політика конфіденційності',
       'sub_subscription_success_title': 'Підписку активовано',
       'sub_subscription_success_message':
-          'PatenteGo VIP активний. Керувати підпискою або скасувати її можна в налаштуваннях акаунта магазину.',
+          'LinguaPatente VIP активний. Керувати підпискою або скасувати її можна в налаштуваннях акаунта магазину.',
       'sub_restore_checking': 'Перевіряємо історію покупок...',
       'sub_restore_success': 'Підписку успішно відновлено',
       'sub_restore_not_found': 'Підписку для відновлення не знайдено',
@@ -2650,8 +4299,91 @@ class AppStrings {
       'iap_subscription_not_ready': 'Підписка ще не готова. Спробуйте пізніше.',
       'iap_purchase_start_failed': 'Не вдалося почати покупку.',
       'iap_purchase_failed': 'Покупка не вдалася.',
+      'iap_sign_in_required': 'Увійдіть в обліковий запис перед оформленням підписки.',
       'iap_purchase_verification_failed': 'Не вдалося підтвердити покупку.',
+      'iap_purchase_verification_pending':
+          'Google Play завершив оплату. Ми ще підтверджуємо підписку й автоматично повторимо спробу. Якщо вона незабаром не активується, перевірте з’єднання й натисніть «Відновити покупку».',
+      'iap_purchase_verification_pending_store':
+          'App Store завершив оплату. Ми ще підтверджуємо підписку й автоматично повторимо спробу. Якщо вона незабаром не активується, перевірте з’єднання й натисніть «Відновити покупку».',
+      'iap_purchase_verification_rejected':
+          'Цю покупку не можна використати з акаунтом, у який ви ввійшли. Якщо ви купили її з іншим акаунтом, увійдіть у нього.',
       'sub_restore_please_login': 'Спочатку увійдіть',
+
+      // 网页端（WebAppScreen）
+      'web_sign_in': 'Увійти',
+      'web_start_chapter': 'Почати розділ 1',
+      'web_continue_chapter': 'Продовжити розділ 1',
+      'web_guest_saved':
+          'Прогрес у гостьовому режимі зберігається в цьому браузері.',
+      'web_cloud_saved':
+          'Ви ввійшли — прогрес доступний на всіх ваших пристроях.',
+      'web_sync_unavailable':
+          'Ви ввійшли — прогрес на пристрої збережено. Хмарна синхронізація тимчасово недоступна.',
+      'web_chapter_one': 'Розділ 1 · Дорожні знаки',
+      'web_chapter_question_count': 'Питань: {count}',
+      'web_chapter_progress': 'Прогрес розділу',
+      'web_landing_subhead':
+          'Навчайтеся так само, як у застосунку: оберіть перший розділ, відповідайте на питання й крок за кроком закріплюйте знання.',
+      'web_available_tools': 'Доступно під час практики',
+      'web_hint_listen': 'Прослухати',
+      'web_hint_translate': 'Переклад',
+      'web_hint_explanation': 'Пояснення',
+      'web_hint_sync': 'Синхронізація між пристроями',
+      'web_sync_label': 'Прогрес',
+      'web_sync_local': 'На пристрої',
+      'web_sync_active': 'Синхронізовано',
+      'web_overview': 'Огляд',
+      'web_hub_subtitle':
+          'Оберіть режим навчання й продовжуйте з того місця, де зупинилися.',
+      'web_random_practice_description': '30 випадкових питань з усієї бази.',
+      'web_chapter_practice_description':
+          'Вивчайте 25 офіційних розділів і стежте за прогресом кожного.',
+      'web_exam_description':
+          '30 питань · 20 хвилин · для складання не більше 3 помилок.',
+      'web_mistake_description': 'Питань для повторення: {count}.',
+      'web_no_mistake_description': 'У списку помилок поки порожньо.',
+      'web_favorite_description':
+          'Збережених питань: {count}. Їх можна повторити будь-коли.',
+      'web_no_favorite_description':
+          'Зберігайте корисні питання під час практики.',
+      'web_empty_favorites_description':
+          'Натискайте закладку під час практики, щоб зібрати власний список для повторення.',
+      'web_skip_mastered_description':
+          'Не показувати освоєні питання у випадкових тестах і тестах за розділами.',
+      'web_sign_in_to_sync':
+          'Увійдіть, щоб синхронізувати прогрес між пристроями.',
+      'web_reset_progress_description':
+          'Видалити відповіді, помилки, освоєння, вибране й денну статистику.',
+      'web_mastery_report_description':
+          'Охоплення бази, освоєння й розділи, що потребують уваги.',
+      'web_daily_plan_description':
+          'Розподіляйте нові питання й повторення з чіткою щоденною ціллю.',
+      'web_choose_daily_goal': 'Оберіть, скільки питань розв’язувати щодня',
+      'web_today_plan_progress': 'План на сьогодні',
+      'web_today_plan_complete': 'План на сьогодні виконано',
+      'web_start_today_plan': 'Почати решту питань ({count})',
+      'web_bank_coverage': 'Охоплення бази питань',
+      'web_start_mistake_practice': 'Опрацювати помилки ({count})',
+      'web_submit_exam_confirmation':
+          'Без відповіді: {count}. Такі питання зараховуються як помилки. Здати зараз?',
+      'web_review_exam': 'Розбір іспиту',
+      'web_choose_sign_in_method': 'Оберіть спосіб входу',
+      'web_browser_voice_title': 'Італійська озвучка в браузері',
+      'web_browser_voice_description':
+          'Натисніть «Аудіо», щоб відтворити ту саму живу озвучку, що й у застосунку. Якщо мережеве аудіо недоступне, автоматично ввімкнеться італійський голос браузера.',
+      'web_offline_title': 'Офлайн-доступ',
+      'web_offline_description':
+          'Оболонка застосунку та вже відкриті розділи кешуються браузером, тож їх можна знову відкрити за нестабільного з’єднання.',
+      'web_your_answer': 'Ваша відповідь',
+
+      // 错误提示展示层（UserErrorCopy）
+      'auth_error_sign_in_generic': 'Не вдалося увійти. Спробуйте ще раз.',
+      'auth_error_register_generic':
+          'Не вдалося зареєструватися. Спробуйте ще раз.',
+      'iap_error_generic':
+          'Не вдалося виконати запит до магазину. Спробуйте пізніше.',
+      'sync_failed_generic':
+          'Не вдалося синхронізувати. Перевірте з’єднання та спробуйте ще раз.',
     },
   };
 
@@ -2687,4 +4419,11 @@ class AppStrings {
   static List<String> getSupportedLanguages() {
     return _strings.keys.toList();
   }
+
+  /// 所有语言的文案表（只读），供错误文案等展示层判断某段文字是否已本地化。
+  static Map<String, Map<String, String>> get allTables => _strings;
+
+  /// 仅供测试检查各语言 key、占位符是否一致，业务代码请使用 [get]。
+  @visibleForTesting
+  static Map<String, Map<String, String>> get tablesForTesting => _strings;
 }

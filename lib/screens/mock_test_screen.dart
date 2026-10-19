@@ -15,7 +15,10 @@ import 'home_screen.dart';
 /// 模擬考試頁面
 /// 實現 30題、20分鐘、錯3題合格的考試邏輯
 class MockTestScreen extends StatefulWidget {
-  const MockTestScreen({super.key});
+  const MockTestScreen({super.key, @visibleForTesting this.debugQuestions});
+
+  /// 僅供布局測試注入固定題目：跳過抽題、計時與「今日已考」記錄。正式入口不傳。
+  final List<Question>? debugQuestions;
 
   @override
   State<MockTestScreen> createState() => _MockTestScreenState();
@@ -40,6 +43,12 @@ class _MockTestScreenState extends State<MockTestScreen> {
   @override
   void initState() {
     super.initState();
+    final debugQuestions = widget.debugQuestions;
+    if (debugQuestions != null) {
+      _questions = List.of(debugQuestions);
+      _isLoading = false;
+      return;
+    }
     _startMockTest();
   }
 
@@ -220,15 +229,18 @@ class _MockTestScreenState extends State<MockTestScreen> {
       // 未作答或答錯都計為錯誤
       if (userAnswer == null || userAnswer != question.answer) {
         errorIds.add(question.id);
-        // 記錄錯誤到數據庫（模擬考試模式：只記錄錯誤，不影響 correct_streak）
-        final userStateProvider =
-            Provider.of<UserStateProvider>(context, listen: false);
-        DatabaseService.recordErrorInExam(
-          question.id,
-          userId: userStateProvider.effectiveUserId,
-        ).catchError((e) {
-          // 忽略錯誤，不影響用戶體驗
-        });
+        // 已作答題目已在選擇答案時寫入；只為未作答題補一筆錯誤，
+        // 避免同一題在交卷時重複累計並重複安排複習。
+        if (userAnswer == null) {
+          final userStateProvider =
+              Provider.of<UserStateProvider>(context, listen: false);
+          DatabaseService.recordErrorInExam(
+            question.id,
+            userId: userStateProvider.effectiveUserId,
+          ).catchError((e) {
+            // 忽略錯誤，不影響用戶體驗
+          });
+        }
       }
     }
 
@@ -289,6 +301,7 @@ class _MockTestScreenState extends State<MockTestScreen> {
 
   /// 構建毛玻璃 AppBar
   PreferredSizeWidget _buildGlassAppBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: ClipRRect(
@@ -296,10 +309,10 @@ class _MockTestScreenState extends State<MockTestScreen> {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
+              color: colorScheme.surface.withOpacity(0.82),
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.black.withOpacity(0.05),
+                  color: colorScheme.outline.withOpacity(0.2),
                   width: 0.5,
                 ),
               ),
@@ -313,8 +326,9 @@ class _MockTestScreenState extends State<MockTestScreen> {
                   children: [
                     // 左側：返回按鈕（返回到主頁）
                     IconButton(
+                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                       icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                      color: const Color(0xFF475569),
+                      color: colorScheme.onSurfaceVariant,
                       onPressed: () {
                         // 如果導航棧中只有當前頁面，則返回到主頁
                         if (Navigator.of(context).canPop()) {
@@ -338,10 +352,10 @@ class _MockTestScreenState extends State<MockTestScreen> {
                         children: [
                           Text(
                             AppStrings.get('mock_test_title'),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF0D131B),
+                              color: colorScheme.onSurface,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -350,7 +364,7 @@ class _MockTestScreenState extends State<MockTestScreen> {
                             style: TextStyle(
                               fontSize: 9,
                               fontWeight: FontWeight.w500,
-                              color: Colors.grey[600],
+                              color: colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
@@ -361,11 +375,10 @@ class _MockTestScreenState extends State<MockTestScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF), // bg-blue-50
+                        color: colorScheme.primary.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: const Color(0xFFBFDBFE)
-                              .withOpacity(0.5), // blue-200
+                          color: colorScheme.primary.withOpacity(0.28),
                           width: 1,
                         ),
                       ),
@@ -374,11 +387,11 @@ class _MockTestScreenState extends State<MockTestScreen> {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          fontFamily: 'monospace', // 電子表字體
+                          fontFeatures: const [FontFeature.tabularFigures()],
                           letterSpacing: 1,
                           color: _timeRemaining < 300
                               ? Colors.red[900]
-                              : const Color(0xFF1E40AF), // blue-800
+                              : colorScheme.primary,
                         ),
                       ),
                     ),
@@ -394,19 +407,93 @@ class _MockTestScreenState extends State<MockTestScreen> {
 
   /// 構建題目卡片
   Widget _buildQuestionCard(int index) {
+    final colorScheme = Theme.of(context).colorScheme;
     final question = _questions[index];
     final selectedAnswer = userChoices[index];
     final questionText = question.getDisplayQuestionText(
       defaultText: AppStrings.get('question_content_missing'),
     );
+    final hasImage =
+        question.imageName != null && question.imageName!.isNotEmpty;
+
+    // 題號圓形徽章
+    final badge = Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: colorScheme.onSurface.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Center(
+        child: Text(
+          '${index + 1}',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+
+    // 題庫圖片（固定 64x64，圓角包裹，可點擊查看大圖）
+    final image = hasImage
+        ? GestureDetector(
+            onTap: () => _showImagePreview(question.imageName!),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Stack(
+                children: [
+                  Container(
+                    width: 64,
+                    height: 64,
+                    color: colorScheme.onSurface.withOpacity(0.06),
+                    child: _buildQuestionImage(question.imageName!),
+                  ),
+                  // 放大鏡圖標（右上角）
+                  Positioned(
+                    top: 2,
+                    right: 2,
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Icon(
+                        Icons.zoom_in,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        : const SizedBox.shrink();
+
+    // 意語題目文本：模擬考必須能讀到完整題幹，不限行數、不加省略號。
+    final stem = Text(
+      questionText,
+      // 意大利语题干始终从左到右排版（包括乌尔都语界面）。
+      textDirection: TextDirection.ltr,
+      style: TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        height: 1.4,
+        color: colorScheme.onSurface,
+      ),
+    );
 
     return Container(
+      key: ValueKey('mock-test-question-card-$index'),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: Colors.grey[200]!,
+          color: colorScheme.outlineVariant,
           width: 1,
         ),
         boxShadow: [
@@ -423,83 +510,44 @@ class _MockTestScreenState extends State<MockTestScreen> {
           // 頂部行：題號徽章 + 圖片 + 題目文本
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 題號圓形徽章
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${index + 1}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // 題庫圖片（固定 64x64 或 80x80，圓角包裹，可點擊查看大圖）
-                if (question.imageName != null &&
-                    question.imageName!.isNotEmpty)
-                  GestureDetector(
-                    onTap: () => _showImagePreview(question.imageName!),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Stack(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // 圖片旁的文字欄放不下約 10 個字寬（約一個長意大利語單詞）時，
+                // 題幹改到題號與圖片下方全寬顯示，避免單詞被逐字拆行。
+                final besideWidth = constraints.maxWidth -
+                    32 -
+                    12 -
+                    (hasImage ? 64 + 12 : 0);
+                final fontSize = MediaQuery.textScalerOf(context).scale(13);
+                if (hasImage && besideWidth < fontSize * 10) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            color: Colors.grey[100],
-                            child: _buildQuestionImage(question.imageName!),
-                          ),
-                          // 放大鏡圖標（右上角）
-                          Positioned(
-                            top: 2,
-                            right: 2,
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.6),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Icon(
-                                Icons.zoom_in,
-                                size: 12,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
+                          badge,
+                          const SizedBox(width: 12),
+                          image,
                         ],
                       ),
-                    ),
-                  ),
-                if (question.imageName != null &&
-                    question.imageName!.isNotEmpty)
-                  const SizedBox(width: 12),
-                // 意語題目文本（Expanded 包裹）
-                Expanded(
-                  child: Text(
-                    questionText,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      height: 1.4,
-                      color: Color(0xFF1A1C1E),
-                    ),
-                    maxLines: 4,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+                      const SizedBox(height: 12),
+                      SizedBox(width: double.infinity, child: stem),
+                    ],
+                  );
+                }
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    badge,
+                    const SizedBox(width: 12),
+                    if (hasImage) image,
+                    if (hasImage) const SizedBox(width: 12),
+                    // 意語題目文本（Expanded 包裹）
+                    Expanded(child: stem),
+                  ],
+                );
+              },
             ),
           ),
           // 底部操作行：VERO 和 FALSO 按鈕
@@ -508,7 +556,7 @@ class _MockTestScreenState extends State<MockTestScreen> {
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: Colors.grey[200]!,
+                  color: colorScheme.outlineVariant,
                   width: 1,
                 ),
               ),
@@ -522,8 +570,8 @@ class _MockTestScreenState extends State<MockTestScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: selectedAnswer == true
-                            ? const Color(0xFF3B82F6) // 藍色（不管對錯）
-                            : Colors.white,
+                            ? colorScheme.primary
+                            : colorScheme.surface,
                         borderRadius: const BorderRadius.only(
                           bottomLeft: Radius.circular(22),
                         ),
@@ -535,8 +583,8 @@ class _MockTestScreenState extends State<MockTestScreen> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: selectedAnswer == true
-                                ? Colors.white
-                                : const Color(0xFF1E263C),
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -546,7 +594,7 @@ class _MockTestScreenState extends State<MockTestScreen> {
                 // 垂直細線分隔
                 Container(
                   width: 1,
-                  color: Colors.grey[300],
+                  color: colorScheme.outlineVariant,
                 ),
                 // FALSO 按鈕（右半邊）- 考試模式下選中時保持藍色
                 Expanded(
@@ -555,8 +603,8 @@ class _MockTestScreenState extends State<MockTestScreen> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: selectedAnswer == false
-                            ? const Color(0xFF3B82F6) // 藍色（不管對錯）
-                            : Colors.white,
+                            ? colorScheme.primary
+                            : colorScheme.surface,
                         borderRadius: const BorderRadius.only(
                           bottomRight: Radius.circular(22),
                         ),
@@ -568,8 +616,8 @@ class _MockTestScreenState extends State<MockTestScreen> {
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: selectedAnswer == false
-                                ? Colors.white
-                                : const Color(0xFF1E263C),
+                                ? colorScheme.onPrimary
+                                : colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -709,6 +757,7 @@ class _MockTestScreenState extends State<MockTestScreen> {
 
   /// 構建吸底提交按鈕
   Widget _buildSubmitButton(String buttonText) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Material(
@@ -720,13 +769,13 @@ class _MockTestScreenState extends State<MockTestScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
             decoration: BoxDecoration(
               color: _allQuestionsAnswered
-                  ? const Color(0xFF3B82F6) // 藍色背景
-                  : Colors.grey[300], // 禁用狀態：灰色
+                  ? colorScheme.primary
+                  : colorScheme.onSurface.withOpacity(0.14),
               borderRadius: BorderRadius.circular(32),
               boxShadow: _allQuestionsAnswered
                   ? [
                       BoxShadow(
-                        color: const Color(0xFF3B82F6).withOpacity(0.4),
+                        color: colorScheme.primary.withOpacity(0.4),
                         blurRadius: 16,
                         offset: const Offset(0, 4),
                         spreadRadius: 2,
@@ -739,8 +788,9 @@ class _MockTestScreenState extends State<MockTestScreen> {
               children: [
                 Icon(
                   Icons.send,
-                  color:
-                      _allQuestionsAnswered ? Colors.white : Colors.grey[600],
+                  color: _allQuestionsAnswered
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
                   size: 20,
                 ),
                 const SizedBox(width: 8),
@@ -749,8 +799,9 @@ class _MockTestScreenState extends State<MockTestScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color:
-                        _allQuestionsAnswered ? Colors.white : Colors.grey[600],
+                    color: _allQuestionsAnswered
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -812,26 +863,25 @@ class _MockTestScreenState extends State<MockTestScreen> {
       // 自定義 AppBar（毛玻璃效果）
       appBar: _buildGlassAppBar(context),
       body: Container(
-        decoration: AppTheme.pageDecoration,
-        child: Stack(
+        decoration: AppTheme.pageDecorationFor(context),
+        child: Column(
           children: [
-            // 題目列表（滾動）
-            ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100), // 底部留出空間給提交按鈕
-              itemCount: _questions.length,
-              itemBuilder: (context, index) {
-                return _buildQuestionCard(index);
-              },
+            // 題目列表（滾動）。交卷按鈕放在列表下方而非懸浮其上，
+            // 不會壓住題幹或 VERO/FALSO；按鈕高度隨字號變化也不影響最後一題捲出。
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                itemCount: _questions.length,
+                itemBuilder: (context, index) {
+                  return _buildQuestionCard(index);
+                },
+              ),
             ),
             // 吸底提交按鈕
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: SafeArea(
-                child: Center(
-                  child: _buildSubmitButton(submitButtonText),
-                ),
+            SafeArea(
+              top: false,
+              child: Center(
+                child: _buildSubmitButton(submitButtonText),
               ),
             ),
           ],

@@ -1,0 +1,60 @@
+{
+  "identifier" : "LOCALTEST",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "ITA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "LOCALGRP",
+      "localizations" : [
+
+      ],
+      "name" : "LinguaPatente VIP (LOCAL TEST ONLY)",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "0.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "LOCALVIP",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "LOCAL TEST ONLY - placeholder price, not the real App Store price.",
+              "displayName" : "LinguaPatente VIP Monthly (LOCAL TEST ONLY)",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "patentego_vip_monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "LinguaPatente VIP Monthly (LOCAL TEST ONLY)",
+          "subscriptionGroupID" : "LOCALGRP",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

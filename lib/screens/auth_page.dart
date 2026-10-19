@@ -5,6 +5,7 @@ import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
+import '../config/user_error_copy.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -44,8 +45,11 @@ class _AuthPageState extends State<AuthPage> {
       }
     } catch (e) {
       if (mounted) {
-        // 顯示具體錯誤原因
-        final errorMessage = e.toString().replaceFirst('Exception: ', '');
+        // 只顯示本地化文案；未知的 SDK 錯誤統一顯示通用提示。
+        final errorMessage = UserErrorCopy.auth(
+          e,
+          language: context.read<UserStateProvider>().currentLanguage,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -111,7 +115,7 @@ class _AuthPageState extends State<AuthPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  '${AppStrings.getWithLanguage(lang, 'merge_progress_failed')} (${e.toString()})'),
+                  AppStrings.getWithLanguage(lang, 'merge_progress_failed')),
               backgroundColor: Colors.red,
             ),
           );
@@ -128,12 +132,15 @@ class _AuthPageState extends State<AuthPage> {
   @override
   Widget build(BuildContext context) {
     final isLoading = _loadingProvider != null;
-    final lang = context.watch<UserStateProvider>().currentLanguage;
+    final userStateProvider = context.watch<UserStateProvider>();
+    final lang = userStateProvider.currentLanguage;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: Stack(
           children: [
             // 主要內容（底層）
@@ -148,8 +155,10 @@ class _AuthPageState extends State<AuthPage> {
                       child: Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back_ios_new,
-                                size: 20, color: Color(0xFF475569)),
+                            tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                            icon:
+                                const Icon(Icons.arrow_back_ios_new, size: 20),
+                            color: colorScheme.onSurfaceVariant,
                             onPressed: isLoading ? null : _handleClose,
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -166,21 +175,21 @@ class _AuthPageState extends State<AuthPage> {
                           children: [
                             const SizedBox(height: 20),
                             // 圖標
-                            const Icon(
+                            Icon(
                               Icons.lock_outline,
                               size: 72,
-                              color: Color(0xFF0EA5E9),
+                              color: AppTheme.primaryFor(context),
                             ),
                             const SizedBox(height: 24),
                             // 標題
                             Text(
                               AppStrings.getWithLanguage(lang, 'auth_welcome'),
                               textAlign: TextAlign.center,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w600,
-                                color: Color(0xFF1d1d1f),
-                                letterSpacing: -0.5,
+                                color: colorScheme.onSurface,
+                                letterSpacing: 0,
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -190,7 +199,7 @@ class _AuthPageState extends State<AuthPage> {
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey[600],
+                                color: colorScheme.onSurfaceVariant,
                                 height: 1.5,
                               ),
                             ),
@@ -226,13 +235,17 @@ class _AuthPageState extends State<AuthPage> {
                                       ),
                                     ),
                                     const SizedBox(width: 12),
-                                    Text(
-                                      AppStrings.getWithLanguage(
-                                          lang, 'auth_google'),
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF1d1d1f),
+                                    // 长语言（ru/uk/pa）或放大字号时允许换行，避免溢出。
+                                    Flexible(
+                                      child: Text(
+                                        AppStrings.getWithLanguage(
+                                            lang, 'auth_google'),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: colorScheme.onSurface,
+                                        ),
                                       ),
                                     ),
                                   ],
@@ -244,19 +257,25 @@ class _AuthPageState extends State<AuthPage> {
                             Container(
                               decoration: BoxDecoration(
                                 color: Colors.black,
-                                borderRadius: BorderRadius.circular(16),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
+                                borderRadius: isRetro
+                                    ? BorderRadius.zero
+                                    : BorderRadius.circular(16),
+                                boxShadow: isRetro
+                                    ? const []
+                                    : [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
                               ),
                               child: Material(
                                 color: Colors.transparent,
                                 child: InkWell(
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: isRetro
+                                      ? BorderRadius.zero
+                                      : BorderRadius.circular(16),
                                   onTap: isLoading
                                       ? null
                                       : () => _handleSignIn(
@@ -278,13 +297,16 @@ class _AuthPageState extends State<AuthPage> {
                                           color: Colors.white,
                                         ),
                                         const SizedBox(width: 12),
-                                        Text(
-                                          AppStrings.getWithLanguage(
-                                              lang, 'auth_apple'),
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.white,
+                                        Flexible(
+                                          child: Text(
+                                            AppStrings.getWithLanguage(
+                                                lang, 'auth_apple'),
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         ),
                                       ],
@@ -302,7 +324,7 @@ class _AuthPageState extends State<AuthPage> {
                                     lang, 'auth_guest_later'),
                                 style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey[600],
+                                  color: colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ),

@@ -1,0 +1,21 @@
+{
+ "_source": "assets/italy_quiz.db (read-only export after keyword batch 14; keywords_json is the stored string). 6696 holds the entry 'assicurazione per la responsabilità civile auto (R.C.A.)', the stem's own continuous phrase (the stored form lacked 'per la'): 56 characters, longer than the 54 characters of the earlier samples. The list is the complete final list of batch 14, nothing was removed or shortened for the test.",
+ "questions": [
+  {
+   "id": "6696",
+   "image_name": null,
+   "answer": false,
+   "chapter": 23,
+   "translations": {
+    "en": "Insurance for auto civil liability (R.C.A.), which is required by law, includes compensation for damages caused by the vehicle, provided it is driven by the owner.",
+    "it": "L'assicurazione per la responsabilità civile auto (R.C.A.), obbligatoria per legge, comprende il risarcimento dei danni provocati dal veicolo, purché guidato dal proprietario",
+    "pa": "آٹو سول ذمے داری (آر سی اے) لئی انشورنس، جو قانون ولوں لازمی اے، گاڑی دے کارن ہوئے نقصاناں دے معاوضے وچ شامل اے، بشرطیکہ ایہ مالک ولوں چلائی جاوے۔",
+    "ru": "Страхование гражданской ответственности автовладельцев (R.C.A.), обязательное по закону, включает компенсацию ущерба, причиненного транспортным средством, при условии, что им управляет владелец.",
+    "uk": "Страхування цивільної відповідальності автовласників (R.C.A.), обов'язкове за законом, включає компенсацію збитків, заподіяних транспортним засобом, за умови, що ним керує власник.",
+    "ur": "آٹو سول ذمہ داری (آر سی اے) کے لئے انشورنس، جو قانون کے ذریعہ لازمی ہے، گاڑی کی وجہ سے ہونے والے نقصانات کے معاوضے میں شامل ہے، بشرطیکہ یہ مالک کی طرف سے چلائی جائے۔",
+    "zh": "法律规定的汽车民事责任保险(R.C.A.)，包括赔偿车辆造成的损失，但前提是必须由车主驾驶。"
+   },
+   "keywords_json": "[{\"it\": \"assicurazione per la responsabilità civile auto (R.C.A.)\", \"zh\": \"汽车民事责任保险 (R.C.A.)\", \"en\": \"Motor vehicle civil liability insurance (R.C.A.)\", \"ru\": \"Страхование гражданской ответственности автовладельцев (R.C.A.)\", \"uk\": \"Страхування цивільної відповідальності автовласників (R.C.A.)\", \"pa\": \"ਮੋਟਰ ਵਾਹਨ ਸਿਵਲ ਜ਼ਿੰਮੇਵਾਰੀ ਬੀਮਾ (R.C.A.)\", \"ur\": \"موٹر گاڑی کی شہری ذمہ داری کا بیمہ (R.C.A.)\"}, {\"it\": \"obbligatoria\", \"zh\": \"强制性的\", \"en\": \"mandatory\", \"ru\": \"обязательное\", \"uk\": \"обов'язкове\", \"pa\": \"ਲਾਜ਼ਮੀ\", \"ur\": \"لازمی\"}, {\"it\": \"per legge\", \"zh\": \"依照法律\", \"en\": \"by law\", \"ru\": \"по закону\", \"uk\": \"за законом\", \"pa\": \"ਕਾਨੂੰਨ ਅਨੁਸਾਰ\", \"ur\": \"قانون کے مطابق\"}, {\"it\": \"comprende\", \"zh\": \"包括\", \"en\": \"covers (includes)\", \"ru\": \"включает\", \"uk\": \"включає\", \"pa\": \"ਸ਼ਾਮਲ ਕਰਦਾ ਹੈ\", \"ur\": \"شامل کرتا ہے\"}, {\"it\": \"risarcimento dei danni\", \"zh\": \"损害赔偿\", \"en\": \"compensation for damage\", \"ru\": \"возмещение ущерба\", \"uk\": \"відшкодування збитків\", \"pa\": \"ਨੁਕਸਾਨ ਦੀ ਭਰਪਾਈ\", \"ur\": \"نقصان کی تلافی\"}, {\"it\": \"provocati\", \"zh\": \"造成的\", \"en\": \"caused\", \"ru\": \"причинённый\", \"uk\": \"завдані\", \"pa\": \"ਪਹੁੰਚਾਇਆ ਗਿਆ\", \"ur\": \"پہنچایا گیا\"}, {\"it\": \"veicolo\", \"zh\": \"车辆\", \"en\": \"vehicle\", \"ru\": \"транспортное средство\", \"uk\": \"транспортний засіб\", \"pa\": \"ਵਾਹਨ\", \"ur\": \"گاڑی\"}, {\"it\": \"purché\", \"zh\": \"只要（前提是）\", \"en\": \"provided that\", \"ru\": \"при условии, что\", \"uk\": \"за умови, що\", \"pa\": \"ਬਸ਼ਰਤੇ ਕਿ\", \"ur\": \"بشرطیکہ\"}, {\"it\": \"guidato dal\", \"zh\": \"由…驾驶\", \"en\": \"driven by\", \"ru\": \"под управлением\", \"uk\": \"під керуванням\", \"pa\": \"… ਵੱਲੋਂ ਚਲਾਇਆ ਜਾ ਰਿਹਾ\", \"ur\": \"… کی طرف سے چلائی جا رہی\"}, {\"it\": \"proprietario\", \"zh\": \"所有人（车主）\", \"en\": \"owner\", \"ru\": \"владелец\", \"uk\": \"власник\", \"pa\": \"ਮਾਲਕ\", \"ur\": \"مالک\"}]"
+  }
+ ]
+}

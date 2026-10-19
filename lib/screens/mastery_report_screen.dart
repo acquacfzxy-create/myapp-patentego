@@ -7,13 +7,13 @@ import 'package:provider/provider.dart';
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
 import '../config/chapter_config.dart';
+import '../config/locale_format.dart';
+import '../models/chapter_capability.dart';
 import '../providers/user_state_provider.dart';
+import '../services/access_policy.dart';
 import '../services/database_service.dart';
-import '../widgets/empty_state_view.dart';
-import 'chapter_selection_screen.dart';
-import 'mistake_review_screen.dart';
-import 'subscription_page.dart';
 import 'practice_screen.dart';
+import 'subscription_page.dart';
 
 class MasteryReportScreen extends StatefulWidget {
   const MasteryReportScreen({super.key});
@@ -22,16 +22,43 @@ class MasteryReportScreen extends StatefulWidget {
   State<MasteryReportScreen> createState() => _MasteryReportScreenState();
 }
 
-class _MasteryReportScreenState extends State<MasteryReportScreen> {
+class _MasteryReportScreenState extends State<MasteryReportScreen>
+    with WidgetsBindingObserver {
   bool _isLoading = true;
-  List<Map<String, int>> _topWeakChapters = [];
+  List<ChapterCapability> _chapterCapabilities = [];
   List<Map<String, dynamic>> _mockHistory = [];
+  List<Map<String, dynamic>> _dailyGrowth = [];
+  bool _showAllCapabilities = false;
+  int? _highlightedChapterId;
   int? _chartTouchedSpotIndex;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshAfterResume();
+    }
+  }
+
+  Future<void> _refreshAfterResume() async {
+    try {
+      await context.read<UserStateProvider>().checkAndResetDailyCounters();
+      if (mounted) await _loadData();
+    } catch (_) {
+      // 前景刷新失敗時保留現有報告，使用者仍可手動重新進入頁面。
+    }
   }
 
   Future<void> _loadData() async {
@@ -40,16 +67,23 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
       final userId = userState.effectiveUserId;
 
       await userState.updateMasteryStats();
-      final weakChapters =
-          await DatabaseService.getTopWeakChapters(userId: userId, limit: 3);
+      final capabilityStats =
+          await DatabaseService.getChapterCapabilityStats(userId: userId);
       final history = await DatabaseService.getMockExamHistory(userId: userId);
+      final dailyGrowth =
+          await DatabaseService.getDailyGrowth(userId: userId, days: 7);
       await userState.loadPassRatePrediction();
       await userState.loadMockExamImprovement();
 
       final recent5 = history.take(5).toList().reversed.toList();
+      if (!mounted) return;
       setState(() {
-        _topWeakChapters = weakChapters;
+        _chapterCapabilities = capabilityStats
+            .map(ChapterCapability.fromMap)
+            .where((capability) => capability.chapterId > 0)
+            .toList();
         _mockHistory = recent5;
+        _dailyGrowth = dailyGrowth;
         _isLoading = false;
       });
     } catch (_) {
@@ -94,89 +128,236 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
     final userState = context.watch<UserStateProvider>();
     final isVip = userState.isVip;
     final currentLang = userState.currentLanguage;
-    final hasAnyData = userState.attemptedCount > 0 ||
-        _mockHistory.isNotEmpty ||
-        _topWeakChapters.isNotEmpty;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: AppTheme.pageMid,
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
         title: Text(
           AppStrings.getWithLanguage(currentLang, 'mastery_report_title'),
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            color: colorScheme.onSurface,
           ),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+          icon: Icon(
             Icons.arrow_back_ios_new,
             size: 20,
-            color: Color(0xFF475569),
+            color: colorScheme.onSurfaceVariant,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
-            : hasAnyData
-                ? SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildOverallGaugeCard(currentLang),
-                        const SizedBox(height: 24),
-                        _buildWeakChaptersSection(currentLang),
-                        const SizedBox(height: 24),
-                        _buildVipAnalyticsSection(isVip, currentLang),
-                      ],
-                    ),
-                  )
-                : _buildEmptyMasteryState(context, currentLang),
+            : SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildOverallGaugeCard(currentLang),
+                    const SizedBox(height: 24),
+                    _buildWeeklyGrowthSection(currentLang),
+                    const SizedBox(height: 24),
+                    _buildChapterCapabilitySection(userState, currentLang),
+                    const SizedBox(height: 24),
+                    _buildVipAnalyticsSection(isVip, currentLang),
+                  ],
+                ),
+              ),
       ),
     );
   }
 
-  Widget _buildEmptyMasteryState(BuildContext context, String lang) {
-    final userState = context.read<UserStateProvider>();
-    return Center(
-      child: EmptyStateView(
-        icon: Icons.insights_outlined,
-        title: AppStrings.getWithLanguage(lang, 'empty_report_title'),
-        description:
-            AppStrings.getWithLanguage(lang, 'empty_report_description'),
-        action: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF2563EB),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-            elevation: 0,
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (context) => PracticeScreen(
-                  skipMastered: userState.skipMastered,
-                ),
-              ),
-            );
-          },
-          child: Text(
-            AppStrings.getWithLanguage(lang, 'go_practice'),
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+  int _growthValue(Map<String, dynamic> entry, String key) {
+    return (entry[key] as num? ?? 0).toInt();
+  }
+
+  List<Map<String, dynamic>> get _lastSevenDaysGrowth {
+    final normalized = List<Map<String, dynamic>>.generate(
+      7,
+      (_) => {
+        'date': '',
+        'answered': 0,
+        'correct': 0,
+        'newlyMastered': 0,
+        'mistakesResolved': 0,
+      },
+    );
+    final source = _dailyGrowth.length > 7
+        ? _dailyGrowth.sublist(_dailyGrowth.length - 7)
+        : _dailyGrowth;
+    final start = normalized.length - source.length;
+    for (var index = 0; index < source.length; index++) {
+      normalized[start + index] = source[index];
+    }
+    return normalized;
+  }
+
+  Widget _buildWeeklyGrowthSection(String lang) {
+    final primaryColor = AppTheme.primaryFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final surfaceColor = AppTheme.surfaceFor(context);
+    final isRetro = AppTheme.isRetroFor(context);
+    final dailyGrowth = _lastSevenDaysGrowth;
+    final answered = dailyGrowth.fold<int>(
+      0,
+      (total, entry) => total + _growthValue(entry, 'answered'),
+    );
+    final studyDays = dailyGrowth
+        .where((entry) => _growthValue(entry, 'answered') > 0)
+        .length;
+    final newlyMastered = dailyGrowth.fold<int>(
+      0,
+      (total, entry) => total + _growthValue(entry, 'newlyMastered'),
+    );
+    final mistakesResolved = dailyGrowth.fold<int>(
+      0,
+      (total, entry) => total + _growthValue(entry, 'mistakesResolved'),
+    );
+    final maxAnswered = dailyGrowth.fold<int>(
+      0,
+      (currentMax, entry) => max(currentMax, _growthValue(entry, 'answered')),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppStrings.getWithLanguage(lang, 'growth_week_title'),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
+        const SizedBox(height: 10),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: surfaceColor.withOpacity(isRetro ? 0.98 : 0.94),
+            borderRadius:
+                isRetro ? BorderRadius.zero : BorderRadius.circular(20),
+            border:
+                Border.all(color: AppTheme.lineFor(context).withOpacity(0.5)),
+          ),
+          child: Column(
+            children: [
+              SizedBox(
+                height: 66,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: dailyGrowth.map((entry) {
+                    final dayAnswered = _growthValue(entry, 'answered');
+                    final height = maxAnswered == 0
+                        ? 4.0
+                        : 4 + (dayAnswered / maxAnswered) * 42;
+                    final date = entry['date'] as String? ?? '';
+                    final dayLabel =
+                        date.length >= 2 ? date.substring(date.length - 2) : '';
+                    return Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            width: 16,
+                            height: height,
+                            decoration: BoxDecoration(
+                              color: dayAnswered > 0
+                                  ? primaryColor
+                                  : primaryColor.withOpacity(0.14),
+                              borderRadius: isRetro
+                                  ? BorderRadius.zero
+                                  : BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            dayLabel,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: mutedColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              if (answered == 0) ...[
+                const SizedBox(height: 12),
+                Text(
+                  AppStrings.getWithLanguage(lang, 'growth_no_activity'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12, color: mutedColor),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  _buildGrowthMetric(
+                    '$studyDays / 7',
+                    AppStrings.getWithLanguage(lang, 'growth_study_days'),
+                  ),
+                  _buildGrowthMetric(
+                    '$answered',
+                    AppStrings.getWithLanguage(lang, 'growth_answered'),
+                  ),
+                  _buildGrowthMetric(
+                    '$newlyMastered',
+                    AppStrings.getWithLanguage(lang, 'growth_newly_mastered'),
+                  ),
+                  _buildGrowthMetric(
+                    '$mistakesResolved',
+                    AppStrings.getWithLanguage(
+                        lang, 'growth_mistakes_resolved'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGrowthMetric(String value, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final mutedColor = AppTheme.mutedFor(context);
+    return SizedBox(
+      width: 132,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: colorScheme.onSurface,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 11, color: mutedColor),
+          ),
+        ],
       ),
     );
   }
@@ -187,21 +368,19 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
     final isInsufficientData = passRate < 0;
     final isZeroRate = passRate == 0;
     final displayValue = passRate < 0 ? 0.0 : passRate.clamp(0.0, 1.0);
+    final isRetro = AppTheme.isRetroFor(context);
+    final surfaceColor = AppTheme.surfaceFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.4),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF1D4ED8).withOpacity(0.06),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: surfaceColor.withOpacity(isRetro ? 0.98 : 0.86),
+        borderRadius: isRetro
+            ? BorderRadius.zero
+            : BorderRadius.circular(AppTheme.radiusXl),
+        border: Border.all(color: AppTheme.lineFor(context).withOpacity(0.5)),
+        boxShadow: AppTheme.cardShadowFor(context),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Column(
@@ -211,7 +390,11 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
             width: 180,
             height: 90,
             child: CustomPaint(
-              painter: _SemiGaugePainter(percentage: displayValue),
+              painter: _SemiGaugePainter(
+                percentage: displayValue,
+                backgroundColor: AppTheme.lineFor(context).withOpacity(0.45),
+                progressColor: primaryColor,
+              ),
               child: Center(
                 child: Text(
                   isInsufficientData
@@ -223,8 +406,8 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                     fontSize: 36,
                     fontWeight: FontWeight.w800,
                     color: isInsufficientData || isZeroRate
-                        ? Colors.grey.shade500
-                        : const Color(0xFF0F172A),
+                        ? mutedColor
+                        : Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -241,7 +424,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
+              color: mutedColor,
             ),
           ),
           if (!isInsufficientData &&
@@ -253,7 +436,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                 AppStrings.getWithLanguage(lang, 'prediction_accuracy_low'),
                 style: TextStyle(
                   fontSize: 11,
-                  color: Colors.orange.shade700,
+                  color: AppTheme.warningTextFor(context),
                 ),
               ),
             ),
@@ -265,15 +448,16 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(999),
+                  color: AppTheme.primarySoftFor(context),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(999),
                 ),
                 child: Text(
                   AppStrings.getWithLanguage(lang, 'collecting_study_data'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1D4ED8),
+                    color: primaryColor,
                   ),
                 ),
               ),
@@ -291,6 +475,12 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
     if (improvement == null || improvement == 0) return const SizedBox.shrink();
     final isUp = improvement > 0;
     final pct = (improvement.abs() * 100).round();
+    final statusColor =
+        isUp ? AppTheme.successFor(context) : AppTheme.dangerFor(context);
+    final statusBackground = isUp
+        ? AppTheme.successSoftFor(context)
+        : AppTheme.dangerSoftFor(context);
+    final isRetro = AppTheme.isRetroFor(context);
     final label =
         '${isUp ? AppStrings.getWithLanguage(lang, 'improvement_vs_yesterday_up') : AppStrings.getWithLanguage(lang, 'improvement_vs_yesterday_down')} $pct%';
     return Padding(
@@ -298,18 +488,10 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isUp
-              ? const Color(0xFFD1FAE5)
-              : const Color(0xFFFEE2E2).withOpacity(0.9),
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: [
-            BoxShadow(
-              color: (isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626))
-                  .withOpacity(0.2),
-              blurRadius: 8,
-              spreadRadius: 0,
-            ),
-          ],
+          color: statusBackground,
+          borderRadius:
+              isRetro ? BorderRadius.zero : BorderRadius.circular(999),
+          border: Border.all(color: statusColor.withOpacity(0.25)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -317,7 +499,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
             Icon(
               isUp ? Icons.trending_up : Icons.trending_down,
               size: 16,
-              color: isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+              color: statusColor,
             ),
             const SizedBox(width: 4),
             Text(
@@ -325,7 +507,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: isUp ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                color: statusColor,
               ),
             ),
           ],
@@ -334,185 +516,435 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
     );
   }
 
-  Widget _buildWeakChaptersSection(String currentLang) {
+  Widget _buildChapterCapabilitySection(
+    UserStateProvider userState,
+    String lang,
+  ) {
+    final capabilities = [..._chapterCapabilities]..sort((a, b) {
+        final aAccessPriority = userState.isChapterLocked(a.chapterId) ? 1 : 0;
+        final bAccessPriority = userState.isChapterLocked(b.chapterId) ? 1 : 0;
+        final accessComparison = aAccessPriority.compareTo(bAccessPriority);
+        if (accessComparison != 0) return accessComparison;
+
+        final stateComparison = _capabilityPriority(a.state)
+            .compareTo(_capabilityPriority(b.state));
+        if (stateComparison != 0) return stateComparison;
+
+        if (a.state == ChapterCapabilityState.needsAttention) {
+          final mistakeComparison =
+              b.mistakeDensity.compareTo(a.mistakeDensity);
+          if (mistakeComparison != 0) return mistakeComparison;
+        }
+        return a.chapterId.compareTo(b.chapterId);
+      });
+    var visibleCapabilities =
+        _showAllCapabilities ? capabilities : capabilities.take(5).toList();
+    if (!_showAllCapabilities &&
+        _highlightedChapterId != null &&
+        !visibleCapabilities.any(
+          (capability) => capability.chapterId == _highlightedChapterId,
+        )) {
+      final highlighted = capabilities.where(
+        (capability) => capability.chapterId == _highlightedChapterId,
+      );
+      if (highlighted.isNotEmpty) {
+        visibleCapabilities = [
+          ...capabilities.take(4),
+          highlighted.first,
+        ];
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 4),
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
+            Expanded(
               child: Text(
-                AppStrings.getWithLanguage(currentLang, 'focus_chapters_title'),
-                style: const TextStyle(
+                AppStrings.getWithLanguage(lang, 'chapter_capability_title'),
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ),
-            if (_topWeakChapters.isNotEmpty)
+            if (capabilities.length > 5)
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) =>
-                          const MistakeReviewScreen(initialTabIndex: 0),
-                    ),
-                  );
+                  setState(() => _showAllCapabilities = !_showAllCapabilities);
                 },
                 style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF137FEC),
+                  foregroundColor: AppTheme.primaryFor(context),
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                   minimumSize: Size.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                    AppStrings.getWithLanguage(currentLang, 'mistake_review'),
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w600)),
+                  AppStrings.getWithLanguage(
+                    lang,
+                    _showAllCapabilities
+                        ? 'chapter_capability_show_priority'
+                        : 'chapter_capability_show_all',
+                  ),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
           ],
         ),
-        const SizedBox(height: 8),
-        if (_topWeakChapters.isEmpty)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            child: Text(
-              AppStrings.getWithLanguage(
-                  currentLang, 'no_weak_chapters_placeholder'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-                height: 1.4,
+        const SizedBox(height: 10),
+        ...visibleCapabilities.map(
+          (capability) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _buildCapabilityCard(capability, userState, lang),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCapabilityCard(
+    ChapterCapability capability,
+    UserStateProvider userState,
+    String lang,
+  ) {
+    final color = _capabilityColor(capability.state);
+    final isLocked = userState.isChapterLocked(capability.chapterId);
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final cardColor = AppTheme.surfaceFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final stats = AppStrings.getWithLanguage(lang, 'chapter_capability_stats')
+        .replaceAll('{practiced}', '${capability.practiced}')
+        .replaceAll('{total}', '${capability.total}')
+        .replaceAll('{mastered}', '${capability.mastered}')
+        .replaceAll('{mistakes}', '${capability.mistakes}');
+
+    final isHighlighted = _highlightedChapterId == capability.chapterId;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: isHighlighted
+            ? color.withOpacity(0.08)
+            : cardColor.withOpacity(isRetro ? 0.98 : 0.92),
+        borderRadius: isRetro
+            ? BorderRadius.zero
+            : BorderRadius.circular(AppTheme.radiusSm),
+        border: Border.all(
+          color: color.withOpacity(isHighlighted ? 0.8 : 0.2),
+          width: isHighlighted ? 2 : 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.12),
+                  shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
+                ),
+                child: Icon(
+                  _capabilityIcon(capability.state),
+                  color: color,
+                  size: 20,
+                ),
               ),
-            ),
-          )
-        else
-          Column(
-            children: _topWeakChapters.take(2).map((entry) {
-              final index = _topWeakChapters.indexOf(entry);
-              final chapterId = entry['chapter'] ?? 0;
-              final errors = entry['errors'] ?? 0;
-              final title = _buildChapterTitle(chapterId, currentLang);
-
-              final isPrimary = index == 0;
-              final icon =
-                  isPrimary ? Icons.priority_high : Icons.speed_rounded;
-              final iconColor =
-                  isPrimary ? const Color(0xFFDC2626) : const Color(0xFFF97316);
-
-              return Padding(
-                padding: EdgeInsets.only(top: index == 0 ? 0 : 10),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ChapterSelectionScreen(),
-                        ),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 20,
-                            spreadRadius: 0,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(22),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: isPrimary
-                                    ? [
-                                        const Color(0xFFFECACA),
-                                        const Color(0xFFFEE2E2),
-                                      ]
-                                    : [
-                                        const Color(0xFFFED7AA),
-                                        const Color(0xFFFFEDD5),
-                                      ],
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: (isPrimary
-                                          ? const Color(0xFFDC2626)
-                                          : const Color(0xFFF97316))
-                                      .withOpacity(0.15),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Icon(icon, color: iconColor, size: 22),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  title,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF111827),
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${AppStrings.getWithLanguage(currentLang, 'error_count_prefix')}$errors',
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF6B7280),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.chevron_right,
-                            color: const Color(0xFF137FEC).withOpacity(0.8),
-                            size: 24,
-                          ),
-                        ],
-                      ),
-                    ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  _buildChapterTitle(capability.chapterId, lang),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: colorScheme.onSurface,
+                    height: 1.35,
                   ),
                 ),
-              );
-            }).toList(),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(999),
+                ),
+                child: Text(
+                  _capabilityStateLabel(capability.state, lang),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
           ),
-      ],
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius:
+                isRetro ? BorderRadius.zero : BorderRadius.circular(3),
+            child: LinearProgressIndicator(
+              minHeight: 6,
+              value: capability.coverageRatio.clamp(0, 1),
+              backgroundColor: AppTheme.lineFor(context).withOpacity(0.65),
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+          const SizedBox(height: 7),
+          Text(
+            stats,
+            style: TextStyle(
+              fontSize: 11,
+              color: mutedColor,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => _startCapabilityPractice(capability),
+              icon: Icon(isLocked ? Icons.lock_outline : Icons.bolt, size: 17),
+              label: Text(_capabilityActionLabel(capability.state, lang)),
+              style: ElevatedButton.styleFrom(
+                elevation: 0,
+                backgroundColor: color.withOpacity(0.12),
+                foregroundColor: color,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(8),
+                ),
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _capabilityPriority(ChapterCapabilityState state) {
+    switch (state) {
+      case ChapterCapabilityState.needsAttention:
+        return 0;
+      case ChapterCapabilityState.learning:
+        return 1;
+      case ChapterCapabilityState.notStarted:
+        return 2;
+      case ChapterCapabilityState.stable:
+        return 3;
+    }
+  }
+
+  Color _capabilityColor(ChapterCapabilityState state) {
+    switch (state) {
+      case ChapterCapabilityState.notStarted:
+        return AppTheme.mutedFor(context);
+      case ChapterCapabilityState.learning:
+        return AppTheme.primaryFor(context);
+      case ChapterCapabilityState.needsAttention:
+        return AppTheme.dangerFor(context);
+      case ChapterCapabilityState.stable:
+        return AppTheme.successFor(context);
+    }
+  }
+
+  IconData _capabilityIcon(ChapterCapabilityState state) {
+    switch (state) {
+      case ChapterCapabilityState.notStarted:
+        return Icons.radio_button_unchecked;
+      case ChapterCapabilityState.learning:
+        return Icons.school_outlined;
+      case ChapterCapabilityState.needsAttention:
+        return Icons.priority_high;
+      case ChapterCapabilityState.stable:
+        return Icons.check;
+    }
+  }
+
+  String _capabilityStateLabel(ChapterCapabilityState state, String lang) {
+    switch (state) {
+      case ChapterCapabilityState.notStarted:
+        return AppStrings.getWithLanguage(
+          lang,
+          'chapter_capability_not_started',
+        );
+      case ChapterCapabilityState.learning:
+        return AppStrings.getWithLanguage(lang, 'chapter_capability_learning');
+      case ChapterCapabilityState.needsAttention:
+        return AppStrings.getWithLanguage(
+          lang,
+          'chapter_capability_needs_attention',
+        );
+      case ChapterCapabilityState.stable:
+        return AppStrings.getWithLanguage(lang, 'chapter_capability_stable');
+    }
+  }
+
+  String _capabilityActionLabel(ChapterCapabilityState state, String lang) {
+    switch (state) {
+      case ChapterCapabilityState.notStarted:
+        return AppStrings.getWithLanguage(lang, 'chapter_capability_start');
+      case ChapterCapabilityState.stable:
+        return AppStrings.getWithLanguage(lang, 'chapter_capability_review');
+      case ChapterCapabilityState.learning:
+      case ChapterCapabilityState.needsAttention:
+        return AppStrings.getWithLanguage(
+          lang,
+          'chapter_capability_strengthen',
+        );
+    }
+  }
+
+  Future<void> _startCapabilityPractice(ChapterCapability capability) async {
+    final userState = context.read<UserStateProvider>();
+    await userState.checkAndResetDailyCounters();
+    if (!mounted) return;
+
+    if (userState.isChapterLocked(capability.chapterId)) {
+      await _showCapabilityAccessPrompt(
+        title: AppStrings.getWithLanguage(
+          userState.currentLanguage,
+          'chapter_locked_title',
+        ),
+        message: AppStrings.getWithLanguage(
+          userState.currentLanguage,
+          'chapter_locked_message',
+        ),
+      );
+      return;
+    }
+
+    if (!userState.canPractice()) {
+      await _showCapabilityAccessPrompt(
+        title: AppStrings.getWithLanguage(
+          userState.currentLanguage,
+          'quiz_limit_reached',
+        ),
+        message: AppStrings.getWithLanguage(
+          userState.currentLanguage,
+          'quiz_limit_message',
+        ),
+      );
+      return;
+    }
+
+    final questionLimit = userState.isVip
+        ? 10
+        : min(
+            10,
+            AccessPolicy.freeDailyQuizLimit - userState.dailyQuizCount,
+          );
+    final strengthenedChapterId = await Navigator.of(context).push<int>(
+      MaterialPageRoute<int>(
+        builder: (_) => PracticeScreen(
+          chapterId: capability.chapterId,
+          skipMastered: capability.state != ChapterCapabilityState.stable,
+          strengtheningStart: capability,
+          strengtheningQuestionLimit: questionLimit,
+        ),
+      ),
+    );
+    if (!mounted) return;
+    await userState.syncProgressToCloudIfVip();
+    if (!mounted) return;
+    await _loadData();
+    if (!mounted || strengthenedChapterId == null) return;
+    setState(() => _highlightedChapterId = strengthenedChapterId);
+    Future<void>.delayed(const Duration(milliseconds: 2500), () {
+      if (mounted && _highlightedChapterId == strengthenedChapterId) {
+        setState(() => _highlightedChapterId = null);
+      }
+    });
+  }
+
+  Future<void> _showCapabilityAccessPrompt({
+    required String title,
+    required String message,
+  }) async {
+    final lang = context.read<UserStateProvider>().currentLanguage;
+    final colorScheme = Theme.of(context).colorScheme;
+    final primaryColor = AppTheme.primaryFor(context);
+    final shouldSubscribe = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.lock, color: primaryColor, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ),
+            IconButton(
+              tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
+              icon: const Icon(Icons.close, size: 20),
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: TextStyle(
+            fontSize: 16,
+            color: colorScheme.onSurface,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(AppStrings.getWithLanguage(lang, 'return_home')),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: colorScheme.onPrimary,
+            ),
+            child: Text(
+              AppStrings.getWithLanguage(lang, 'go_subscribe_unlock'),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || shouldSubscribe != true) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (_) => const SubscriptionPage()),
     );
   }
 
   /// 模擬考錯誤趨勢區塊（已取消 VIP 鎖定，所有用戶可見；底部按鈕跳轉訂閱頁）
   Widget _buildVipAnalyticsSection(bool isVip, String lang) {
     const chartHeight = 200.0;
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    final surfaceColor = AppTheme.surfaceFor(context);
 
     final titleSection = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -524,10 +956,10 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
           alignment: Alignment.centerLeft,
           child: Text(
             AppStrings.getWithLanguage(lang, 'mock_exam_trend_title'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+              color: colorScheme.onSurface,
             ),
           ),
         ),
@@ -536,7 +968,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
           AppStrings.getWithLanguage(lang, 'recent_5_trends'),
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade600,
+            color: AppTheme.mutedFor(context),
           ),
         ),
         const SizedBox(height: 12),
@@ -550,11 +982,12 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
         titleSection,
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(
-              color: Colors.white.withOpacity(0.5),
-            ),
+            color: surfaceColor.withOpacity(isRetro ? 0.98 : 0.86),
+            borderRadius: isRetro
+                ? BorderRadius.zero
+                : BorderRadius.circular(AppTheme.radiusXl),
+            border:
+                Border.all(color: AppTheme.lineFor(context).withOpacity(0.5)),
           ),
           padding: const EdgeInsets.all(16),
           height: chartHeight,
@@ -573,22 +1006,18 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                   ),
                 );
               },
-              borderRadius: BorderRadius.circular(999),
+              borderRadius:
+                  isRetro ? BorderRadius.zero : BorderRadius.circular(999),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 24,
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF0F172A),
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.2),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: primaryColor,
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(999),
+                  boxShadow: AppTheme.cardShadowFor(context),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -597,19 +1026,19 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                       child: Text(
                         AppStrings.getWithLanguage(lang, 'ai_advice_cta'),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: colorScheme.onPrimary,
                           height: 1.25,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward,
                       size: 18,
-                      color: Colors.white,
+                      color: colorScheme.onPrimary,
                     ),
                   ],
                 ),
@@ -631,10 +1060,16 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
     if (sec <= 0) return '';
     final ms = sec > 9999999999 ? sec : sec * 1000;
     final dt = DateTime.fromMillisecondsSinceEpoch(ms.toInt());
-    return '${dt.month}/${dt.day}';
+    return LocaleFormat.shortDate(AppStrings.getLanguage(), dt);
   }
 
   Widget _buildMockHistoryChart(String lang) {
+    final primaryColor = AppTheme.primaryFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final surfaceColor = AppTheme.surfaceFor(context);
+    final successColor = AppTheme.successFor(context);
+    final dangerColor = AppTheme.dangerFor(context);
+    final isRetro = AppTheme.isRetroFor(context);
     if (_mockHistory.isEmpty) {
       return Center(
         child: Column(
@@ -643,15 +1078,15 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
             Icon(
               Icons.show_chart_rounded,
               size: 42,
-              color: const Color(0xFF137FEC).withOpacity(0.3),
+              color: primaryColor.withOpacity(0.3),
             ),
             const SizedBox(height: 8),
             Text(
               AppStrings.getWithLanguage(lang, 'trend_chart_locked_desc'),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF9CA3AF),
+                color: mutedColor,
                 height: 1.4,
               ),
             ),
@@ -686,16 +1121,15 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
       isCurved: true,
       curveSmoothness: 0.3,
       barWidth: 3,
-      color: const Color(0xFF137FEC),
+      color: primaryColor,
       dotData: FlDotData(
         show: true,
         getDotPainter: (spot, percent, bd, index) {
           final isPass = spot.y <= _passThresholdY;
           return FlDotCirclePainter(
             radius: 5,
-            color: Colors.white,
-            strokeColor:
-                isPass ? const Color(0xFF2563EB) : const Color(0xFFDC2626),
+            color: surfaceColor,
+            strokeColor: isPass ? primaryColor : dangerColor,
             strokeWidth: 2.5,
           );
         },
@@ -706,8 +1140,8 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            const Color(0xFF1D4ED8).withOpacity(0.35),
-            const Color(0xFF137FEC).withOpacity(0.08),
+            primaryColor.withOpacity(0.35),
+            primaryColor.withOpacity(0.08),
             Colors.transparent,
           ],
           stops: const [0.0, 0.4, 1.0],
@@ -731,7 +1165,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
               passLabelRight -
               passLabelWidth -
               oneCharWidth;
-          final passLineColor = Colors.green.withOpacity(0.5);
+          final passLineColor = successColor.withOpacity(0.5);
 
           return Stack(
             clipBehavior: Clip.none,
@@ -744,7 +1178,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                   leftX: leftReserved,
                   gapStartX: gapStartX,
                   passLineColor: passLineColor,
-                  bottomLineColor: Colors.grey.withOpacity(0.25),
+                  bottomLineColor: mutedColor.withOpacity(0.25),
                   strokeWidth: 1.5,
                   dashLength: 4,
                   gapLength: 4,
@@ -783,7 +1217,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                                 fontSize: 10,
                                 color: isPassTick
                                     ? passLineColor
-                                    : Colors.grey.withOpacity(0.5),
+                                    : mutedColor.withOpacity(0.5),
                               ),
                             ),
                           );
@@ -818,7 +1252,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                               style: TextStyle(
                                 fontSize: 9,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.grey.withOpacity(0.5),
+                                color: mutedColor.withOpacity(0.5),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -835,8 +1269,8 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                   borderData: FlBorderData(
                     show: true,
                     border: Border(
-                      left: BorderSide(color: Colors.grey.withOpacity(0.2)),
-                      bottom: BorderSide(color: Colors.grey.withOpacity(0.2)),
+                      left: BorderSide(color: mutedColor.withOpacity(0.2)),
+                      bottom: BorderSide(color: mutedColor.withOpacity(0.2)),
                     ),
                   ),
                   minX: chartMinX,
@@ -865,10 +1299,8 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                           getDotPainter: (spot, percent, bd, idx) =>
                               FlDotCirclePainter(
                             radius: 5,
-                            color: Colors.white,
-                            strokeColor: isPass
-                                ? const Color(0xFF2563EB)
-                                : const Color(0xFFDC2626),
+                            color: surfaceColor,
+                            strokeColor: isPass ? primaryColor : dangerColor,
                             strokeWidth: 2.5,
                           ),
                         ),
@@ -883,15 +1315,15 @@ class _MasteryReportScreenState extends State<MasteryReportScreen> {
                           final wrong = wrongCounts[dataIndex];
                           return LineTooltipItem(
                             '$wrong',
-                            const TextStyle(
+                            TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: Color(0xFF111827),
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           );
                         }).toList();
                       },
-                      tooltipRoundedRadius: 6,
+                      tooltipRoundedRadius: isRetro ? 0 : 6,
                       tooltipPadding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 6),
                     ),
@@ -997,8 +1429,14 @@ class _ChartGridLinesPainter extends CustomPainter {
 /// 半圓儀表盤繪製：漸變弧線、圓角端、極淡灰底
 class _SemiGaugePainter extends CustomPainter {
   final double percentage; // 0.0 - 1.0
+  final Color backgroundColor;
+  final Color progressColor;
 
-  _SemiGaugePainter({required this.percentage});
+  _SemiGaugePainter({
+    required this.percentage,
+    required this.backgroundColor,
+    required this.progressColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1007,7 +1445,7 @@ class _SemiGaugePainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
 
     final backgroundPaint = Paint()
-      ..color = const Color(0xFFF1F5F9)
+      ..color = backgroundColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 12
       ..strokeCap = StrokeCap.round;
@@ -1015,18 +1453,8 @@ class _SemiGaugePainter extends CustomPainter {
     canvas.drawArc(rect, pi, pi, false, backgroundPaint);
 
     if (percentage > 0) {
-      const gradient = LinearGradient(
-        begin: Alignment.centerLeft,
-        end: Alignment.centerRight,
-        colors: [
-          const Color(0xFF137FEC),
-          const Color(0xFF3B82F6),
-          const Color(0xFF93C5FD),
-        ],
-        stops: const [0.0, 0.5, 1.0],
-      );
       final progressPaint = Paint()
-        ..shader = gradient.createShader(rect)
+        ..color = progressColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 12
         ..strokeCap = StrokeCap.round;
@@ -1038,6 +1466,8 @@ class _SemiGaugePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SemiGaugePainter oldDelegate) {
-    return oldDelegate.percentage != percentage;
+    return oldDelegate.percentage != percentage ||
+        oldDelegate.backgroundColor != backgroundColor ||
+        oldDelegate.progressColor != progressColor;
   }
 }

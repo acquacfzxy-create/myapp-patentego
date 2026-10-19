@@ -1,0 +1,41 @@
+{
+ "_source": "assets/italy_quiz.db (read-only export; mock exam stems from user screenshot Q18-21 plus longest no-image/image stems)",
+ "questions": [
+  {
+   "id": "4904",
+   "answer": false,
+   "image_name": "/img_sign/647.png",
+   "it": "Secondo le norme di precedenza nell'incrocio rappresentato in figura il veicolo H transita dopo il veicolo O"
+  },
+  {
+   "id": "4643",
+   "answer": true,
+   "image_name": null,
+   "it": "Se un'auto della polizia, con sirena in funzione, vi sorpassa ponendosi davanti e sul tetto ha un display con la scritta luminosa \"ALT POLIZIA\", solo voi avete l'obbligo di arrestarvi"
+  },
+  {
+   "id": "4411",
+   "answer": false,
+   "image_name": null,
+   "it": "In un centro abitato, quando un pedone, fuori delle strisce di attraversamento, non accenni a darci la precedenza, è opportuno nelle ore notturne, procedere con gli abbaglianti accesi così che possa accorgersi di noi"
+  },
+  {
+   "id": "4341",
+   "answer": true,
+   "image_name": "/img_sign/676.png",
+   "it": "Il veicolo S, muovendosi in retromarcia per immettersi nella circolazione, deve dare la precedenza ai veicoli provenienti sia da destra che da sinistra"
+  },
+  {
+   "id": "5568",
+   "answer": true,
+   "image_name": null,
+   "it": "In caso di ingorgo su strade extraurbane principali o autostrade, se la corsia di emergenza manca o non è sufficiente alla circolazione dei veicoli di polizia o di soccorso, il conducente del veicolo che occupa la prima corsia di destra deve disporsi il più vicino possibile alla striscia di sinistra"
+  },
+  {
+   "id": "2665",
+   "answer": true,
+   "image_name": "/img_sign/154.png",
+   "it": "Avvicinandosi ad un semaforo, che già da molto tempo ha la luce verde accesa, occorre proseguire con prudenza, pronti eventualmente a fermarsi se, quando si accende la luce gialla, non si è ancora impegnato l'incrocio"
+  }
+ ]
+}

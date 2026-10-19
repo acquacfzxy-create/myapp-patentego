@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:italy_quiz_app/services/explanation_parser.dart';
+import 'package:lingua_patente/services/explanation_parser.dart';
 
 void main() {
   group('ExplanationParser', () {

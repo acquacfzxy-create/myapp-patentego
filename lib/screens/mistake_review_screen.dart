@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../services/database_service.dart';
+import '../services/access_policy.dart';
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
@@ -92,7 +93,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
     });
   }
 
-  /// 點擊解析圖標：展開時先做限額檢查與計次，與練習模式一致
+  /// 點擊解析圖標：所有用戶免費展開解析
   Future<void> _onExplanationIconTap(String questionId) async {
     final isOpening = _showExplanation[questionId] != true;
     if (!isOpening) {
@@ -103,25 +104,6 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
       return;
     }
 
-    final userStateProvider =
-        Provider.of<UserStateProvider>(context, listen: false);
-    if (!userStateProvider.canViewExplanation(questionId)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.get('explanation_limit_reached_message')),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SubscriptionPage(),
-        ),
-      );
-      return;
-    }
-
-    await userStateProvider.incrementExplanationCount(questionId);
     if (mounted) {
       setState(() {
         _showExplanation[questionId] = true;
@@ -178,7 +160,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           SnackBar(
             content: Text(AppStrings.get('removed_from_mistakes')),
             duration: const Duration(seconds: 2),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successFor(context),
           ),
         );
       }
@@ -188,7 +170,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           SnackBar(
             content: Text('${AppStrings.get('failed_to_remove')}: $e'),
             duration: const Duration(seconds: 2),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.dangerFor(context),
           ),
         );
       }
@@ -197,31 +179,37 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
 
   /// 顯示移除確認對話框
   Future<void> _showRemoveConfirmationDialog(String questionId) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) => ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: isRetro
+            ? BorderRadius.zero
+            : BorderRadius.circular(AppTheme.radiusLg),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: AlertDialog(
-            backgroundColor: Colors.white.withOpacity(0.95),
+            backgroundColor: colorScheme.surface,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: isRetro
+                  ? BorderRadius.zero
+                  : BorderRadius.circular(AppTheme.radiusLg),
             ),
             title: Text(
               AppStrings.get('remove_from_mistakes_title'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B),
+                color: colorScheme.onSurface,
               ),
             ),
             content: Text(
               AppStrings.get('remove_from_mistakes_message'),
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[700],
+                color: colorScheme.onSurfaceVariant,
                 height: 1.5,
               ),
             ),
@@ -232,7 +220,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                 child: Text(
                   AppStrings.get('cancel'),
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                   ),
                 ),
@@ -241,15 +229,16 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
               ElevatedButton(
                 onPressed: () => Navigator.of(dialogContext).pop(true),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red[400],
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.dangerFor(context),
+                  foregroundColor: colorScheme.onError,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius:
+                        isRetro ? BorderRadius.zero : BorderRadius.circular(8),
                   ),
                 ),
                 child: Text(
                   AppStrings.get('confirm_remove'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -272,7 +261,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
       // 毛玻璃 AppBar（參照 ExamReviewScreen）
       appBar: _buildGlassAppBar(context),
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorQuestions.isEmpty
@@ -294,17 +283,20 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
   }
 
   Widget _buildEmptyMistakesState(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return EmptyStateView(
       icon: Icons.assignment_turned_in_outlined,
       title: AppStrings.get('empty_mistakes_title'),
       description: AppStrings.get('empty_mistakes_description'),
       action: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2563EB),
-          foregroundColor: Colors.white,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
           padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: AppTheme.isRetroFor(context)
+                ? BorderRadius.zero
+                : BorderRadius.circular(24),
           ),
           elevation: 0,
         ),
@@ -326,11 +318,12 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
 
   /// 構建 Tab 切換欄
   Widget _buildTabBar() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.6),
+        color: colorScheme.surface.withOpacity(0.6),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -361,14 +354,17 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
     required bool isSelected,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: isSelected
+          color: isSelected ? colorScheme.surface : Colors.transparent,
+          borderRadius: AppTheme.isRetroFor(context)
+              ? BorderRadius.zero
+              : BorderRadius.circular(8),
+          boxShadow: isSelected && !AppTheme.isRetroFor(context)
               ? [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.05),
@@ -384,7 +380,9 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              color: isSelected ? const Color(0xFF137FEC) : Colors.grey[600],
+              color: isSelected
+                  ? colorScheme.primary
+                  : colorScheme.onSurfaceVariant,
             ),
           ),
         ),
@@ -396,85 +394,35 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
   Widget _buildBrowseList() {
     return Consumer<UserStateProvider>(
       builder: (context, userStateProvider, child) {
-        final totalMistakes = userStateProvider.mistakeCount;
+        // 使用本頁實際載入的數量，避免 Provider 尚未刷新時洩漏完整列表。
+        final totalMistakes = _errorQuestions.length;
         final isVip = userStateProvider.isVip;
-
-        // ─── 計算列表顯示長度（截斷非會員的錯題列表） ─────────────────────
-        int itemCount;
-        if (isVip) {
-          // VIP：顯示完整錯題列表
-          itemCount = _errorQuestions.length;
-        } else {
-          // 非會員：限制列表長度
-          if (totalMistakes <= 10) {
-            // 錯題數量不超過 10：顯示實際數量
-            itemCount = _errorQuestions.length;
-          } else {
-            // 錯題數量大於 10：顯示 12 個條目
-            // [0-9] 十道可見錯題 + [10] 升級橫幅 + [11] 模糊鎖定 Teaser
-            itemCount = 12;
-          }
-        }
+        final visibleCount = AccessPolicy.visibleMistakePreviewCount(
+          isVip: isVip,
+          totalItems: totalMistakes,
+        );
+        final hiddenCount = totalMistakes - visibleCount;
+        final itemCount = visibleCount + (hiddenCount > 0 ? 1 : 0);
 
         return ListView.builder(
           padding: const EdgeInsets.all(16),
           itemCount: itemCount,
           itemBuilder: (context, index) {
-            // ─── VIP：沿用原有邏輯，完整渲染鎖定 / 非鎖定 ────────────────
-            if (isVip || totalMistakes <= 10) {
-              final entry = _errorQuestions[index];
-              final isLocked = userStateProvider.shouldLockMistake(index);
-
+            // 完整預覽固定結束在第五題；其後只渲染一個通用模糊區塊，
+            // 不載入或洩漏任何被鎖定題目的內容。
+            if (hiddenCount > 0 && index == visibleCount) {
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: isLocked
-                    ? _buildLockedCard(entry, index, totalMistakes)
-                    : _buildQuestionCard(entry, index),
+                child: _buildHiddenMistakesPreview(hiddenCount: hiddenCount),
               );
             }
 
-            // ─── 非會員且 totalMistakes > 10：固定 12 項結構 ───────────────
-            // [0-9]：前 10 道正常題目
-            // [10]：升級橫幅（唯一一張）
-            // [11]：第一道鎖定題作為模糊 Teaser
-
-            if (index <= 9) {
-              // 安全防護：如果實際錯題少於 index+1，就不渲染
-              if (index >= _errorQuestions.length) {
-                return const SizedBox.shrink();
-              }
-              final entry = _errorQuestions[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _buildQuestionCard(entry, index),
-              );
-            } else if (index == 10) {
-              // 升級橫幅，與上下卡片間距使用統一的 16
-              final hiddenCount = (totalMistakes - 10).clamp(0, totalMistakes);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildUnlockBanner(hiddenCount: hiddenCount),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              );
-            } else if (index == 11) {
-              // 第一張鎖定卡片作為 Teaser（如果存在第 11 題）
-              if (_errorQuestions.length <= 10) {
-                return const SizedBox.shrink();
-              }
-              final lockedEntry = _errorQuestions[10]; // 第 11 題，index=10
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: _buildLockedCard(lockedEntry, 10, totalMistakes),
-              );
-            }
-
-            // 理論上不會觸達這裡（itemCount 已限制為 12）
-            return const SizedBox.shrink();
+            final questionIndex = index;
+            final entry = _errorQuestions[questionIndex];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildQuestionCard(entry, questionIndex),
+            );
           },
         );
       },
@@ -483,6 +431,11 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
 
   /// 構建專項複習引導卡片
   Widget _buildPracticeGuide() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final cardRadius =
+        isRetro ? BorderRadius.zero : BorderRadius.circular(AppTheme.radiusXl);
+    final warningColor = AppTheme.warningFor(context);
     final mistakeCount = _errorQuestions.length;
     final userStateProvider =
         Provider.of<UserStateProvider>(context, listen: true);
@@ -492,7 +445,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: cardRadius,
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
             child: Container(
@@ -500,34 +453,28 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
               constraints: const BoxConstraints(maxWidth: 400),
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.85),
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                color: colorScheme.surface.withOpacity(0.92),
+                borderRadius: cardRadius,
+                boxShadow: AppTheme.cardShadowFor(context),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   // 圖標
-                  const Icon(
+                  Icon(
                     Icons.psychology,
                     size: 80,
-                    color: Color(0xFF137FEC),
+                    color: colorScheme.primary,
                   ),
                   const SizedBox(height: 24),
                   // 標題
                   Text(
                     AppStrings.get('mistake_mode_title'),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF0D131B),
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -539,7 +486,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                     style: TextStyle(
                       fontSize: 15,
                       height: 1.6,
-                      color: Colors.grey[700],
+                      color: colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 32),
@@ -564,16 +511,18 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
-                            isVip ? const Color(0xFF137FEC) : Colors.white,
+                            isVip ? colorScheme.primary : colorScheme.surface,
                         foregroundColor:
-                            isVip ? Colors.white : const Color(0xFFB45309),
+                            isVip ? colorScheme.onPrimary : warningColor,
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: isRetro
+                              ? BorderRadius.zero
+                              : BorderRadius.circular(12),
                           side: isVip
                               ? BorderSide.none
-                              : const BorderSide(
-                                  color: Color(0xFFF59E0B),
+                              : BorderSide(
+                                  color: warningColor,
                                   width: 1.2,
                                 ),
                         ),
@@ -588,8 +537,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                                 ? Icons.workspace_premium
                                 : Icons.lock_outline,
                             size: 18,
-                            color:
-                                isVip ? Colors.white : const Color(0xFFF59E0B),
+                            color: isVip ? colorScheme.onPrimary : warningColor,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -638,6 +586,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
 
   /// 構建毛玻璃 AppBar（參照 ExamReviewScreen）
   PreferredSizeWidget _buildGlassAppBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: ClipRRect(
@@ -645,10 +594,10 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
+              color: colorScheme.surface.withOpacity(0.82),
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.black.withOpacity(0.05),
+                  color: colorScheme.outline.withOpacity(0.2),
                   width: 0.5,
                 ),
               ),
@@ -662,8 +611,9 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                   children: [
                     // 左側：返回按鈕
                     IconButton(
+                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                       icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                      color: const Color(0xFF475569),
+                      color: colorScheme.onSurfaceVariant,
                       onPressed: () => Navigator.of(context).pop(),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -673,10 +623,10 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                       child: Center(
                         child: Text(
                           AppStrings.get('mistake_review'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E293B),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -695,6 +645,10 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
 
   /// 構建題目卡片（完全參照 ExamReviewScreen）
   Widget _buildQuestionCard(WrongQuestionEntry entry, int index) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final cardRadius =
+        isRetro ? BorderRadius.zero : BorderRadius.circular(AppTheme.radiusXl);
     final question = entry.question;
     final correctAnswer = question.answer;
     final questionId = question.id;
@@ -708,20 +662,14 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
         question.imageName != null && question.imageName!.isNotEmpty;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: cardRadius,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: colorScheme.surface.withOpacity(0.92),
+            borderRadius: cardRadius,
+            boxShadow: AppTheme.cardShadowFor(context),
           ),
           child: Stack(
             children: [
@@ -745,11 +693,13 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                           // 意語題目文本（統一行高1.5）
                           Text(
                             questionText,
-                            style: const TextStyle(
+                            // 意大利语题干始终从左到右排版（包括乌尔都语界面）。
+                            textDirection: TextDirection.ltr,
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                               height: 1.5, // 統一行高
-                              color: Color(0xFF0D131B),
+                              color: colorScheme.onSurface,
                             ),
                           ),
 
@@ -798,94 +748,10 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
     );
   }
 
-  /// 構建鎖定卡片（VIP 限制：第 11 題起模糊 + 金色鎖，點擊跳轉訂閱頁）
-  Widget _buildLockedCard(WrongQuestionEntry entry, int index, int total) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => const SubscriptionPage(),
-          ),
-        );
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Stack(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLeftGutter(
-                          index, entry.question.answer, entry.wrongCount),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              entry.question.getDisplayQuestionText(
-                                defaultText:
-                                    AppStrings.get('question_content_missing'),
-                              ),
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                                height: 1.5,
-                                color: Color(0xFF0D131B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      const SizedBox(width: 40), // 占位，對齊右欄
-                    ],
-                  ),
-                ),
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(24),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                      child: Container(
-                        color: Colors.white.withOpacity(0.35),
-                        alignment: Alignment.center,
-                        child: const Icon(
-                          Icons.lock,
-                          size: 52,
-                          color: Color(0xFFD4AF37),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   /// 構建左欄（題號 + 正確答案圓圈，極簡版）
   /// 邏輯：只顯示正確答案（V 或 F），題號在圓圈上方
   Widget _buildLeftGutter(int index, bool correctAnswer, int wrongCount) {
+    final colorScheme = Theme.of(context).colorScheme;
     // 根據正確答案決定顯示 V 還是 F
     final label = correctAnswer ? 'V' : 'F';
 
@@ -902,7 +768,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
               style: TextStyle(
                 fontSize: 9,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[500],
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -928,6 +794,8 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
     required String label,
     required bool isCorrect, // 是否為正確答案（始終為 true）
   }) {
+    final isRetro = AppTheme.isRetroFor(context);
+    final successColor = AppTheme.successFor(context);
     return SizedBox(
       width: 28,
       height: 28,
@@ -935,10 +803,11 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.green.withOpacity(0.1), // 極淺綠色背景
+          shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
+          color: successColor.withOpacity(0.1), // 極淺綠色背景
+          borderRadius: isRetro ? BorderRadius.zero : null,
           border: Border.all(
-            color: Colors.green[300]!, // 淺綠色邊框
+            color: successColor.withOpacity(0.7), // 淺綠色邊框
             width: 1.0, // 極細邊框
           ),
         ),
@@ -951,7 +820,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
               fontFeatures: const [
                 FontFeature.tabularFigures()
               ], // Monospace 效果
-              color: Colors.green[700]!, // 深綠色文字（而非鮮綠色）
+              color: successColor, // 深綠色文字（而非鮮綠色）
             ),
           ),
         ),
@@ -962,26 +831,31 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
   /// 獲取錯誤次數標籤的顏色配置
   /// 根據錯誤次數返回對應的文字顏色和背景顏色
   Map<String, Color> _getMistakeColor(int count) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = AppTheme.mutedFor(context);
+    final lineColor = AppTheme.lineFor(context);
+    final warningColor = AppTheme.warningFor(context);
+    final dangerColor = AppTheme.dangerFor(context);
     if (count <= 2) {
       // 輕度（1-2次）：中性色
       return {
-        'text': Colors.grey[600]!,
-        'background': Colors.grey[100]!,
-        'border': Colors.grey[200]!,
+        'text': mutedColor,
+        'background': mutedColor.withOpacity(isDark ? 0.12 : 0.08),
+        'border': lineColor.withOpacity(0.5),
       };
     } else if (count <= 4) {
       // 中度（3-4次）：警示色
       return {
-        'text': Colors.orange[700]!,
-        'background': Colors.orange[50]!,
-        'border': Colors.orange[200]!,
+        'text': warningColor,
+        'background': warningColor.withOpacity(0.14),
+        'border': warningColor.withOpacity(0.4),
       };
     } else {
       // 重度（5次及以上）：危險色
       return {
-        'text': Colors.red[700]!,
-        'background': Colors.red[50]!,
-        'border': Colors.red[200]!,
+        'text': dangerColor,
+        'background': dangerColor.withOpacity(0.14),
+        'border': dangerColor.withOpacity(0.4),
       };
     }
   }
@@ -1019,6 +893,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
     return FutureBuilder<bool>(
       future: _isFavorite(questionId),
       builder: (context, snapshot) {
+        final colorScheme = Theme.of(context).colorScheme;
         final isFavorite = snapshot.data ?? false;
         final isTranslationActive = _showTranslation[questionId] == true;
         final isExplanationActive = _showExplanation[questionId] == true;
@@ -1028,89 +903,83 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 收藏按鈕（帶背景圓圈，激活時變紅色）
-              GestureDetector(
-                onTap: () => _toggleFavorite(questionId),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100]!.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isFavorite ? Icons.favorite : Icons.favorite_border,
-                    size: 16,
-                    color: isFavorite ? Colors.red[400] : Colors.grey[400],
-                  ),
-                ),
+              _buildActionButton(
+                tooltip: isFavorite
+                    ? AppStrings.get('unfavorite')
+                    : AppStrings.get('favorites'),
+                icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: isFavorite
+                    ? AppTheme.dangerFor(context)
+                    : colorScheme.onSurfaceVariant,
+                onPressed: () => _toggleFavorite(questionId),
               ),
-              const SizedBox(width: 12),
-              // 解析按鈕（帶背景圓圈，激活時變藍色；展開前做限額檢查與計次）
-              GestureDetector(
-                onTap: () async {
+              const SizedBox(width: 8),
+              _buildActionButton(
+                tooltip: AppStrings.get('btn_explanation'),
+                icon: isExplanationActive
+                    ? Icons.menu_book
+                    : Icons.menu_book_outlined,
+                color: isExplanationActive
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
+                isActive: isExplanationActive,
+                onPressed: () async {
                   await _onExplanationIconTap(questionId);
                 },
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100]!.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    isExplanationActive
-                        ? Icons.menu_book
-                        : Icons.menu_book_outlined,
-                    size: 16,
-                    color: isExplanationActive
-                        ? const Color(0xFF137FEC) // 激活時變藍色（primaryColor）
-                        : Colors.grey[400],
-                  ),
-                ),
               ),
-              const SizedBox(width: 12),
-              // 翻譯按鈕（帶背景圓圈，激活時變藍色）
-              GestureDetector(
-                onTap: _currentLanguage == 'it'
+              const SizedBox(width: 8),
+              _buildActionButton(
+                tooltip: AppStrings.get('translation'),
+                icon: Icons.translate,
+                color: _currentLanguage == 'it'
+                    ? colorScheme.onSurface.withOpacity(0.25)
+                    : (isTranslationActive
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant),
+                isActive: isTranslationActive,
+                onPressed: _currentLanguage == 'it'
                     ? null
                     : () => _toggleTranslation(questionId),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100]!.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.translate,
-                    size: 16,
-                    color: _currentLanguage == 'it'
-                        ? Colors.grey[300] // 禁用狀態
-                        : (isTranslationActive
-                            ? const Color(0xFF137FEC) // 激活時變藍色（primaryColor）
-                            : Colors.grey[400]),
-                  ),
-                ),
               ),
-              const SizedBox(width: 12),
-              // 移除按鈕（帶背景圓圈，淡灰色）
-              GestureDetector(
-                onTap: () => _showRemoveConfirmationDialog(questionId),
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100]!.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.delete_outline,
-                    size: 16,
-                    color: Colors.grey[400],
-                  ),
-                ),
+              const SizedBox(width: 8),
+              _buildActionButton(
+                tooltip: AppStrings.get('remove_from_mistakes'),
+                icon: Icons.delete_outline,
+                color: colorScheme.onSurfaceVariant,
+                onPressed: () => _showRemoveConfirmationDialog(questionId),
               ),
             ],
           ),
         );
       },
+    );
+  }
+
+  Widget _buildActionButton({
+    required String tooltip,
+    required IconData icon,
+    required Color color,
+    required VoidCallback? onPressed,
+    bool isActive = false,
+  }) {
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      icon: Icon(icon, size: 19, color: color),
+      style: IconButton.styleFrom(
+        minimumSize: const Size.square(44),
+        backgroundColor: isActive
+            ? AppTheme.primarySoftFor(context)
+            : AppTheme.surfaceFor(context),
+        shape: isRetro
+            ? const RoundedRectangleBorder(borderRadius: BorderRadius.zero)
+            : const CircleBorder(),
+        side: isRetro
+            ? const BorderSide(color: AppTheme.retroLine)
+            : BorderSide(color: primaryColor.withOpacity(isActive ? 0.3 : 0.1)),
+      ),
     );
   }
 
@@ -1206,6 +1075,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                 top: 0,
                 right: 0,
                 child: IconButton(
+                  tooltip: MaterialLocalizations.of(context).closeButtonTooltip,
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -1238,18 +1108,23 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           return Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: AppTheme.isRetroFor(context)
+                  ? BorderRadius.zero
+                  : BorderRadius.circular(16),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.image_not_supported,
-                    size: 64, color: Colors.grey),
+                Icon(
+                  Icons.image_not_supported,
+                  size: 64,
+                  color: AppTheme.mutedFor(context),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   AppStrings.get('failed_to_load'),
-                  style: const TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppTheme.mutedFor(context)),
                 ),
               ],
             ),
@@ -1271,18 +1146,23 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           return Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: AppTheme.isRetroFor(context)
+                  ? BorderRadius.zero
+                  : BorderRadius.circular(16),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.image_not_supported,
-                    size: 64, color: Colors.grey),
+                Icon(
+                  Icons.image_not_supported,
+                  size: 64,
+                  color: AppTheme.mutedFor(context),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   AppStrings.get('failed_to_load'),
-                  style: const TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppTheme.mutedFor(context)),
                 ),
               ],
             ),
@@ -1294,68 +1174,78 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
 
   /// 構建關鍵詞標籤（優化版：使用Wrap，支持長單詞完整顯示）
   Widget _buildKeyWordsChips(Question question) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     final keywords = question.getKeyWords(_currentLanguage);
 
     if (keywords.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 4,
-      children: keywords.map((keyword) {
-        final itWord = keyword['it'] ?? '';
-        final translation =
-            keyword[_currentLanguage] ?? keyword['en'] ?? keyword['zh'] ?? '';
+    return LayoutBuilder(
+      builder: (context, constraints) => Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        children: keywords.map((keyword) {
+          final itWord = keyword['it'] ?? '';
+          final translation =
+              keyword[_currentLanguage] ?? keyword['en'] ?? keyword['zh'] ?? '';
 
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.grey[100], // 極淺灰色背景
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: Colors.grey[200]!, // 極淡邊框
-              width: 0.5,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // 意大利语单词（不限制宽度，允许完整显示）
-              Text(
-                itWord,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF1E293B),
+          return ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceFor(context),
+                borderRadius:
+                    isRetro ? BorderRadius.zero : BorderRadius.circular(12),
+                border: Border.all(
+                  color: colorScheme.outline.withOpacity(0.28),
+                  width: 0.8,
                 ),
               ),
-              if (translation.isNotEmpty) ...[
-                const SizedBox(width: 4),
-                Text(
-                  '•',
-                  style: TextStyle(fontSize: 9, color: Colors.grey[400]),
-                ),
-                const SizedBox(width: 4),
-                // 翻译文本（不限制宽度，允许完整显示）
-                Text(
-                  translation,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
+              child: Wrap(
+                spacing: 4,
+                runSpacing: 2,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text(
+                    itWord,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
-                ),
-              ],
-            ],
-          ),
-        );
-      }).toList(),
+                  if (translation.isNotEmpty) ...[
+                    Text(
+                      '•',
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    Text(
+                      translation,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
   /// 構建精美解析區塊（JSON 解析 + 詳細說明 / 考點總結 / 學習小貼士）
   /// 結構參考練習模式的解析底部彈窗，但以內嵌卡片方式展示
   Widget _buildRichExplanationSection(Question question) {
+    final colorScheme = Theme.of(context).colorScheme;
     final explanationText = question.getExplanationText(_currentLanguage) ??
         question.getExplanationText('it') ??
         AppStrings.getWithLanguage(
@@ -1408,10 +1298,10 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Colors.blue[100]!,
+          color: colorScheme.primary.withOpacity(0.25),
           width: 1,
         ),
       ),
@@ -1421,10 +1311,10 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           // 詳細說明標題
           Text(
             AppStrings.get('detail_description_title'),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.grey,
+              color: colorScheme.onSurfaceVariant,
               letterSpacing: 0.5,
             ),
           ),
@@ -1432,20 +1322,20 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           // 詳細說明內容
           Text(
             detailedDescription,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               height: 1.6,
-              color: Color(0xFF1D1D1F),
+              color: colorScheme.onSurface,
             ),
           ),
           if (isJsonFormat && keyPoints != null && keyPoints.isNotEmpty) ...[
             const SizedBox(height: 20),
             Text(
               AppStrings.get('key_points_title'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey,
+                color: colorScheme.onSurfaceVariant,
                 letterSpacing: 0.5,
               ),
             ),
@@ -1465,18 +1355,18 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                       width: 6,
                       height: 6,
                       margin: const EdgeInsets.only(top: 6, right: 10),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF137FEC),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary,
                         shape: BoxShape.circle,
                       ),
                     ),
                     Expanded(
-                      child: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(
+                      child: Text.rich(
+                        TextSpan(
+                          style: TextStyle(
                             fontSize: 14,
                             height: 1.5,
-                            color: Color(0xFF1D1D1F),
+                            color: colorScheme.onSurface,
                           ),
                           children: [
                             TextSpan(
@@ -1503,10 +1393,10 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: Colors.blue[50],
+                color: colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: Colors.blue[200]!,
+                  color: colorScheme.primary.withOpacity(0.32),
                   width: 1,
                 ),
               ),
@@ -1515,7 +1405,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                 children: [
                   Icon(
                     Icons.lightbulb_outline,
-                    color: Colors.blue[700],
+                    color: colorScheme.primary,
                     size: 22,
                   ),
                   const SizedBox(width: 10),
@@ -1525,7 +1415,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         height: 1.6,
-                        color: Colors.blue[900],
+                        color: colorScheme.primary,
                       ),
                     ),
                   ),
@@ -1544,15 +1434,24 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
       return const SizedBox.shrink();
     }
 
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final warningColor = AppTheme.warningFor(context);
+    final lockBackground =
+        isRetro ? AppTheme.primaryFor(context) : warningColor;
+    final lockForeground = isRetro ? AppTheme.retroPage : Colors.black;
+    final cardRadius =
+        isRetro ? BorderRadius.zero : BorderRadius.circular(AppTheme.radiusLg);
+
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: cardRadius,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.white.withOpacity(0.9),
+            borderRadius: cardRadius,
+            color: colorScheme.surface.withOpacity(0.92),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
@@ -1569,34 +1468,31 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                 height: 32,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFFFFE6A7),
-                      Color(0xFFF4D03F),
-                    ],
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.amber.withOpacity(0.4),
-                      blurRadius: 10,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
+                  color: lockBackground,
+                  boxShadow: isRetro
+                      ? const []
+                      : [
+                          BoxShadow(
+                            color: warningColor.withOpacity(0.35),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.lock,
                   size: 18,
-                  color: Color(0xFF7C5B07),
+                  color: lockForeground,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   '${AppStrings.get('hidden_mistakes_banner_prefix')}$hiddenCount${AppStrings.get('hidden_mistakes_banner_suffix')}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     height: 1.5,
-                    color: Color(0xFF1F2933),
+                    color: colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -1613,10 +1509,12 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    backgroundColor: const Color(0xFF137FEC),
-                    foregroundColor: Colors.white,
+                    backgroundColor: colorScheme.primary,
+                    foregroundColor: colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: isRetro
+                          ? BorderRadius.zero
+                          : BorderRadius.circular(999),
                     ),
                     elevation: 0,
                   ),
@@ -1633,6 +1531,92 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  /// 固定高度的模糊終點：只傳達仍有內容被鎖定，不渲染真實題幹，
+  /// 因此免費列表最多只有五張題卡加一個鎖定區，不會無限下滑。
+  Widget _buildHiddenMistakesPreview({required int hiddenCount}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final previewRadius =
+        isRetro ? BorderRadius.zero : BorderRadius.circular(AppTheme.radiusXl);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: previewRadius,
+          child: SizedBox(
+            height: 150,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  color: colorScheme.surface.withOpacity(0.78),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: colorScheme.onSurface.withOpacity(0.12),
+                          borderRadius: isRetro
+                              ? BorderRadius.zero
+                              : BorderRadius.circular(999),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      ...[0.86, 0.68, 0.48].map(
+                        (factor) => Padding(
+                          padding: const EdgeInsets.only(bottom: 9),
+                          child: FractionallySizedBox(
+                            widthFactor: factor,
+                            child: Container(
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: colorScheme.onSurface.withOpacity(0.16),
+                                borderRadius: isRetro
+                                    ? BorderRadius.zero
+                                    : BorderRadius.circular(999),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: Container(
+                    color: colorScheme.surface.withOpacity(0.28),
+                    alignment: Alignment.center,
+                    child: Container(
+                      width: 54,
+                      height: 54,
+                      decoration: BoxDecoration(
+                        color: colorScheme.surface,
+                        shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
+                        borderRadius: isRetro ? BorderRadius.zero : null,
+                        boxShadow: AppTheme.cardShadowFor(context),
+                      ),
+                      child: Icon(
+                        Icons.lock_rounded,
+                        color: AppTheme.primaryFor(context),
+                        size: 28,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _buildUnlockBanner(hiddenCount: hiddenCount),
+      ],
     );
   }
 }
@@ -1667,7 +1651,11 @@ class _MistakeReviewPracticeScreenState
     // 🔄 使用統一的 updateQuestionProgress 方法（會自動減少 wrong_count）
     final userStateProvider =
         Provider.of<UserStateProvider>(context, listen: false);
-    await userStateProvider.updateQuestionProgress(question.id, isCorrect);
+    await userStateProvider.updateQuestionProgress(
+      question.id,
+      isCorrect,
+      mistakeResolved: isCorrect && widget.entry.wrongCount <= 1,
+    );
 
     if (!mounted) return;
 
@@ -1700,7 +1688,7 @@ class _MistakeReviewPracticeScreenState
                 Text(AppStrings.get('mistake_eliminated')),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successFor(context),
             duration: const Duration(seconds: 2),
           ),
         );

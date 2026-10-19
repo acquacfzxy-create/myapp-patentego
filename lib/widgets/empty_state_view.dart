@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_theme.dart';
+
 class EmptyStateView extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -16,6 +18,11 @@ class EmptyStateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = AppTheme.primaryFor(context);
+    final inkColor = AppTheme.inkFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final isRetro = AppTheme.isRetroFor(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -25,26 +32,26 @@ class EmptyStateView extends StatelessWidget {
             Icon(
               icon,
               size: 96,
-              color: const Color(0xFF137FEC).withOpacity(0.3),
+              color: primaryColor.withOpacity(isRetro ? 0.72 : 0.3),
             ),
             const SizedBox(height: 22),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF1F2937),
+                color: inkColor,
               ),
             ),
             const SizedBox(height: 10),
             Text(
               description,
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 height: 1.6,
-                color: Color(0xFF4B5563),
+                color: mutedColor,
               ),
             ),
             if (action != null) ...[

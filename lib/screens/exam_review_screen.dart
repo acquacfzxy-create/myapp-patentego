@@ -45,46 +45,13 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
     });
   }
 
-  /// 打開與練習模式一致的解析底部彈窗（限額檢查與計次與練習模式一致）
+  /// 打開與練習模式一致的解析底部彈窗（所有用戶免費不限次）
   Future<void> _openExplanationSheet(int index) async {
-    final question = widget.questions[index];
-    final userStateProvider =
-        Provider.of<UserStateProvider>(context, listen: false);
-    final questionId = question.id;
-    final isVip = userStateProvider.isVip;
-
-    if (!userStateProvider.canViewExplanation(questionId)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppStrings.get('explanation_limit_reached_message')),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SubscriptionPage(),
-        ),
-      );
-      return;
-    }
-
-    final alreadyUnlockedToday =
-        userStateProvider.isExplanationUnlockedToday(questionId);
-    final remainingBefore = userStateProvider.remainingExplanations;
-
     await QuestionWidget.showRichExplanation(
       context,
-      question: question,
+      question: widget.questions[index],
       currentLanguage: _currentLanguage,
-      remainingExplanations:
-          (!isVip && !alreadyUnlockedToday) ? remainingBefore : null,
-      showVipBadgeOnStudyTip: !isVip,
     );
-
-    if (!isVip && !alreadyUnlockedToday) {
-      await userStateProvider.incrementExplanationCount(questionId);
-    }
   }
 
   /// 切換收藏狀態
@@ -118,7 +85,7 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
       // 毛玻璃 AppBar
       appBar: _buildGlassAppBar(context),
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: Consumer<UserStateProvider>(
           builder: (context, userStateProvider, _) {
             return ListView.builder(
@@ -146,6 +113,7 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
 
   /// 構建毛玻璃 AppBar
   PreferredSizeWidget _buildGlassAppBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: ClipRRect(
@@ -153,10 +121,10 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
+              color: colorScheme.surface.withOpacity(0.82),
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.black.withOpacity(0.05),
+                  color: colorScheme.onSurface.withOpacity(0.08),
                   width: 0.5,
                 ),
               ),
@@ -170,8 +138,9 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                   children: [
                     // 左側：返回按鈕（純圖標）
                     IconButton(
+                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                       icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                      color: const Color(0xFF475569),
+                      color: colorScheme.onSurfaceVariant,
                       onPressed: () => Navigator.of(context).pop(),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -179,13 +148,18 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                     // 中間：標題
                     Expanded(
                       child: Center(
-                        child: Text(
+                        // 顶栏高度固定：标题保持单行，放不下时整体缩小（俄语/乌克兰语放大字号时）。
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
                           AppStrings.get('view_test_errors'),
-                          style: const TextStyle(
+                          maxLines: 1,
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E293B),
+                            color: colorScheme.onSurface,
                           ),
+                        ),
                         ),
                       ),
                     ),
@@ -203,6 +177,10 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
 
   /// 構建鎖定的題目卡片（非 VIP：第 11 題起僅鎖正確題；錯題/未答題仍可復盤）
   Widget _buildLockedReviewCard(int index) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final cardRadius =
+        isRetro ? BorderRadius.zero : BorderRadius.circular(AppTheme.radiusXl);
     return GestureDetector(
       onTap: () {
         Navigator.of(context).push(
@@ -217,16 +195,16 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
           _buildQuestionCard(index),
           Positioned.fill(
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: cardRadius,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: Container(
-                  color: Colors.white.withOpacity(0.5),
+                  color: colorScheme.surface.withOpacity(isRetro ? 0.72 : 0.5),
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     Icons.lock,
                     size: 48,
-                    color: Color(0xFFD4AF37),
+                    color: AppTheme.primaryFor(context),
                   ),
                 ),
               ),
@@ -239,6 +217,10 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
 
   /// 構建題目卡片
   Widget _buildQuestionCard(int index) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final cardRadius =
+        isRetro ? BorderRadius.zero : BorderRadius.circular(AppTheme.radiusXl);
     final question = widget.questions[index];
     final userChoice = widget.userChoices[index];
     final correctAnswer = question.answer;
@@ -250,20 +232,14 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
         question.imageName != null && question.imageName!.isNotEmpty;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: cardRadius,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            color: colorScheme.surface.withOpacity(0.94),
+            borderRadius: cardRadius,
+            boxShadow: AppTheme.cardShadowFor(context),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -285,11 +261,13 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                       // 意語題目文本（最高優先級，字號和對比度最高）
                       Text(
                         questionText,
-                        style: const TextStyle(
+                        // 意大利语题干始终从左到右排版（包括乌尔都语界面）。
+                        textDirection: TextDirection.ltr,
+                        style: TextStyle(
                           fontSize: 17, // 略微增大，強化信息層級
                           fontWeight: FontWeight.w600, // 增加字重，提高對比度
                           height: 1.5,
-                          color: Color(0xFF0D131B), // 更深的黑色，提高對比度
+                          color: colorScheme.onSurface,
                         ),
                       ),
 
@@ -330,6 +308,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
 
   /// 構建左欄（題號徽章 + V/F 圓圈）
   Widget _buildLeftGutter(int index, bool correctAnswer, bool? userChoice) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     // 強制應用"閱卷紅線"邏輯：
     // - 綠色圓圈：正確答案始終顯示綠色
     // - 紅色斜線：只有當用戶選錯了（userChoice != null && userChoice != correctAnswer）時才顯示
@@ -357,15 +337,16 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(8),
+              color: colorScheme.onSurface.withOpacity(0.08),
+              borderRadius:
+                  isRetro ? BorderRadius.zero : BorderRadius.circular(8),
             ),
             child: Text(
               '${index + 1}',
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ),
@@ -405,6 +386,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
   }) {
     // 調試：檢查 isWrong 參數
     if (kDebugMode && isWrong) {}
+    final successColor = AppTheme.successFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
 
     return SizedBox(
       width: 40,
@@ -420,13 +403,12 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: isCorrect
-                  ? const Color(0xFF22C55E)
-                      .withOpacity(0.15) // 正確答案：淡綠色背景（始終顯示）
+                  ? successColor.withOpacity(0.15) // 正確答案：淡綠色背景（始終顯示）
                   : Colors.transparent,
               border: Border.all(
                 color: isCorrect
-                    ? const Color(0xFF22C55E) // 正確答案：綠色邊框（始終顯示）
-                    : Colors.grey[300]!,
+                    ? successColor // 正確答案：綠色邊框（始終顯示）
+                    : mutedColor.withOpacity(0.38),
                 width: isCorrect ? 2 : 1.5,
               ),
             ),
@@ -440,8 +422,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                     FontFeature.tabularFigures()
                   ], // Monospace 效果
                   color: isCorrect
-                      ? const Color(0xFF22C55E) // 正確答案：綠色文字（始終顯示）
-                      : Colors.grey[500], // 未選中：灰色文字
+                      ? successColor // 正確答案：綠色文字（始終顯示）
+                      : mutedColor, // 未選中：灰色文字
                 ),
               ),
             ),
@@ -453,7 +435,7 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
           if (isWrong)
             Positioned.fill(
               child: CustomPaint(
-                painter: _RedSlashPainter(),
+                painter: _RedSlashPainter(color: AppTheme.dangerFor(context)),
               ),
             ),
         ],
@@ -467,46 +449,78 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
       future: _isFavorite(index),
       builder: (context, snapshot) {
         final isFavorite = snapshot.data ?? false;
+        final colorScheme = Theme.of(context).colorScheme;
 
         return Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             IconButton(
+              tooltip: isFavorite
+                  ? AppStrings.get('unfavorite')
+                  : AppStrings.get('favorites'),
               icon: Icon(
                 isFavorite ? Icons.favorite : Icons.favorite_border,
-                size: 22,
-                color: isFavorite ? Colors.red : Colors.grey[600],
+                size: 20,
+                color: isFavorite
+                    ? AppTheme.dangerFor(context)
+                    : colorScheme.onSurfaceVariant,
               ),
               onPressed: () => _toggleFavorite(index),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+              style: _reviewActionStyle(context),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             IconButton(
-              icon: Icon(Icons.menu_book_outlined,
-                  size: 22, color: Colors.grey[600]),
+              tooltip: AppStrings.get('btn_explanation'),
+              icon: Icon(
+                Icons.menu_book_outlined,
+                size: 20,
+                color: colorScheme.onSurfaceVariant,
+              ),
               onPressed: () async {
                 await _openExplanationSheet(index);
               },
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+              style: _reviewActionStyle(context),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             IconButton(
+              tooltip: AppStrings.get('translation'),
               icon: Icon(
                 Icons.translate,
-                size: 22,
+                size: 20,
                 color: _showTranslation[index] == true
-                    ? const Color(0xFF137FEC)
-                    : Colors.grey[600],
+                    ? colorScheme.primary
+                    : colorScheme.onSurfaceVariant,
               ),
               onPressed: () => _toggleTranslation(index),
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
+              style: _reviewActionStyle(
+                context,
+                isActive: _showTranslation[index] == true,
+              ),
             ),
           ],
         );
       },
+    );
+  }
+
+  ButtonStyle _reviewActionStyle(
+    BuildContext context, {
+    bool isActive = false,
+  }) {
+    final isRetro = AppTheme.isRetroFor(context);
+    return IconButton.styleFrom(
+      minimumSize: const Size.square(44),
+      backgroundColor: isActive
+          ? AppTheme.primarySoftFor(context)
+          : AppTheme.surfaceFor(context),
+      shape: isRetro
+          ? const RoundedRectangleBorder(borderRadius: BorderRadius.zero)
+          : const CircleBorder(),
+      side: BorderSide(
+        color: isRetro
+            ? AppTheme.retroLine
+            : AppTheme.lineFor(context).withOpacity(0.8),
+      ),
     );
   }
 
@@ -551,6 +565,8 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
   Widget _buildKeyWordsChips(int index) {
     final question = widget.questions[index];
     final keywords = question.getKeyWords(_currentLanguage);
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
 
     if (keywords.isEmpty) {
       return const SizedBox.shrink();
@@ -574,9 +590,10 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.grey[300]!),
+                  color: colorScheme.surface.withOpacity(0.8),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.lineFor(context)),
                 ),
                 child: Wrap(
                   spacing: 6,
@@ -585,21 +602,24 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                   children: [
                     Text(
                       itWord,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       '•',
-                      style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     Text(
                       translation,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[600],
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -621,10 +641,14 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
 /// - 角度：-45度（從左上到右下）
 /// - 寬度：稍微超出圓圈一點，模仿老師批改的效果
 class _RedSlashPainter extends CustomPainter {
+  final Color color;
+
+  const _RedSlashPainter({required this.color});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.red // 鮮豔的紅色
+      ..color = color // 鮮豔的紅色
       ..strokeWidth = 2.0 // 厚度 2px
       ..strokeCap = StrokeCap.round; // 圓角端點，更像手寫效果
 

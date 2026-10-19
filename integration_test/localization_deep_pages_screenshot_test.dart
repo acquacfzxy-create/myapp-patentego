@@ -5,13 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:italy_quiz_app/config/app_strings.dart';
-import 'package:italy_quiz_app/providers/user_state_provider.dart';
-import 'package:italy_quiz_app/screens/mastery_report_screen.dart';
-import 'package:italy_quiz_app/screens/mistake_review_screen.dart';
-import 'package:italy_quiz_app/screens/settings_screen.dart';
-import 'package:italy_quiz_app/screens/subscription_page.dart';
-import 'package:italy_quiz_app/services/database_service.dart';
+import 'package:lingua_patente/config/app_strings.dart';
+import 'package:lingua_patente/providers/user_state_provider.dart';
+import 'package:lingua_patente/screens/mastery_report_screen.dart';
+import 'package:lingua_patente/screens/mistake_review_screen.dart';
+import 'package:lingua_patente/screens/settings_screen.dart';
+import 'package:lingua_patente/screens/subscription_page.dart';
+import 'package:lingua_patente/services/database_service.dart';
+import 'package:lingua_patente/services/iap_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 
@@ -71,8 +72,14 @@ Future<void> _pumpLocalizedPage(
   await tester.pumpWidget(
     RepaintBoundary(
       key: _screenshotKey,
-      child: ChangeNotifierProvider<UserStateProvider>.value(
-        value: provider,
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider<UserStateProvider>.value(value: provider),
+          // 截图测试不连接真实 Billing：购买未启用，订阅页呈现“不可用”降级状态。
+          ChangeNotifierProvider<IapService>(
+            create: (_) => IapService(billingSupported: false),
+          ),
+        ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           builder: (context, child) {

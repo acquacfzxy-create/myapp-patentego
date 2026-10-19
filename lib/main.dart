@@ -1,12 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 import 'screens/splash_bootstrap.dart';
 import 'screens/home_screen.dart';
+import 'screens/web_app_screen.dart';
 import 'services/database_service.dart';
 import 'services/firebase_status.dart';
+import 'services/iap_service.dart';
+import 'services/voice_pack_service.dart';
+import 'config/app_locales.dart';
 import 'config/app_strings.dart';
 import 'config/app_theme.dart';
 import 'config/route_observer.dart';
@@ -19,7 +26,9 @@ void main() async {
 
   // 初始化 Firebase
   try {
-    await Firebase.initializeApp();
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     FirebaseStatus.markInitialized();
   } catch (e) {
     FirebaseStatus.markUnavailable(e);
@@ -46,11 +55,42 @@ void main() async {
 
   // 啟動應用（使用 Provider 管理全局狀態）
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => UserStateProvider(),
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserStateProvider()),
+        // App 级購買協調器：啟動即監聽 purchaseStream，不依賴訂閱頁生命週期。
+        ChangeNotifierProvider<IapService>(
+          lazy: false,
+          create: (context) {
+            // 先取得实例再捕获，App 级服务不持有 Provider 的 BuildContext。
+            final userState = context.read<UserStateProvider>();
+            final service = IapService();
+            // 续订等待仅限 Android Play Billing；Web 等平台不注入，保持原有到期判定。
+            if (service.supportsRenewalChecks) {
+              userState.attachRenewalChecker(service.checkRenewal);
+            }
+            unawaited(service.start(
+              onEntitlementActive: userState.activateVipFromVerifiedPurchase,
+              onResumed: userState.handleAppResumed,
+            ));
+            return service;
+          },
+        ),
+      ],
       child: const MyApp(),
     ),
   );
+
+  // 背景恢復已下載語音包並刷新目錄，不延遲離線題庫啟動。
+  if (!kIsWeb) unawaited(_initializeVoicePacks());
+}
+
+Future<void> _initializeVoicePacks() async {
+  try {
+    await VoicePackService.instance.initialize();
+  } catch (_) {
+    // 雲端不可用時保留系統 TTS 備援，語音包頁可稍後手動重試。
+  }
 }
 
 void _registerThirdPartyLicenses() {
@@ -84,8 +124,40 @@ SOFTWARE.
   });
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_refreshDailyCounters());
+    }
+  }
+
+  Future<void> _refreshDailyCounters() async {
+    try {
+      await context.read<UserStateProvider>().checkAndResetDailyCounters();
+    } catch (_) {
+      // 生命週期刷新失敗不阻斷 App 恢復前景。
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -100,19 +172,51 @@ class MyApp extends StatelessWidget {
 
         // 判斷是否為 RTL 語言（從右向左）
         final isRTL = currentLang == 'ur';
+        final themeMode = userStateProvider.themeMode;
+        final isDarkMode = themeMode == AppThemeMode.night;
+        final isRetroMode = themeMode == AppThemeMode.retro;
 
         return MaterialApp(
           title: AppStrings.getWithLanguage(currentLang, 'app_title'),
-          theme: AppTheme.lightTheme(),
+          // 让系统组件跟随界面语言；ur 的 RTL 同时由 Localizations 提供。
+          locale: AppLocales.localeFor(currentLang),
+          supportedLocales: AppLocales.supportedLocales,
+          localizationsDelegates: AppLocales.delegates,
+          theme: isRetroMode
+              ? AppTheme.retroTheme(language: currentLang)
+              : kIsWeb
+                  ? AppTheme.webTheme()
+                  : AppTheme.lightTheme(language: currentLang),
+          darkTheme: kIsWeb
+              ? AppTheme.webTheme(dark: true)
+              : AppTheme.darkTheme(language: currentLang),
+          themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
           builder: (context, child) {
-            return Directionality(
-              textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
-              child: child ?? const SizedBox.shrink(),
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness:
+                    isDarkMode ? Brightness.light : Brightness.dark,
+                // iOS 只认 statusBarBrightness（指页面底色的明暗，与图标亮度相反）。
+                statusBarBrightness:
+                    isDarkMode ? Brightness.dark : Brightness.light,
+                systemNavigationBarColor: isDarkMode
+                    ? AppTheme.nightPage
+                    : isRetroMode
+                        ? AppTheme.retroPage
+                        : Colors.white,
+                systemNavigationBarIconBrightness:
+                    isDarkMode ? Brightness.light : Brightness.dark,
+              ),
+              child: Directionality(
+                textDirection: isRTL ? TextDirection.rtl : TextDirection.ltr,
+                child: child ?? const SizedBox.shrink(),
+              ),
             );
           },
           // 注册路由观察者
           navigatorObservers: [routeObserver],
-          home: const SplashBootstrap(),
+          home: kIsWeb ? const WebAppScreen() : const SplashBootstrap(),
           debugShowCheckedModeBanner: false,
         );
       },

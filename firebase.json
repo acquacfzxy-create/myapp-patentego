@@ -3,7 +3,7 @@
     "source": "functions",
     "codebase": "subscriptions",
     "ignore": ["node_modules", "*.log", "test"],
-    "predeploy": ["node --test \"$RESOURCE_DIR/test/subscription_policy.test.js\""]
+    "predeploy": ["node --test \"$RESOURCE_DIR/test/subscription_policy.test.js\" \"$RESOURCE_DIR/test/apple_subscription.test.js\" \"$RESOURCE_DIR/test/apple_flow.test.js\" \"$RESOURCE_DIR/test/emulator.integration.test.js\""]
   }],
   "firestore": {
     "rules": "firestore.rules"

@@ -1,0 +1,21 @@
+{
+ "_source": "assets/italy_quiz.db (read-only export after keyword batch 12; keywords_json is the stored string). 6695 keeps an existing entry (assicurazione R.C.A.) whose meanings are 58 (en), 69 (uk), 49 (pa) and 52 (ur) characters long: longer than the 56 / 63 / 47 / 51 characters of the earlier samples (ru is 71, as before). The list is the complete final list of batch 12, nothing was removed or shortened for the test.",
+ "questions": [
+  {
+   "id": "6695",
+   "image_name": null,
+   "answer": false,
+   "chapter": 23,
+   "translations": {
+    "en": "After signing the R.C.A. (auto civil liability) insurance contract, the insurance company must issue a manual to the customer on how to avoid accidents.",
+    "it": "Dopo la firma del contratto di assicurazione R.C.A. (responsabilità civile auto), l'impresa assicuratrice deve rilasciare al cliente un manuale su come evitare incidenti",
+    "pa": "آر سی اے (آٹو سول ذمے داری) انشورنس معاہدہ اُتے دستخط کرن توں بعد، انشورنس کمپنی نوں گاہک نوں حادثیاں توں بچن دے طریقے بارے اک دستی جاری کرنا چاہیدا اے۔",
+    "ru": "После подписания договора страхования R.C.A. (гражданская ответственность автовладельца) страховая компания должна выдать клиенту руководство о том, как избежать несчастных случаев.",
+    "uk": "Після підписання договору страхування R.C.A. (цивільна відповідальність автовласника) страхова компанія повинна видати клієнту посібник про те, як уникнути нещасних випадків.",
+    "ur": "آر سی اے (آٹو سول ذمہ داری) انشورنس معاہدے پر دستخط کرنے کے بعد، انشورنس کمپنی کو حادثات سے بچنے کے طریقے کے بارے میں ایک دستی گاہک کو جاری کرنا چاہیے۔",
+    "zh": "在签署R.C.A.（汽车民事责任）保险合同后，保险公司必须向客户发布一本关于如何避免事故的手册。"
+   },
+   "keywords_json": "[{\"it\": \"dopo\", \"zh\": \"在…之后\", \"en\": \"after\", \"ru\": \"после\", \"uk\": \"після\", \"pa\": \"ਤੋਂ ਬਾਅਦ\", \"ur\": \"کے بعد\"}, {\"it\": \"firma\", \"zh\": \"签署（签字）\", \"en\": \"signing\", \"ru\": \"подписание\", \"uk\": \"підписання\", \"pa\": \"ਦਸਤਖ਼ਤ\", \"ur\": \"دستخط\"}, {\"it\": \"contratto\", \"zh\": \"合同\", \"en\": \"contract\", \"ru\": \"договор\", \"uk\": \"договір\", \"pa\": \"ਇਕਰਾਰਨਾਮਾ\", \"ur\": \"معاہدہ\"}, {\"it\": \"assicurazione R.C.A.\", \"zh\": \"汽车民事责任保险\", \"en\": \"R.C.A. insurance (motor vehicle civil liability insurance)\", \"ru\": \"страхование гражданской ответственности владельцев транспортных средств\", \"uk\": \"страхування цивільної відповідальності власників транспортних засобів\", \"pa\": \"ਆਰ.ਸੀ.ਏ. ਬੀਮਾ (ਮੋਟਰ ਵਾਹਨ ਦੀ ਸਿਵਲ ਜ਼ਿੰਮੇਵਾਰੀ ਬੀਮਾ)\", \"ur\": \"آر سی اے انشورنس (موٹر گاڑی کی سول ذمہ داری انشورنس)\"}, {\"it\": \"responsabilità civile auto\", \"zh\": \"汽车民事责任\", \"en\": \"motor third-party liability\", \"ru\": \"автогражданская ответственность\", \"uk\": \"автоцивільна відповідальність\", \"pa\": \"ਗੱਡੀ ਦੀ ਤੀਜੀ ਧਿਰ ਜ਼ਿੰਮੇਵਾਰੀ\", \"ur\": \"گاڑی کی تیسری فریق ذمہ داری\"}, {\"it\": \"impresa assicuratrice\", \"zh\": \"保险公司\", \"en\": \"insurance company\", \"ru\": \"страховая компания\", \"uk\": \"страхова компанія\", \"pa\": \"ਬੀਮਾ ਕੰਪਨੀ\", \"ur\": \"بیمہ کمپنی\"}, {\"it\": \"deve rilasciare\", \"zh\": \"必须发给\", \"en\": \"must issue\", \"ru\": \"должна выдать\", \"uk\": \"має видати\", \"pa\": \"ਦੇਣਾ ਲਾਜ਼ਮੀ ਹੈ\", \"ur\": \"دینا لازمی ہے\"}, {\"it\": \"cliente\", \"zh\": \"客户\", \"en\": \"customer\", \"ru\": \"клиент\", \"uk\": \"клієнт\", \"pa\": \"ਗਾਹਕ\", \"ur\": \"گاہک\"}, {\"it\": \"manuale\", \"zh\": \"手册\", \"en\": \"handbook\", \"ru\": \"руководство\", \"uk\": \"посібник\", \"pa\": \"ਕਿਤਾਬਚਾ\", \"ur\": \"کتابچہ\"}, {\"it\": \"su come evitare\", \"zh\": \"关于如何避免\", \"en\": \"on how to avoid\", \"ru\": \"о том, как избежать\", \"uk\": \"про те, як уникнути\", \"pa\": \"ਕਿਵੇਂ ਬਚਿਆ ਜਾਵੇ ਇਸ ਬਾਰੇ\", \"ur\": \"اس بارے میں کہ کیسے بچا جائے\"}, {\"it\": \"incidenti\", \"zh\": \"事故\", \"en\": \"accidents\", \"ru\": \"аварии\", \"uk\": \"аварії\", \"pa\": \"ਹਾਦਸੇ\", \"ur\": \"حادثات\"}]"
+  }
+ ]
+}

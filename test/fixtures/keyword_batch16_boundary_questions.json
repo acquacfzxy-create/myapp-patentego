@@ -1,0 +1,37 @@
+{
+ "_source": "assets/italy_quiz.db (read-only export after keyword batch 17; keywords_json is the stored string). 6676 and 6677 hold the entry polizza di assicurazione R.C.A. whose meanings are longer than the other samples: en 61 / 65, ru 79, uk 77 characters (unchanged since batch 16) and, after the batch-17 correction of pa/ur, pa 61 and ur 64 characters in both questions (batch 16: pa 54 / 52, ur 56 / 63). The lists are the complete final lists, nothing was removed or shortened for the test.",
+ "questions": [
+  {
+   "id": "6676",
+   "image_name": null,
+   "answer": true,
+   "chapter": 23,
+   "translations": {
+    "en": "The maximum coverage of the R.C.A. (motor vehicle liability) insurance policy can be increased at the customer's choice by paying a larger sum of money (insurance premium).",
+    "it": "I massimali della polizza di assicurazione R.C.A. (responsabilità civile auto) possono essere aumentati, a scelta del cliente, pagando una maggiore somma di denaro (premio assicurativo)",
+    "pa": "آر سی اے (موٹر گڈی ذمہ واری) انشورنس پالیسی دی ودھ توں ودھ کوریج گاہک دی پسند نال ودھائی جا سکدی اے، ودھ پیسے دے کے (بیمہ پریمیم)۔",
+    "ru": "Максимальное покрытие полиса страхования гражданской ответственности владельцев транспортных средств (R.C.A.) может быть увеличено по выбору клиента путем уплаты большей суммы денег (страховой премии).",
+    "uk": "Максимальне покриття полісу страхування цивільної відповідальності власників транспортних засобів (R.C.A.) може бути збільшено за вибором клієнта шляхом сплати більшої суми грошей (страхової премії).",
+    "ur": "آر سی اے (موٹر گاڑی ذمہ داری) انشورنس پالیسی کی زیادہ سے زیادہ کوریج کسٹمر کی پسند پر بڑھائی جا سکتی ہے، زیادہ رقم ادا کر کے (انشورنس پریمیم)۔",
+    "zh": "R.C.A.(汽车民事责任)保险的保额可以根据客户的选择增加，通过支付更多的钱(保险费)。"
+   },
+   "keywords_json": "[{\"it\": \"massimali\", \"zh\": \"最高保额\", \"en\": \"maximum coverage\", \"ru\": \"максимальные лимиты покрытия\", \"uk\": \"максимальні ліміти покриття\", \"pa\": \"ਵੱਧ ਤੋਂ ਵੱਧ ਕਵਰੇਜ\", \"ur\": \"زیادہ سے زیادہ کوریج\"}, {\"it\": \"polizza di assicurazione R.C.A.\", \"zh\": \"R.C.A. 责任保险\", \"en\": \"R.C.A. insurance policy (third-party liability car insurance)\", \"ru\": \"страховой полис R.C.A. (страхование гражданской ответственности автовладельцев)\", \"uk\": \"страховий поліс R.C.A. (страхування цивільної відповідальності автовласників)\", \"pa\": \"ਆਰ.ਸੀ.ਏ. ਬੀਮਾ ਪਾਲਿਸੀ (ਗੱਡੀ ਨਾਲ ਦੂਜਿਆਂ ਨੂੰ ਹੋਏ ਨੁਕਸਾਨ ਦਾ ਬੀਮਾ)\", \"ur\": \"آر سی اے بیمہ پالیسی (گاڑی سے دوسروں کو ہونے والے نقصان کا بیمہ)\"}, {\"it\": \"responsabilità civile auto\", \"zh\": \"汽车民事责任\", \"en\": \"motor third-party liability\", \"ru\": \"автогражданская ответственность\", \"uk\": \"автоцивільна відповідальність\", \"pa\": \"ਗੱਡੀ ਦੀ ਤੀਜੀ ਧਿਰ ਜ਼ਿੰਮੇਵਾਰੀ\", \"ur\": \"گاڑی کی تیسری فریق ذمہ داری\"}, {\"it\": \"possono essere aumentati\", \"zh\": \"可以提高\", \"en\": \"may be increased\", \"ru\": \"могут быть увеличены\", \"uk\": \"можуть бути збільшені\", \"pa\": \"ਵਧਾਈ ਜਾ ਸਕਦੀ ਹੈ\", \"ur\": \"بڑھائی جا سکتی ہے\"}, {\"it\": \"a scelta del\", \"zh\": \"由…选择\", \"en\": \"at the choice of the\", \"ru\": \"по выбору\", \"uk\": \"за вибором\", \"pa\": \"… ਦੀ ਮਰਜ਼ੀ ਅਨੁਸਾਰ\", \"ur\": \"… کی مرضی کے مطابق\"}, {\"it\": \"cliente\", \"zh\": \"客户\", \"en\": \"customer\", \"ru\": \"клиент\", \"uk\": \"клієнт\", \"pa\": \"ਗਾਹਕ\", \"ur\": \"گاہک\"}, {\"it\": \"pagando\", \"zh\": \"通过支付（原形 pagare）\", \"en\": \"by paying (from: pagare)\", \"ru\": \"заплатив (от: pagare)\", \"uk\": \"заплативши (від: pagare)\", \"pa\": \"ਅਦਾ ਕਰ ਕੇ (ਮੂਲ ਰੂਪ: pagare)\", \"ur\": \"ادا کر کے (اصل صورت: pagare)\"}, {\"it\": \"maggiore\", \"zh\": \"更高的\", \"en\": \"larger\", \"ru\": \"большая\", \"uk\": \"більша\", \"pa\": \"ਵੱਧ\", \"ur\": \"زیادہ\"}, {\"it\": \"somma di denaro\", \"zh\": \"金额（一笔钱）\", \"en\": \"sum of money\", \"ru\": \"сумма денег\", \"uk\": \"сума грошей\", \"pa\": \"ਰਕਮ\", \"ur\": \"رقم\"}, {\"it\": \"premio assicurativo\", \"zh\": \"保险费\", \"en\": \"insurance premium\", \"ru\": \"страховая премия\", \"uk\": \"страхова премія\", \"pa\": \"ਬੀਮੇ ਦੀ ਕਿਸ਼ਤ (ਪ੍ਰੀਮੀਅਮ)\", \"ur\": \"بیمے کی قسط (پریمیم)\"}]"
+  },
+  {
+   "id": "6677",
+   "image_name": null,
+   "answer": false,
+   "chapter": 23,
+   "translations": {
+    "en": "The maximum coverage of the R.C.A. (motor vehicle liability) insurance policy is the amount of money that the insurance company collects from its customer each year.",
+    "it": "I massimali della polizza di assicurazione R.C.A. (responsabilità civile auto ) sono le somme di denaro che l'impresa assicuratrice riscuote ogni anno dal proprio cliente",
+    "pa": "آر سی اے (موٹر گڈی ذمہ واری) انشورنس پالیسی دی ودھ توں ودھ کوریج اوہ رقم اے جو انشورنس کمپنی ہر سال اپنے گاہک توں وصول کردی اے۔",
+    "ru": "Максимальное покрытие полиса страхования гражданской ответственности владельцев транспортных средств (R.C.A.) - это сумма денег, которую страховая компания взимает со своего клиента каждый год.",
+    "uk": "Максимальне покриття полісу страхування цивільної відповідальності власників транспортних засобів (R.C.A.) - це сума грошей, яку страхова компанія стягує зі свого клієнта щороку.",
+    "ur": "آر سی اے (موٹر گاڑی ذمہ داری) انشورنس پالیسی کی زیادہ سے زیادہ کوریج وہ رقم ہے جو انشورنس کمپنی ہر سال اپنے گاہک سے وصول کرتی ہے۔",
+    "zh": "R.C.A.(汽车民事责任)保险的保额是保险公司每年向客户收取的金额。"
+   },
+   "keywords_json": "[{\"it\": \"massimali\", \"zh\": \"最高赔偿额\", \"en\": \"maximum coverage\", \"ru\": \"максимальные лимиты страхового покрытия\", \"uk\": \"максимальні ліміти страхового покриття\", \"pa\": \"ਵੱਧ ਤੋਂ ਵੱਧ ਕਵਰੇਜ\", \"ur\": \"زیادہ سے زیادہ کوریج\"}, {\"it\": \"polizza di assicurazione R.C.A.\", \"zh\": \"R.C.A.保险单 (汽车民事责任保险)\", \"en\": \"R.C.A. insurance policy (motor vehicle civil liability insurance)\", \"ru\": \"страховой полис R.C.A. (страхование гражданской ответственности автовладельцев)\", \"uk\": \"страховий поліс R.C.A. (страхування цивільної відповідальності автовласників)\", \"pa\": \"ਆਰ.ਸੀ.ਏ. ਬੀਮਾ ਪਾਲਿਸੀ (ਗੱਡੀ ਨਾਲ ਦੂਜਿਆਂ ਨੂੰ ਹੋਏ ਨੁਕਸਾਨ ਦਾ ਬੀਮਾ)\", \"ur\": \"آر سی اے بیمہ پالیسی (گاڑی سے دوسروں کو ہونے والے نقصان کا بیمہ)\"}, {\"it\": \"responsabilità civile auto\", \"zh\": \"汽车民事责任\", \"en\": \"motor third-party liability\", \"ru\": \"автогражданская ответственность\", \"uk\": \"автоцивільна відповідальність\", \"pa\": \"ਗੱਡੀ ਦੀ ਤੀਜੀ ਧਿਰ ਜ਼ਿੰਮੇਵਾਰੀ\", \"ur\": \"گاڑی کی تیسری فریق ذمہ داری\"}, {\"it\": \"somme di denaro\", \"zh\": \"金额（钱款）\", \"en\": \"sums of money\", \"ru\": \"суммы денег\", \"uk\": \"суми грошей\", \"pa\": \"ਰਕਮਾਂ\", \"ur\": \"رقوم\"}, {\"it\": \"impresa assicuratrice\", \"zh\": \"保险公司\", \"en\": \"insurance company\", \"ru\": \"страховая компания\", \"uk\": \"страхова компанія\", \"pa\": \"ਬੀਮਾ ਕੰਪਨੀ\", \"ur\": \"بیمہ کمپنی\"}, {\"it\": \"riscuote\", \"zh\": \"收取\", \"en\": \"collects\", \"ru\": \"взимает\", \"uk\": \"стягує\", \"pa\": \"ਵਸੂਲ ਕਰਦੀ ਹੈ\", \"ur\": \"وصول کرتی ہے\"}, {\"it\": \"ogni anno\", \"zh\": \"每年\", \"en\": \"every year\", \"ru\": \"каждый год\", \"uk\": \"щороку\", \"pa\": \"ਹਰ ਸਾਲ\", \"ur\": \"ہر سال\"}, {\"it\": \"proprio cliente\", \"zh\": \"自己的客户\", \"en\": \"its own customer\", \"ru\": \"свой клиент\", \"uk\": \"свій клієнт\", \"pa\": \"ਆਪਣਾ ਗਾਹਕ\", \"ur\": \"اپنا گاہک\"}]"
+  }
+ ]
+}

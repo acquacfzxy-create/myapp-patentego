@@ -22,20 +22,32 @@ class GlassCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isRetro = AppTheme.isRetroFor(context);
     final card = Container(
       decoration: BoxDecoration(
-        borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusLg),
-        color: AppTheme.surface,
+        borderRadius: isRetro
+            ? BorderRadius.zero
+            : borderRadius ?? BorderRadius.circular(AppTheme.radiusLg),
+        color: AppTheme.surfaceFor(context),
         border: Border.all(
-          color: Colors.white.withOpacity(0.78),
+          color: isRetro
+              ? AppTheme.retroLine
+              : isDark
+                  ? AppTheme.nightLine.withOpacity(0.9)
+                  : Colors.white.withOpacity(0.78),
           width: 1,
         ),
-        boxShadow: AppTheme.cardShadow,
+        boxShadow: AppTheme.cardShadowFor(context),
       ),
       child: ClipRRect(
-        borderRadius: borderRadius ?? BorderRadius.circular(AppTheme.radiusLg),
+        borderRadius: isRetro
+            ? BorderRadius.zero
+            : borderRadius ?? BorderRadius.circular(AppTheme.radiusLg),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          filter: isRetro
+              ? ImageFilter.blur(sigmaX: 0, sigmaY: 0)
+              : ImageFilter.blur(sigmaX: 14, sigmaY: 14),
           child: Padding(
             padding: padding ?? EdgeInsets.zero,
             child: child,

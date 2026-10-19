@@ -1,14 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+import 'dart:math';
+import 'package:flutter/foundation.dart'
+    show kDebugMode, kIsWeb, visibleForTesting;
 import 'package:flutter/services.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../models/chapter_strengthening_plan.dart';
+import '../models/daily_goal_plan.dart';
 import '../models/question.dart';
+import '../models/spaced_review_schedule.dart';
 import 'firebase_status.dart';
 
 class WrongQuestionEntry {
@@ -102,6 +107,8 @@ class DatabaseService {
           correct_streak,
           total_attempts,
           last_practiced,
+          review_stage,
+          next_review_at,
           created_at
         )
         SELECT
@@ -114,6 +121,8 @@ class DatabaseService {
           correct_streak,
           total_attempts,
           last_practiced,
+          review_stage,
+          next_review_at,
           created_at
         FROM user_progress
         WHERE user_id = ?
@@ -135,6 +144,16 @@ class DatabaseService {
             WHEN COALESCE(excluded.last_practiced, 0) >= COALESCE(user_progress.last_practiced, 0)
             THEN excluded.is_mastered
             ELSE user_progress.is_mastered
+          END,
+          review_stage = CASE
+            WHEN COALESCE(excluded.last_practiced, 0) >= COALESCE(user_progress.last_practiced, 0)
+            THEN excluded.review_stage
+            ELSE user_progress.review_stage
+          END,
+          next_review_at = CASE
+            WHEN COALESCE(excluded.last_practiced, 0) >= COALESCE(user_progress.last_practiced, 0)
+            THEN excluded.next_review_at
+            ELSE user_progress.next_review_at
           END,
           last_practiced = CASE
             WHEN user_progress.last_practiced IS NULL THEN excluded.last_practiced
@@ -173,7 +192,7 @@ class DatabaseService {
   static const String _userProgressDbName = 'user_progress.db';
 
   // 靜態數據庫版本號（用於強制更新）
-  static const int kStaticDbVersion = 10;
+  static const int kStaticDbVersion = 92;
   static const String _lastCopiedDbVersionKey = 'last_copied_db_version';
 
   // 初始化錯誤信息（如果初始化失敗，保存錯誤信息）
@@ -615,6 +634,8 @@ class DatabaseService {
           'CREATE INDEX IF NOT EXISTS idx_user_mastered ON user_progress (user_id, is_mastered)');
       await db.execute(
           'CREATE INDEX IF NOT EXISTS idx_user_last_practiced ON user_progress (user_id, last_practiced)');
+      await db.execute(
+          'CREATE INDEX IF NOT EXISTS idx_user_next_review ON user_progress (user_id, next_review_at)');
 
       // 保留原索引（兼容舊查詢/統計）
       await db.execute(
@@ -633,6 +654,23 @@ class DatabaseService {
       _debugLog('📋 [UserProgress] 錯誤堆棧: $stackTrace');
       // 索引創建失敗不影響應用運行，只是查詢可能較慢
     }
+  }
+
+  static Future<void> _createDailyGrowthTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS daily_growth (
+        user_id TEXT NOT NULL,
+        activity_date TEXT NOT NULL,
+        answered_count INTEGER NOT NULL DEFAULT 0,
+        new_question_count INTEGER NOT NULL DEFAULT 0,
+        review_question_count INTEGER NOT NULL DEFAULT 0,
+        correct_count INTEGER NOT NULL DEFAULT 0,
+        newly_mastered_count INTEGER NOT NULL DEFAULT 0,
+        mistakes_resolved_count INTEGER NOT NULL DEFAULT 0,
+        updated_at INTEGER NOT NULL,
+        PRIMARY KEY (user_id, activity_date)
+      )
+    ''');
   }
 
   /// 執行數據庫遷移（添加 chapter 和 keywords_json 字段）
@@ -702,7 +740,7 @@ class DatabaseService {
 
       final db = await openDatabase(
         path,
-        version: 7, // 7: 新增 mock_exam_results 表
+        version: 10, // 10: 最小版間隔複習排程
         onCreate: (db, version) async {
           _debugLog('📝 [UserProgress] 創建用戶進度表結構...');
           await db.execute('''
@@ -716,6 +754,8 @@ class DatabaseService {
               correct_streak INTEGER DEFAULT 0,
               total_attempts INTEGER DEFAULT 0,
               last_practiced INTEGER,
+              review_stage INTEGER NOT NULL DEFAULT 0,
+              next_review_at INTEGER,
               created_at INTEGER DEFAULT (strftime('%s', 'now')),
               PRIMARY KEY (question_id, user_id)
             )
@@ -733,6 +773,8 @@ class DatabaseService {
             )
           ''');
           _debugLog('✅ [UserProgress] mock_exam_results 表創建成功');
+          await _createDailyGrowthTable(db);
+          _debugLog('✅ [UserProgress] daily_growth 表創建成功');
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           _debugLog('🔄 [UserProgress] 數據庫升級: $oldVersion -> $newVersion');
@@ -876,6 +918,59 @@ class DatabaseService {
             } catch (e) {
               _debugLog('⚠️ [UserProgress] mock_exam_results 表創建失敗: $e');
             }
+          }
+
+          // 版本8：每日成長統計表
+          if (oldVersion < 8) {
+            try {
+              await _createDailyGrowthTable(db);
+              _debugLog('✅ [UserProgress] daily_growth 表創建成功');
+            } catch (e) {
+              _debugLog('⚠️ [UserProgress] daily_growth 表創建失敗: $e');
+            }
+          }
+
+          // 版本9：區分每日新題與複習，支援可信的雙目標進度。
+          if (oldVersion < 9) {
+            for (final statement in const [
+              'ALTER TABLE daily_growth ADD COLUMN new_question_count INTEGER NOT NULL DEFAULT 0',
+              'ALTER TABLE daily_growth ADD COLUMN review_question_count INTEGER NOT NULL DEFAULT 0',
+            ]) {
+              try {
+                await db.execute(statement);
+              } catch (_) {
+                // 欄位可能已由開發版本建立，保留既有資料即可。
+              }
+            }
+          }
+
+          // 版本10：保存間隔複習階段與下一次到期日期。舊進度先於
+          // 今日到期，讓既有用戶能自然進入新排程而不遺失學習紀錄。
+          if (oldVersion < 10) {
+            for (final statement in const [
+              'ALTER TABLE user_progress ADD COLUMN review_stage INTEGER NOT NULL DEFAULT 0',
+              'ALTER TABLE user_progress ADD COLUMN next_review_at INTEGER',
+            ]) {
+              try {
+                await db.execute(statement);
+              } catch (_) {
+                // 欄位可能已由開發版本建立，保留既有資料即可。
+              }
+            }
+            await db.execute('''
+              UPDATE user_progress
+              SET
+                review_stage = CASE
+                  WHEN correct_streak >= 4 THEN 4
+                  WHEN correct_streak > 0 THEN correct_streak
+                  ELSE 0
+                END,
+                next_review_at = strftime(
+                  '%s', 'now', 'localtime', 'start of day', 'utc'
+                )
+              WHERE (total_attempts > 0 OR wrong_count > 0)
+                AND next_review_at IS NULL
+            ''');
           }
         },
       );
@@ -1405,6 +1500,147 @@ class DatabaseService {
     return questions;
   }
 
+  static Future<int> getDueReviewCount({
+    required String userId,
+    DateTime? now,
+  }) async {
+    final progressDb = await userProgressDatabase;
+    final dueAt = SpacedReviewSchedule.dueAtStartOfDayEpochSeconds(now);
+    final rows = await progressDb.rawQuery('''
+      SELECT COUNT(*) AS count
+      FROM user_progress
+      WHERE user_id = ?
+        AND (total_attempts > 0 OR wrong_count > 0)
+        AND next_review_at IS NOT NULL
+        AND next_review_at <= ?
+    ''', [_normalizeUserId(userId), dueAt]);
+    return (rows.first['count'] as int?) ?? 0;
+  }
+
+  /// Builds one finite daily-plan session. Only reviews whose scheduled date
+  /// has arrived are eligible; mistakes and the most overdue items come first.
+  static Future<List<Question>> getStudyPlanQuestions({
+    required int newCount,
+    required int reviewCount,
+    required String translationLang,
+    required String userId,
+  }) async {
+    final normalizedUserId = _normalizeUserId(userId);
+    final progressDb = await userProgressDatabase;
+    final attemptedRows = await progressDb.rawQuery('''
+      SELECT question_id
+      FROM user_progress
+      WHERE user_id = ? AND (total_attempts > 0 OR wrong_count > 0)
+    ''', [normalizedUserId]);
+    final dueAt = SpacedReviewSchedule.dueAtStartOfDayEpochSeconds();
+    final dueReviewRows = await progressDb.rawQuery('''
+      SELECT
+        question_id,
+        wrong_count,
+        is_mastered,
+        correct_streak,
+        last_practiced,
+        next_review_at
+      FROM user_progress
+      WHERE user_id = ?
+        AND (total_attempts > 0 OR wrong_count > 0)
+        AND next_review_at IS NOT NULL
+        AND next_review_at <= ?
+      ORDER BY
+        CASE WHEN wrong_count > 0 THEN 0 ELSE 1 END,
+        next_review_at ASC,
+        wrong_count DESC,
+        is_mastered ASC,
+        correct_streak ASC,
+        COALESCE(last_practiced, 0) ASC
+    ''', [normalizedUserId, dueAt]);
+    final attemptedIds =
+        attemptedRows.map((row) => row['question_id'] as String).toSet();
+
+    final mainDb = await database;
+    final allIdRows = await mainDb.rawQuery('SELECT id FROM questions');
+    final unseenIds = allIdRows
+        .map((row) => row['id'] as String)
+        .where((id) => !attemptedIds.contains(id))
+        .toList()
+      ..shuffle();
+
+    final selectedNew = unseenIds.take(max(0, newCount)).toList();
+    final selectedReview = dueReviewRows
+        .map((row) => row['question_id'] as String)
+        .take(max(0, reviewCount))
+        .toList();
+    final selectedIds = <String>[...selectedNew, ...selectedReview];
+    if (selectedIds.isEmpty) return [];
+
+    final placeholders = selectedIds.map((_) => '?').join(',');
+    final rows = await mainDb.rawQuery('''
+      SELECT
+        q.id,
+        q.img,
+        q.answer,
+        q.chapter,
+        q.keywords_json,
+        it_q.content AS question_it,
+        it_e.content AS explanation_it,
+        trans_q.content AS question_trans,
+        trans_e.content AS explanation_trans
+      FROM questions q
+      LEFT JOIN translations it_q
+        ON q.id = it_q.question_id AND it_q.lang = 'it' AND it_q.type = 'q'
+      LEFT JOIN translations it_e
+        ON q.id = it_e.question_id AND it_e.lang = 'it' AND it_e.type = 'e'
+      LEFT JOIN translations trans_q
+        ON q.id = trans_q.question_id AND trans_q.lang = ? AND trans_q.type = 'q'
+      LEFT JOIN translations trans_e
+        ON q.id = trans_e.question_id AND trans_e.lang = ? AND trans_e.type = 'e'
+      WHERE q.id IN ($placeholders)
+    ''', [translationLang, translationLang, ...selectedIds]);
+
+    final byId = <String, Question>{};
+    for (final row in rows) {
+      final questionMap = {
+        'id': row['id'],
+        'img': row['img'],
+        'answer': row['answer'],
+        'chapter': row['chapter'],
+        'keywords_json': row['keywords_json'],
+        'question': row['question_it'],
+        'explanation': row['explanation_it'],
+        'question_trans': row['question_trans'],
+        'explanation_trans': row['explanation_trans'],
+      };
+      byId[row['id'] as String] = Question.fromMapWithTranslation(
+        questionMap,
+        'it',
+        translationLang,
+      );
+    }
+
+    // Start with one due review, then interleave the rest so a long session
+    // reinforces memory without postponing all new-question work.
+    final newQuestions =
+        selectedNew.map((id) => byId[id]).whereType<Question>();
+    final reviewQuestions =
+        selectedReview.map((id) => byId[id]).whereType<Question>().toList();
+    final result = <Question>[];
+    var reviewIndex = 0;
+    var newSinceReview = 0;
+    if (reviewQuestions.isNotEmpty) {
+      result.add(reviewQuestions[reviewIndex++]);
+    }
+    for (final question in newQuestions) {
+      result.add(question);
+      newSinceReview++;
+      if (newSinceReview >= 4 && reviewIndex < reviewQuestions.length) {
+        result.add(reviewQuestions[reviewIndex++]);
+        newSinceReview = 0;
+      }
+    }
+    result.addAll(reviewQuestions.skip(reviewIndex));
+    return result;
+  }
+
   /// 從指定章節獲取題目列表
   /// [chapterId] 章節ID（1-25）
   /// [skipMastered] 是否跳過已掌握的題目（is_mastered = 1），默認為 false
@@ -1551,6 +1787,106 @@ class DatabaseService {
     _debugLog(
         '✅ [DatabaseService] 章節 $chapterId 最終返回 ${questions.length} 道題目 (跳過已掌握: $skippedCount, 加載失敗: ${filteredQuestionIds.length - questions.length})');
     return questions;
+  }
+
+  /// 建立短章節加強任務：錯題、未掌握、未做、已掌握依序補足題數。
+  static Future<List<Question>> getChapterStrengtheningQuestions({
+    required int chapterId,
+    required String userId,
+    required String translationLang,
+    int limit = 10,
+  }) async {
+    if (limit <= 0) return [];
+
+    final db = await database;
+    final userProgressDb = await userProgressDatabase;
+    final normalizedUserId = _normalizeUserId(userId);
+    final questionRows = await db.rawQuery(
+      'SELECT id FROM questions WHERE chapter = ? ORDER BY id',
+      [chapterId],
+    );
+    if (questionRows.isEmpty) return [];
+
+    final progressRows = await userProgressDb.rawQuery('''
+      SELECT
+        question_id,
+        wrong_count,
+        is_mastered,
+        total_attempts,
+        last_practiced
+      FROM user_progress
+      WHERE user_id = ?
+    ''', [normalizedUserId]);
+    final progressByQuestion = <String, Map<String, Object?>>{
+      for (final row in progressRows) row['question_id'].toString(): row,
+    };
+
+    final candidates = <ChapterStrengtheningCandidate>[];
+    for (final row in questionRows) {
+      final questionId = row['id'].toString();
+      final progress = progressByQuestion[questionId];
+      final wrongCount = (progress?['wrong_count'] as num?)?.toInt() ?? 0;
+      final isMastered = (progress?['is_mastered'] as num?)?.toInt() == 1;
+      final totalAttempts = (progress?['total_attempts'] as num?)?.toInt() ?? 0;
+      final lastPracticed = (progress?['last_practiced'] as num?)?.toInt() ?? 0;
+      candidates.add(
+        ChapterStrengtheningCandidate(
+          questionId: questionId,
+          wrongCount: wrongCount,
+          isMastered: isMastered,
+          totalAttempts: totalAttempts,
+          lastPracticed: lastPracticed,
+        ),
+      );
+    }
+
+    final selectedIds = buildChapterStrengtheningPlan(
+      candidates,
+      limit: limit,
+    );
+    final placeholders = selectedIds.map((_) => '?').join(',');
+    final rows = await db.rawQuery('''
+      SELECT
+        q.id,
+        q.img,
+        q.answer,
+        q.chapter,
+        q.keywords_json,
+        it_q.content AS question_it,
+        it_e.content AS explanation_it,
+        trans_q.content AS question_trans,
+        trans_e.content AS explanation_trans
+      FROM questions q
+      LEFT JOIN translations it_q ON q.id = it_q.question_id AND it_q.lang = 'it' AND it_q.type = 'q'
+      LEFT JOIN translations it_e ON q.id = it_e.question_id AND it_e.lang = 'it' AND it_e.type = 'e'
+      LEFT JOIN translations trans_q ON q.id = trans_q.question_id AND trans_q.lang = ? AND trans_q.type = 'q'
+      LEFT JOIN translations trans_e ON q.id = trans_e.question_id AND trans_e.lang = ? AND trans_e.type = 'e'
+      WHERE q.id IN ($placeholders)
+    ''', [translationLang, translationLang, ...selectedIds]);
+    final questionsById = <String, Question>{};
+    for (final row in rows) {
+      final questionMap = {
+        'id': row['id'],
+        'img': row['img'],
+        'answer': row['answer'],
+        'question': row['question_it'],
+        'explanation': row['explanation_it'],
+        'question_trans': row['question_trans'],
+        'explanation_trans': row['explanation_trans'],
+        'chapter': row['chapter'],
+        'keywords_json': row['keywords_json'],
+      };
+      final question = Question.fromMapWithTranslation(
+        questionMap,
+        'it',
+        translationLang,
+      );
+      questionsById[question.id] = question;
+    }
+    return selectedIds
+        .map((questionId) => questionsById[questionId])
+        .whereType<Question>()
+        .toList();
   }
 
   /// 從指定章節隨機獲取一道題目（包含意大利語和翻譯）
@@ -1793,6 +2129,181 @@ class DatabaseService {
 
   // ========== 用戶進度相關方法 ==========
 
+  static String _formatLocalActivityDate(DateTime dateTime) {
+    final localDateTime = dateTime.toLocal();
+    final year = localDateTime.year.toString().padLeft(4, '0');
+    final month = localDateTime.month.toString().padLeft(2, '0');
+    final day = localDateTime.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
+  }
+
+  /// 記錄指定日期的答題成長數據。
+  static Future<void> recordDailyGrowth({
+    required String userId,
+    required bool isCorrect,
+    required bool isNewQuestion,
+    bool newlyMastered = false,
+    bool mistakeResolved = false,
+    DateTime? occurredAt,
+  }) async {
+    final db = await userProgressDatabase;
+    final normalizedUserId = _normalizeUserId(userId);
+    final localOccurredAt = (occurredAt ?? DateTime.now()).toLocal();
+
+    await db.rawInsert('''
+      INSERT INTO daily_growth (
+        user_id,
+        activity_date,
+        answered_count,
+        new_question_count,
+        review_question_count,
+        correct_count,
+        newly_mastered_count,
+        mistakes_resolved_count,
+        updated_at
+      )
+      VALUES (?, ?, 1, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(user_id, activity_date) DO UPDATE SET
+        answered_count = answered_count + 1,
+        new_question_count = new_question_count + excluded.new_question_count,
+        review_question_count = review_question_count + excluded.review_question_count,
+        correct_count = correct_count + excluded.correct_count,
+        newly_mastered_count = newly_mastered_count + excluded.newly_mastered_count,
+        mistakes_resolved_count = mistakes_resolved_count + excluded.mistakes_resolved_count,
+        updated_at = excluded.updated_at
+    ''', [
+      normalizedUserId,
+      _formatLocalActivityDate(localOccurredAt),
+      isNewQuestion ? 1 : 0,
+      isNewQuestion ? 0 : 1,
+      isCorrect ? 1 : 0,
+      newlyMastered ? 1 : 0,
+      mistakeResolved ? 1 : 0,
+      localOccurredAt.millisecondsSinceEpoch ~/ 1000,
+    ]);
+  }
+
+  /// 取得包含今天在內、由舊到新的每日成長數據；無紀錄的日期以零補足。
+  static Future<List<Map<String, dynamic>>> getDailyGrowth({
+    required String userId,
+    int days = 7,
+    DateTime? now,
+  }) async {
+    if (days <= 0) {
+      return [];
+    }
+
+    final db = await userProgressDatabase;
+    final normalizedUserId = _normalizeUserId(userId);
+    final localNow = (now ?? DateTime.now()).toLocal();
+    final today = DateTime(localNow.year, localNow.month, localNow.day);
+    final firstDate = DateTime(today.year, today.month, today.day - (days - 1));
+    final lastDate = _formatLocalActivityDate(today);
+    final firstActivityDate = _formatLocalActivityDate(firstDate);
+    final rows = await db.rawQuery('''
+      SELECT
+        activity_date,
+        answered_count,
+        new_question_count,
+        review_question_count,
+        correct_count,
+        newly_mastered_count,
+        mistakes_resolved_count
+      FROM daily_growth
+      WHERE user_id = ? AND activity_date >= ? AND activity_date <= ?
+    ''', [normalizedUserId, firstActivityDate, lastDate]);
+    final rowsByDate = <String, Map<String, dynamic>>{
+      for (final row in rows) row['activity_date'] as String: row,
+    };
+
+    return List.generate(days, (index) {
+      final date =
+          DateTime(firstDate.year, firstDate.month, firstDate.day + index);
+      final activityDate = _formatLocalActivityDate(date);
+      final row = rowsByDate[activityDate];
+
+      return {
+        'date': activityDate,
+        'answered': ((row?['answered_count'] as num?) ?? 0).toInt(),
+        'newQuestions': ((row?['new_question_count'] as num?) ?? 0).toInt(),
+        'reviewQuestions':
+            ((row?['review_question_count'] as num?) ?? 0).toInt(),
+        'correct': ((row?['correct_count'] as num?) ?? 0).toInt(),
+        'newlyMastered': ((row?['newly_mastered_count'] as num?) ?? 0).toInt(),
+        'mistakesResolved':
+            ((row?['mistakes_resolved_count'] as num?) ?? 0).toInt(),
+      };
+    });
+  }
+
+  static Future<LearningStreakStats> getLearningStreakStats({
+    required String userId,
+    int minimumQuestions = DailyGoalPlan.habitMinimumQuestions,
+    DateTime? now,
+  }) async {
+    final db = await userProgressDatabase;
+    final rows = await db.rawQuery('''
+      SELECT activity_date
+      FROM daily_growth
+      WHERE user_id = ? AND answered_count >= ?
+      ORDER BY activity_date ASC
+    ''', [_normalizeUserId(userId), minimumQuestions]);
+    if (rows.isEmpty) return LearningStreakStats.empty;
+
+    final qualifyingDates = rows
+        .map((row) => DateTime.tryParse(row['activity_date'] as String))
+        .whereType<DateTime>()
+        .map(DailyGoalPlan.dateOnly)
+        .toSet();
+    if (qualifyingDates.isEmpty) return LearningStreakStats.empty;
+
+    final today = DailyGoalPlan.dateOnly(now ?? DateTime.now());
+    final yesterday = today.subtract(const Duration(days: 1));
+    final activeToday = qualifyingDates.contains(today);
+    var cursor = activeToday
+        ? today
+        : qualifyingDates.contains(yesterday)
+            ? yesterday
+            : null;
+    var current = 0;
+    while (cursor != null && qualifyingDates.contains(cursor)) {
+      current++;
+      cursor = cursor.subtract(const Duration(days: 1));
+    }
+
+    final sortedDates = qualifyingDates.toList()..sort();
+    var longest = 0;
+    var running = 0;
+    DateTime? previous;
+    for (final date in sortedDates) {
+      running = previous != null && date.difference(previous).inDays == 1
+          ? running + 1
+          : 1;
+      longest = max(longest, running);
+      previous = date;
+    }
+
+    return LearningStreakStats(
+      current: current,
+      longest: longest,
+      activeToday: activeToday,
+    );
+  }
+
+  static Future<bool> hasAttemptedQuestion(
+    String questionId, {
+    required String userId,
+  }) async {
+    final db = await userProgressDatabase;
+    final rows = await db.rawQuery('''
+      SELECT 1
+      FROM user_progress
+      WHERE user_id = ? AND question_id = ? AND total_attempts > 0
+      LIMIT 1
+    ''', [_normalizeUserId(userId), questionId]);
+    return rows.isNotEmpty;
+  }
+
   /// 更新題目進度（統一方法）
   /// [questionId] 題目ID（String類型）
   /// [isCorrect] 是否答對
@@ -1810,15 +2321,17 @@ class DatabaseService {
   }) async {
     final db = await userProgressDatabase;
     final normalizedUserId = _normalizeUserId(userId);
-
     bool newlyMastered = false;
 
-    // 使用事務確保操作的原子性
     await db.transaction((txn) async {
-      // 1. 首先查詢當前的 correct_streak、is_mastered 和 wrong_count
       final result = await txn.query(
         'user_progress',
-        columns: ['correct_streak', 'is_mastered', 'wrong_count'],
+        columns: [
+          'correct_streak',
+          'is_mastered',
+          'wrong_count',
+          'review_stage',
+        ],
         where: 'question_id = ? AND user_id = ?',
         whereArgs: [questionId, normalizedUserId],
       );
@@ -1829,21 +2342,29 @@ class DatabaseService {
           result.isEmpty ? 0 : (result.first['is_mastered'] as int? ?? 0);
       final currentWrongCount =
           result.isEmpty ? 0 : (result.first['wrong_count'] as int? ?? 0);
+      final currentReviewStage =
+          result.isEmpty ? 0 : (result.first['review_stage'] as int? ?? 0);
+      final answeredAt = DateTime.now();
+      final practicedAt =
+          answeredAt.millisecondsSinceEpoch ~/ Duration.millisecondsPerSecond;
+      final reviewState = SpacedReviewSchedule.afterAnswer(
+        currentStage: currentReviewStage,
+        isCorrect: isCorrect,
+        answeredAt: answeredAt,
+      );
 
       if (isCorrect) {
-        // 2. 答對了：correct_streak + 1，total_attempts + 1
         final newStreak = currentStreak + 1;
-        // 如果達到 3，設置 is_mastered = 1
         final shouldMaster = newStreak >= 3;
-        // 如果從未掌握變為掌握，標記為剛剛達成掌握
         newlyMastered = shouldMaster && currentIsMastered == 0;
-
-        // 🔄 統一邏輯：如果 wrong_count > 0，自動減少 1
         final newWrongCount = currentWrongCount > 0 ? currentWrongCount - 1 : 0;
 
         await txn.rawInsert('''
-          INSERT INTO user_progress (question_id, user_id, correct_streak, is_mastered, wrong_count, total_attempts, last_practiced)
-          VALUES (?, ?, ?, ?, ?, 1, strftime('%s', 'now'))
+          INSERT INTO user_progress (
+            question_id, user_id, correct_streak, is_mastered, wrong_count,
+            total_attempts, last_practiced, review_stage, next_review_at
+          )
+          VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?)
           ON CONFLICT(question_id, user_id) DO UPDATE SET
             correct_streak = ?,
             is_mastered = ?,
@@ -1852,29 +2373,51 @@ class DatabaseService {
               ELSE 0
             END,
             total_attempts = total_attempts + 1,
-            last_practiced = strftime('%s', 'now')
+            last_practiced = ?,
+            review_stage = ?,
+            next_review_at = ?
         ''', [
           questionId,
           normalizedUserId,
           newStreak,
           shouldMaster ? 1 : 0,
           newWrongCount,
+          practicedAt,
+          reviewState.stage,
+          reviewState.nextReviewAtEpochSeconds,
           newStreak,
-          shouldMaster ? 1 : 0
+          shouldMaster ? 1 : 0,
+          practicedAt,
+          reviewState.stage,
+          reviewState.nextReviewAtEpochSeconds,
         ]);
       } else {
-        // 3. 答錯了：correct_streak 重置為 0，is_mastered 設為 0，wrong_count + 1，total_attempts + 1
         await txn.rawInsert('''
-          INSERT INTO user_progress (question_id, user_id, error_count, wrong_count, correct_streak, is_mastered, total_attempts, last_practiced)
-          VALUES (?, ?, 1, 1, 0, 0, 1, strftime('%s', 'now'))
+          INSERT INTO user_progress (
+            question_id, user_id, error_count, wrong_count, correct_streak,
+            is_mastered, total_attempts, last_practiced, review_stage,
+            next_review_at
+          )
+          VALUES (?, ?, 1, 1, 0, 0, 1, ?, ?, ?)
           ON CONFLICT(question_id, user_id) DO UPDATE SET
             error_count = error_count + 1,
             wrong_count = wrong_count + 1,
             correct_streak = 0,
             is_mastered = 0,
             total_attempts = total_attempts + 1,
-            last_practiced = strftime('%s', 'now')
-        ''', [questionId, normalizedUserId]);
+            last_practiced = ?,
+            review_stage = ?,
+            next_review_at = ?
+        ''', [
+          questionId,
+          normalizedUserId,
+          practicedAt,
+          reviewState.stage,
+          reviewState.nextReviewAtEpochSeconds,
+          practicedAt,
+          reviewState.stage,
+          reviewState.nextReviewAtEpochSeconds,
+        ]);
         newlyMastered = false;
       }
     });
@@ -1949,15 +2492,37 @@ class DatabaseService {
       {required String userId}) async {
     final db = await userProgressDatabase;
     final normalizedUserId = _normalizeUserId(userId);
+    final answeredAt = DateTime.now();
+    final practicedAt =
+        answeredAt.millisecondsSinceEpoch ~/ Duration.millisecondsPerSecond;
+    final reviewState = SpacedReviewSchedule.afterAnswer(
+      currentStage: 0,
+      isCorrect: false,
+      answeredAt: answeredAt,
+    );
 
     await db.rawInsert('''
-      INSERT INTO user_progress (question_id, user_id, error_count, wrong_count, last_practiced)
-      VALUES (?, ?, 1, 1, strftime('%s', 'now'))
+      INSERT INTO user_progress (
+        question_id, user_id, error_count, wrong_count, last_practiced,
+        review_stage, next_review_at
+      )
+      VALUES (?, ?, 1, 1, ?, ?, ?)
       ON CONFLICT(question_id, user_id) DO UPDATE SET
         error_count = error_count + 1,
         wrong_count = wrong_count + 1,
-        last_practiced = strftime('%s', 'now')
-    ''', [questionId, normalizedUserId]);
+        last_practiced = ?,
+        review_stage = ?,
+        next_review_at = ?
+    ''', [
+      questionId,
+      normalizedUserId,
+      practicedAt,
+      reviewState.stage,
+      reviewState.nextReviewAtEpochSeconds,
+      practicedAt,
+      reviewState.stage,
+      reviewState.nextReviewAtEpochSeconds,
+    ]);
   }
 
   /// 更新練習進度（記錄用戶完成一道題）
@@ -2015,6 +2580,23 @@ class DatabaseService {
 
     final isMastered = result.first['is_mastered'] as int? ?? 0;
     return isMastered == 1;
+  }
+
+  /// 取得單題目前的連續答對次數，供練習頁顯示 3 格掌握進度。
+  static Future<int> getQuestionCorrectStreak(String questionId,
+      {required String userId}) async {
+    final db = await userProgressDatabase;
+    final normalizedUserId = _normalizeUserId(userId);
+
+    final result = await db.query(
+      'user_progress',
+      columns: ['correct_streak'],
+      where: 'question_id = ? AND user_id = ?',
+      whereArgs: [questionId, normalizedUserId],
+    );
+
+    if (result.isEmpty) return 0;
+    return result.first['correct_streak'] as int? ?? 0;
   }
 
   /// 取消題目的已掌握標記
@@ -2650,6 +3232,81 @@ class DatabaseService {
     return result.first['wrong_count'] as int? ?? 0;
   }
 
+  /// 一次取得所有章節的能力統計，避免能力地圖逐章重複查詢。
+  static Future<List<Map<String, int>>> getChapterCapabilityStats({
+    required String userId,
+  }) async {
+    final db = await database;
+    final userProgressDb = await userProgressDatabase;
+    final normalizedUserId = _normalizeUserId(userId);
+
+    final questionRows = await db.rawQuery('''
+      SELECT id, chapter
+      FROM questions
+      WHERE chapter IS NOT NULL
+      ORDER BY chapter, id
+    ''');
+    final progressRows = await userProgressDb.rawQuery('''
+      SELECT
+        question_id,
+        wrong_count,
+        is_mastered,
+        total_attempts,
+        last_practiced
+      FROM user_progress
+      WHERE user_id = ?
+    ''', [normalizedUserId]);
+
+    final progressByQuestion = <String, Map<String, Object?>>{
+      for (final row in progressRows) row['question_id'].toString(): row,
+    };
+    final statsByChapter = <int, Map<String, int>>{};
+
+    for (final question in questionRows) {
+      final chapter = (question['chapter'] as num?)?.toInt();
+      if (chapter == null) continue;
+
+      final stats = statsByChapter.putIfAbsent(
+        chapter,
+        () => {
+          'chapter': chapter,
+          'total': 0,
+          'practiced': 0,
+          'mastered': 0,
+          'mistakes': 0,
+          'lastPracticed': 0,
+        },
+      );
+      stats['total'] = (stats['total'] ?? 0) + 1;
+
+      final progress = progressByQuestion[question['id'].toString()];
+      if (progress == null) continue;
+
+      final totalAttempts = (progress['total_attempts'] as num?)?.toInt() ?? 0;
+      final isMastered = (progress['is_mastered'] as num?)?.toInt() == 1;
+      final wrongCount = (progress['wrong_count'] as num?)?.toInt() ?? 0;
+      final lastPracticed = (progress['last_practiced'] as num?)?.toInt() ?? 0;
+      final wasPracticed = totalAttempts > 0 || isMastered || wrongCount > 0;
+
+      if (wasPracticed) {
+        stats['practiced'] = (stats['practiced'] ?? 0) + 1;
+      }
+      if (isMastered) {
+        stats['mastered'] = (stats['mastered'] ?? 0) + 1;
+      }
+      if (wrongCount > 0) {
+        stats['mistakes'] = (stats['mistakes'] ?? 0) + 1;
+      }
+      if (lastPracticed > (stats['lastPracticed'] ?? 0)) {
+        stats['lastPracticed'] = lastPracticed;
+      }
+    }
+
+    final stats = statsByChapter.values.toList()
+      ..sort((a, b) => (a['chapter'] ?? 0).compareTo(b['chapter'] ?? 0));
+    return stats;
+  }
+
   /// 獲取章節練習進度統計
   /// [chapterId] 章節ID（1-25）
   /// 返回包含以下信息的 Map：
@@ -2861,8 +3518,14 @@ class DatabaseService {
         whereArgs: [normalizedUserId],
       );
 
+      final deletedGrowth = await db.delete(
+        'daily_growth',
+        where: 'user_id = ?',
+        whereArgs: [normalizedUserId],
+      );
+
       _debugLog(
-          '✅ [DatabaseService] 已刪除用戶進度記錄 $deletedProgress 條、模擬考記錄 $deletedMock 條');
+          '✅ [DatabaseService] 已刪除用戶進度記錄 $deletedProgress 條、模擬考記錄 $deletedMock 條、成長記錄 $deletedGrowth 條');
       return true;
     } catch (e, stackTrace) {
       _debugLog('❌ [DatabaseService] 重置用戶進度失敗: $e');
@@ -2967,7 +3630,8 @@ class DatabaseService {
   }
 
   /// 將本地 user_progress 表中有變動的數據批量寫入 Firestore（Sync Down to Up）
-  /// 文檔路徑：users/{userId}/progress/{questionId}，字段：correct_streak, wrong_count, total_attempts, is_mastered, is_favorite, last_practiced
+  /// 文檔路徑：users/{userId}/progress/{questionId}。間隔複習日期可由
+  /// correct_streak 與 last_practiced 精確重建，保持舊版 Firestore 規則相容。
   /// 僅在 isVip 時由 Provider 觸發；網絡異常時不拋錯，返回 SyncResult，避免 App 卡死。
   static Future<SyncResult> syncLocalToCloud({required String userId}) async {
     final currentUser = FirebaseStatus.auth?.currentUser;
@@ -3000,7 +3664,8 @@ class DatabaseService {
 
     final progressRows = await db.query(
       'user_progress',
-      where: 'user_id = ? AND (total_attempts > 0 OR is_favorite = 1)',
+      where:
+          'user_id = ? AND (total_attempts > 0 OR wrong_count > 0 OR is_favorite = 1)',
       whereArgs: [userId],
     );
 
@@ -3031,7 +3696,6 @@ class DatabaseService {
             lastPracticedSec != null && lastPracticedSec > 0
                 ? Timestamp.fromMillisecondsSinceEpoch(lastPracticedSec * 1000)
                 : null;
-
         final progressData = {
           'correct_streak': row['correct_streak'] as int? ?? 0,
           'wrong_count': row['wrong_count'] as int? ?? 0,
@@ -3095,30 +3759,33 @@ class DatabaseService {
     }
   }
 
-  /// 刪除用戶在 Firestore 的學習數據（progress + daily_usage）
+  /// 登出時一併刪除的用戶學習數據子集合（對應 firestore.rules 中允許本人刪除的集合）。
+  @visibleForTesting
+  static const List<String> cloudUserDataSubcollections = [
+    'progress',
+    'daily_usage',
+    'exam_history',
+    'exam_sessions',
+  ];
+
+  /// 刪除用戶在 Firestore 的學習數據（progress + daily_usage + exam_history + exam_sessions）
   /// 用於帳號登出前的資料刪除確認流程（審核合規）
   static Future<void> clearCloudUserData({required String userId}) async {
     try {
       final firestore = FirebaseStatus.firestore;
       if (firestore == null) return;
-      final progressSnapshot = await firestore
-          .collection('users')
-          .doc(userId)
-          .collection('progress')
-          .get();
-      final deletedProgress =
-          await _deleteQuerySnapshotInBatches(firestore, progressSnapshot);
+      final deleted = <String, int>{};
+      for (final name in cloudUserDataSubcollections) {
+        final snapshot = await firestore
+            .collection('users')
+            .doc(userId)
+            .collection(name)
+            .get();
+        deleted[name] =
+            await _deleteQuerySnapshotInBatches(firestore, snapshot);
+      }
 
-      final usageSnapshot = await firestore
-          .collection('users')
-          .doc(userId)
-          .collection('daily_usage')
-          .get();
-      final deletedUsage =
-          await _deleteQuerySnapshotInBatches(firestore, usageSnapshot);
-
-      _debugLog(
-          '✅ [CloudSync] 已刪除雲端學習數據：progress=$deletedProgress, daily_usage=$deletedUsage');
+      _debugLog('✅ [CloudSync] 已刪除雲端學習數據：$deleted');
     } catch (e, stackTrace) {
       _debugLog('⚠️ [CloudSync] 刪除雲端學習數據失敗: $e');
       if (kDebugMode) _debugLog('📋 [CloudSync] 錯誤堆棧: $stackTrace');
@@ -3207,6 +3874,25 @@ class DatabaseService {
             wrongCount: cloudWrongCount,
             correctStreak: cloudCorrectStreak,
           );
+          final cloudReviewStage = data['review_stage'] == null
+              ? cloudCorrectStreak.clamp(0, SpacedReviewSchedule.maxStage)
+              : _cloudInt(data['review_stage'])
+                  .clamp(0, SpacedReviewSchedule.maxStage);
+          final cloudNextReview = data['next_review_at'] as Timestamp?;
+          final cloudNextReviewSeconds = cloudNextReview?.seconds ??
+              (cloudTotalAttempts > 0 || cloudWrongCount > 0
+                  ? SpacedReviewSchedule.toEpochSeconds(
+                      cloudLastPracticedSeconds > 0
+                          ? SpacedReviewSchedule.nextReviewDateForStage(
+                              stage: cloudReviewStage,
+                              lastPracticedAt:
+                                  DateTime.fromMillisecondsSinceEpoch(
+                                cloudLastPracticedSeconds * 1000,
+                              ),
+                            )
+                          : SpacedReviewSchedule.dateOnly(DateTime.now()),
+                    )
+                  : 0);
 
           final localResult = await txn.query(
             'user_progress',
@@ -3229,9 +3915,10 @@ class DatabaseService {
               await txn.rawInsert('''
                 INSERT INTO user_progress (
                   question_id, user_id, is_favorite, error_count, wrong_count,
-                  is_mastered, correct_streak, total_attempts, last_practiced
+                  is_mastered, correct_streak, total_attempts, last_practiced,
+                  review_stage, next_review_at
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(question_id, user_id) DO UPDATE SET
                   is_favorite = ?,
                   error_count = ?,
@@ -3242,7 +3929,9 @@ class DatabaseService {
                     WHEN ? > total_attempts THEN ?
                     ELSE total_attempts
                   END,
-                  last_practiced = ?
+                  last_practiced = ?,
+                  review_stage = ?,
+                  next_review_at = ?
               ''', [
                 questionId,
                 userId,
@@ -3253,6 +3942,8 @@ class DatabaseService {
                 cloudCorrectStreak,
                 mergedTotalAttempts,
                 cloudLastPracticedSeconds,
+                cloudReviewStage,
+                cloudNextReviewSeconds,
                 mergedIsFavorite,
                 cloudErrorCount,
                 cloudWrongCount,
@@ -3261,6 +3952,8 @@ class DatabaseService {
                 mergedTotalAttempts,
                 mergedTotalAttempts,
                 cloudLastPracticedSeconds,
+                cloudReviewStage,
+                cloudNextReviewSeconds,
               ]);
               mergedCount++;
             } else {
@@ -3282,9 +3975,10 @@ class DatabaseService {
             await txn.rawInsert('''
               INSERT INTO user_progress (
                 question_id, user_id, is_favorite, error_count, wrong_count,
-                is_mastered, correct_streak, total_attempts, last_practiced
+                is_mastered, correct_streak, total_attempts, last_practiced,
+                review_stage, next_review_at
               )
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ''', [
               questionId,
               userId,
@@ -3295,6 +3989,8 @@ class DatabaseService {
               cloudCorrectStreak,
               cloudTotalAttempts,
               cloudLastPracticedSeconds,
+              cloudReviewStage,
+              cloudNextReviewSeconds,
             ]);
             mergedCount++;
           }

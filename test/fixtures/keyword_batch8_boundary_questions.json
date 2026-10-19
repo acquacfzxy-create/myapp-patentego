@@ -1,0 +1,37 @@
+{
+ "_source": "assets/italy_quiz.db (read-only export after keyword batch 8; keywords_json is the stored string). 6006 keeps an existing entry whose Italian term has 54 characters; 6693 keeps an existing entry whose ru gloss has 71 characters and whose en gloss has 52. Both lists are the complete final lists of batch 8, nothing was shortened for the test.",
+ "questions": [
+  {
+   "id": "6006",
+   "image_name": null,
+   "answer": false,
+   "chapter": 19,
+   "translations": {
+    "en": "Someone driving a car with a learner's permit (pink slip) is not required to use a seat belt.",
+    "it": "Chi guida un’autovettura munito di autorizzazione ad esercitarsi alla guida (foglio rosa), non è obbligato ad utilizzare la cintura di sicurezza",
+    "pa": "کوئی وی بندہ جیہڑا ڈرائیونگ دی مشق کرن دی اجازت (گلابی پرچی) دے نال کار چلا رہیا اے، اوہنوں سیٹ بیلٹ ورتن دی لوڑ نہیں اے۔",
+    "ru": "Водитель автомобиля с разрешением на учебное вождение (розовый лист) не обязан использовать ремень безопасности.",
+    "uk": "Водій автомобіля з дозволом на навчальне водіння (рожевий листок) не зобов'язаний використовувати ремінь безпеки.",
+    "ur": "وہ شخص جو ڈرائیونگ کی مشق کرنے کی اجازت (گلابی پرچی) کے ساتھ کار چلا رہا ہے، اسے سیٹ بیلٹ استعمال کرنے کی ضرورت نہیں ہے۔",
+    "zh": "持有驾驶练习许可证（粉色纸）的人在驾驶汽车时，没有义务使用安全带。"
+   },
+   "keywords_json": "[{\"it\": \"chi guida\", \"zh\": \"驾驶…的人\", \"en\": \"whoever drives\", \"ru\": \"тот, кто управляет\", \"uk\": \"той, хто керує\", \"pa\": \"ਜੋ ਚਲਾਉਂਦਾ ਹੈ\", \"ur\": \"جو چلاتا ہے\"}, {\"it\": \"autovettura\", \"zh\": \"汽车\", \"en\": \"car\", \"ru\": \"легковой автомобиль\", \"uk\": \"автомобіль\", \"pa\": \"ਕਾਰ\", \"ur\": \"موٹر گاڑی\"}, {\"it\": \"munito di\", \"zh\": \"持有（带着）\", \"en\": \"holding (equipped with)\", \"ru\": \"имеющий\", \"uk\": \"що має\", \"pa\": \"ਕੋਲ ਹੋਵੇ\", \"ur\": \"کے پاس ہو\"}, {\"it\": \"autorizzazione ad esercitarsi alla guida (foglio rosa)\", \"zh\": \"驾驶实习许可（粉色单）\", \"en\": \"learner's permit (pink slip)\", \"ru\": \"разрешение на учебную езду (розовый лист)\", \"uk\": \"дозвіл на навчальну їзду (рожевий листок)\", \"pa\": \"ਸਿੱਖਿਆਰਥੀ ਪਰਮਿਟ (ਗੁਲਾਬੀ ਪਰਚੀ)\", \"ur\": \"سیکھنے کا اجازت نامہ (گلابی پرچی)\"}, {\"it\": \"non è obbligato ad\", \"zh\": \"没有义务（不必）\", \"en\": \"is not obliged to\", \"ru\": \"не обязан\", \"uk\": \"не зобов'язаний\", \"pa\": \"ਪਾਬੰਦ ਨਹੀਂ ਹੈ\", \"ur\": \"پابند نہیں ہے\"}, {\"it\": \"utilizzare\", \"zh\": \"使用\", \"en\": \"to use\", \"ru\": \"использовать\", \"uk\": \"використовувати\", \"pa\": \"ਵਰਤਣਾ\", \"ur\": \"استعمال کرنا\"}, {\"it\": \"cintura di sicurezza\", \"zh\": \"安全带\", \"en\": \"seatbelt\", \"ru\": \"ремень безопасности\", \"uk\": \"пасок безпеки\", \"pa\": \"ਸੁਰੱਖਿਆ ਬੈਲਟ\", \"ur\": \"حفاظتی پٹی\"}]"
+  },
+  {
+   "id": "6693",
+   "image_name": null,
+   "answer": false,
+   "chapter": 23,
+   "translations": {
+    "en": "After signing the R.C.A. (civil liability auto) insurance contract, the insurance company must provide the customer with a list of affiliated body shops to contact in case of an accident.",
+    "it": "Dopo la firma del contratto di assicurazione R.C.A. (responsabilità civile auto), l'impresa assicuratrice deve rilasciare al cliente un elenco delle autocarrozzerie convenzionate, da contattare in caso d'incidente",
+    "pa": "آر سی اے (سول ذمہ داری آٹو) انشورنس معاہدے تے دستخط کرن توں بعد، انشورنس کمپنی نوں گاہک نوں حادثے دی صورت وچ رابطہ کرن لئی منسلک باڈی شاپس دی اک لسٹ فراہم کرنی چاہیدی اے۔",
+    "ru": "После подписания договора страхования R.C.A. (гражданской ответственности автовладельцев), страховая компания должна предоставить клиенту список аффилированных кузовных мастерских для обращения в случае аварии.",
+    "uk": "Після підписання договору страхування R.C.A. (цивільної відповідальності авто), страхова компанія повинна надати клієнту список афілійованих кузовних майстерень для звернення у разі аварії.",
+    "ur": "آر سی اے (سول لائبلیٹی آٹو) انشورنس معاہدے پر دستخط کرنے کے بعد، انشورنس کمپنی کو صارف کو حادثے کی صورت میں رابطہ کرنے کے لیے منسلک باڈی شاپس کی ایک فہرست فراہم کرنی چاہیے۔",
+    "zh": "在签署R.C.A.（汽车民事责任）保险合同后，保险公司必须向客户提供一份协议汽车修理厂的清单，以便在发生事故时联系。"
+   },
+   "keywords_json": "[{\"it\": \"dopo\", \"zh\": \"在…之后\", \"en\": \"after\", \"ru\": \"после\", \"uk\": \"після\", \"pa\": \"ਤੋਂ ਬਾਅਦ\", \"ur\": \"کے بعد\"}, {\"it\": \"firma\", \"zh\": \"签署\", \"en\": \"signing\", \"ru\": \"подписание\", \"uk\": \"підписання\", \"pa\": \"ਦਸਤਖ਼ਤ\", \"ur\": \"دستخط\"}, {\"it\": \"contratto\", \"zh\": \"合同\", \"en\": \"contract\", \"ru\": \"договор\", \"uk\": \"договір\", \"pa\": \"ਇਕਰਾਰਨਾਮਾ\", \"ur\": \"معاہدہ\"}, {\"it\": \"assicurazione R.C.A.\", \"zh\": \"汽车责任保险\", \"en\": \"R.C.A. insurance (motor vehicle liability insurance)\", \"ru\": \"Страхование гражданской ответственности владельцев транспортных средств\", \"uk\": \"Страхування цивільної відповідальності автовласників\", \"pa\": \"ਆਰ.ਸੀ.ਏ. ਬੀਮਾ (ਮੋਟਰ ਗੱਡੀ ਦੀ ਜ਼ਿੰਮੇਵਾਰੀ ਦਾ ਬੀਮਾ)\", \"ur\": \"آر سی اے انشورنس (موٹر گاڑی کی ذمہ داری انشورنس)\"}, {\"it\": \"responsabilità civile auto\", \"zh\": \"汽车民事责任\", \"en\": \"motor third-party liability\", \"ru\": \"автогражданская ответственность\", \"uk\": \"автоцивільна відповідальність\", \"pa\": \"ਗੱਡੀ ਦੀ ਤੀਜੀ ਧਿਰ ਜ਼ਿੰਮੇਵਾਰੀ\", \"ur\": \"گاڑی کی تیسری فریق ذمہ داری\"}, {\"it\": \"impresa assicuratrice\", \"zh\": \"保险公司\", \"en\": \"insurance company\", \"ru\": \"страховая компания\", \"uk\": \"страхова компанія\", \"pa\": \"ਬੀਮਾ ਕੰਪਨੀ\", \"ur\": \"بیمہ کمپنی\"}, {\"it\": \"deve rilasciare\", \"zh\": \"必须出具（发给）\", \"en\": \"must issue\", \"ru\": \"должна выдать\", \"uk\": \"повинна видати\", \"pa\": \"ਜਾਰੀ ਕਰਨਾ ਲਾਜ਼ਮੀ ਹੈ\", \"ur\": \"جاری کرنا لازمی ہے\"}, {\"it\": \"cliente\", \"zh\": \"客户\", \"en\": \"customer\", \"ru\": \"клиент\", \"uk\": \"клієнт\", \"pa\": \"ਗਾਹਕ\", \"ur\": \"گاہک\"}, {\"it\": \"elenco\", \"zh\": \"清单\", \"en\": \"list\", \"ru\": \"список\", \"uk\": \"список\", \"pa\": \"ਸੂਚੀ\", \"ur\": \"فہرست\"}, {\"it\": \"autocarrozzerie convenzionate\", \"zh\": \"协议维修厂\", \"en\": \"affiliated body shops\", \"ru\": \"автомастерские-партнеры\", \"uk\": \"автомайстерні-партнери\", \"pa\": \"ਸਮਝੌਤੇ ਵਾਲੀਆਂ ਬਾਡੀ ਰਿਪੇਅਰ ਦੁਕਾਨਾਂ\", \"ur\": \"الحاق شدہ باڈی شاپس\"}, {\"it\": \"da contattare\", \"zh\": \"可供联系的\", \"en\": \"to be contacted\", \"ru\": \"с которыми следует связаться\", \"uk\": \"з якими слід зв'язатися\", \"pa\": \"ਜਿਨ੍ਹਾਂ ਨਾਲ ਸੰਪਰਕ ਕਰਨਾ ਹੈ\", \"ur\": \"جن سے رابطہ کرنا ہے\"}, {\"it\": \"in caso d'incidente\", \"zh\": \"发生事故时\", \"en\": \"in the event of an accident\", \"ru\": \"в случае аварии\", \"uk\": \"у разі аварії\", \"pa\": \"ਹਾਦਸੇ ਦੀ ਸੂਰਤ ਵਿੱਚ\", \"ur\": \"حادثے کی صورت میں\"}]"
+  }
+ ]
+}

@@ -9,7 +9,7 @@ import '../services/question_speech_service.dart';
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
-import '../screens/subscription_page.dart';
+import '../screens/voice_pack_screen.dart';
 import 'glass_card.dart';
 import 'translation_panel.dart';
 
@@ -18,6 +18,8 @@ import 'translation_panel.dart';
 class QuestionWidget extends StatefulWidget {
   final Question question;
   final Function(bool) onAnswerSelected;
+  /// Lets the practice page suspend auto-advance while reading support is open.
+  final ValueChanged<bool>? onReadingChanged;
   final String currentLanguage;
   final int? currentIndex;
   final int? totalQuestions;
@@ -37,11 +39,14 @@ class QuestionWidget extends StatefulWidget {
   final bool showMasteredBadge; // 是否显示精通气泡
   final bool hideCorrectBadge; // 是否隐藏"正确"气泡（当显示精通气泡时）
   final bool mistakeEliminated; // 错题是否已彻底消灭（wrong_count 降到 0）
+  final int sessionCorrectStreak; // 本次練習連續答對題數
+  final int questionMasteryStep; // 單題掌握進度（0-3）
 
   const QuestionWidget({
     super.key,
     required this.question,
     required this.onAnswerSelected,
+    this.onReadingChanged,
     required this.currentLanguage,
     this.currentIndex,
     this.totalQuestions,
@@ -59,11 +64,13 @@ class QuestionWidget extends StatefulWidget {
     this.showMasteredBadge = false,
     this.hideCorrectBadge = false,
     this.mistakeEliminated = false,
+    this.sessionCorrectStreak = 0,
+    this.questionMasteryStep = 0,
   });
 
   /// 全 App 統一的解析底部彈窗（練習、考後復盤等共用，自動識別 JSON / 純文本）
-  /// [remainingExplanations] 傳入當前剩餘免費解析次數（僅非 VIP 顯示；為 null 時不顯示提示行）
-  /// [showVipBadgeOnStudyTip] 為 true 時在學習小貼士區塊顯示「✨ VIP」標籤並可點擊跳轉訂閱頁（僅非 VIP 時傳 true）
+  /// Legacy quota arguments are ignored: full explanations are free and unlimited.
+
   static Future<void> showRichExplanation(
     BuildContext context, {
     required Question question,
@@ -79,148 +86,11 @@ class QuestionWidget extends StatefulWidget {
 
     final parsedExplanation = ExplanationParser.parse(explanationText);
     final detailedDescription = parsedExplanation.detailedDescription;
-    final keyPoints = parsedExplanation.keyPoints;
-    final studyTip = parsedExplanation.studyTip;
-    final isJsonFormat = parsedExplanation.isJsonFormat;
-
-    // 內部工具：將文本中括號內內容用較淡顏色顯示，括號外保持主色
-    TextSpan buildTextWithSoftParenthesis(
-      String text,
-      TextStyle baseStyle,
-      TextStyle parenthesisStyle,
-    ) {
-      final spans = <TextSpan>[];
-      final regExp = RegExp(r'\([^()]*\)');
-      int currentIndex = 0;
-
-      for (final match in regExp.allMatches(text)) {
-        if (match.start > currentIndex) {
-          spans.add(TextSpan(
-            text: text.substring(currentIndex, match.start),
-            style: baseStyle,
-          ));
-        }
-        spans.add(TextSpan(
-          text: text.substring(match.start, match.end),
-          style: parenthesisStyle,
-        ));
-        currentIndex = match.end;
-      }
-
-      if (currentIndex < text.length) {
-        spans.add(TextSpan(
-          text: text.substring(currentIndex),
-          style: baseStyle,
-        ));
-      }
-
-      return TextSpan(children: spans, style: baseStyle);
-    }
-
-    TextSpan buildStudyTipMarkdownSpan(String text) {
-      final normalStyle = TextStyle(
-        fontSize: 14,
-        height: 1.6,
-        color: Colors.blue[900],
-      );
-      final boldKeywordStyle = TextStyle(
-        fontSize: 14,
-        height: 1.6,
-        color: Colors.blue[700],
-        fontWeight: FontWeight.w700,
-      );
-      final trueStyle = TextStyle(
-        fontSize: 14,
-        height: 1.6,
-        color: Colors.green[700],
-        fontWeight: FontWeight.w700,
-      );
-      final falseStyle = TextStyle(
-        fontSize: 14,
-        height: 1.6,
-        color: Colors.red[600],
-        fontWeight: FontWeight.w700,
-      );
-      final parenthesisStyle = TextStyle(
-        fontSize: 14,
-        height: 1.6,
-        color: Colors.blue[400],
-      );
-
-      List<TextSpan> buildTokenSpans(String raw, TextStyle base) {
-        final spans = <TextSpan>[];
-        // 僅在「獨立詞」或「括號後的對/錯/正確」等高亮，避免「针对」「面对」「对不对」等誤判。
-        // 順序：較長片段優先；單字「对/错/對」需排除常見詞內嵌。
-        final tokenReg = RegExp(
-          r'\b(?:Vero|Falso|True|False)\b'
-          r'|(?<![\u4e00-\u9fff])错误(?![\u4e00-\u9fffA-Za-z0-9])'
-          r'|(?<![\u4e00-\u9fff])錯誤(?![\u4e00-\u9fffA-Za-z0-9])'
-          r'|(?<![\u4e00-\u9fff])正确(?![\u4e00-\u9fffA-Za-z0-9])'
-          r'|(?<![\u4e00-\u9fff])正確(?![\u4e00-\u9fffA-Za-z0-9])'
-          r'|(?<!针|針|面)对(?!不)(?![\u4e00-\u9fffA-Za-z0-9])'
-          r'|(?<!针|針|面)對(?!不)(?![\u4e00-\u9fffA-Za-z0-9])'
-          r'|(?<!不)错(?![\u4e00-\u9fffA-Za-z0-9])'
-          r'|(?<!不)錯(?![\u4e00-\u9fffA-Za-z0-9])',
-          caseSensitive: false,
-        );
-        int current = 0;
-        for (final m in tokenReg.allMatches(raw)) {
-          if (m.start > current) {
-            spans.add(buildTextWithSoftParenthesis(
-              raw.substring(current, m.start),
-              base,
-              parenthesisStyle,
-            ));
-          }
-          final token = raw.substring(m.start, m.end);
-          final lower = token.toLowerCase();
-          bool isTrue;
-          if (lower == 'vero' || lower == 'true') {
-            isTrue = true;
-          } else if (lower == 'falso' || lower == 'false') {
-            isTrue = false;
-          } else {
-            var inner = token;
-            if (inner.length >= 2 &&
-                (inner.startsWith('(') || inner.startsWith('（')) &&
-                (inner.endsWith(')') || inner.endsWith('）'))) {
-              inner = inner.substring(1, inner.length - 1);
-            }
-            isTrue =
-                inner == '正确' || inner == '正確' || inner == '对' || inner == '對';
-          }
-          spans.add(
-              TextSpan(text: token, style: isTrue ? trueStyle : falseStyle));
-          current = m.end;
-        }
-        if (current < raw.length) {
-          spans.add(buildTextWithSoftParenthesis(
-            raw.substring(current),
-            base,
-            parenthesisStyle,
-          ));
-        }
-        return spans;
-      }
-
-      final spans = <TextSpan>[];
-      final boldReg = RegExp(r'\*\*(.+?)\*\*', dotAll: true);
-      int index = 0;
-      for (final m in boldReg.allMatches(text)) {
-        if (m.start > index) {
-          spans.addAll(
-              buildTokenSpans(text.substring(index, m.start), normalStyle));
-        }
-        final boldText = m.group(1) ?? '';
-        spans.addAll(buildTokenSpans(boldText, boldKeywordStyle));
-        index = m.end;
-      }
-      if (index < text.length) {
-        spans.addAll(buildTokenSpans(text.substring(index), normalStyle));
-      }
-
-      return TextSpan(style: normalStyle, children: spans);
-    }
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    final inkColor = AppTheme.inkFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final colorScheme = Theme.of(context).colorScheme;
 
     await showModalBottomSheet(
       context: context,
@@ -228,20 +98,25 @@ class QuestionWidget extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (BuildContext bottomSheetContext) {
         return ClipRRect(
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(AppTheme.radiusXl),
-            topRight: Radius.circular(AppTheme.radiusXl),
-          ),
+          borderRadius: isRetro
+              ? BorderRadius.zero
+              : const BorderRadius.only(
+                  topLeft: Radius.circular(AppTheme.radiusXl),
+                  topRight: Radius.circular(AppTheme.radiusXl),
+                ),
           child: Container(
             constraints: BoxConstraints(
               maxHeight: MediaQuery.of(bottomSheetContext).size.height * 0.85,
             ),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(AppTheme.radiusXl),
-                topRight: Radius.circular(AppTheme.radiusXl),
-              ),
+            decoration: BoxDecoration(
+              color: AppTheme.surfaceFor(context),
+              border: isRetro ? Border.all(color: AppTheme.retroLine) : null,
+              borderRadius: isRetro
+                  ? BorderRadius.zero
+                  : const BorderRadius.only(
+                      topLeft: Radius.circular(AppTheme.radiusXl),
+                      topRight: Radius.circular(AppTheme.radiusXl),
+                    ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -252,15 +127,21 @@ class QuestionWidget extends StatefulWidget {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
+                      color: AppTheme.lineFor(context).withOpacity(0.7),
+                      borderRadius: isRetro
+                          ? BorderRadius.zero
+                          : BorderRadius.circular(2),
                     ),
                   ),
                 ),
                 Flexible(
                   child: SingleChildScrollView(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: EdgeInsets.fromLTRB(
+                      24,
+                      8,
+                      24,
+                      MediaQuery.viewPaddingOf(bottomSheetContext).bottom + 24,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -268,39 +149,49 @@ class QuestionWidget extends StatefulWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
-                            color: AppTheme.primarySoft,
-                            borderRadius: BorderRadius.circular(12),
+                            color: AppTheme.primarySoftFor(context),
+                            borderRadius: isRetro
+                                ? BorderRadius.zero
+                                : BorderRadius.circular(12),
                             border: Border.all(
-                              color: AppTheme.primary.withOpacity(0.22),
+                              color: primaryColor.withOpacity(0.22),
                               width: 1.5,
                             ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                AppStrings.getWithLanguage(currentLanguage,
-                                    'modal_correct_answer_label'),
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppTheme.ink,
+                              // 标签可换行，避免长语言或放大字号时与答案徽章重叠溢出。
+                              Expanded(
+                                child: Text(
+                                  AppStrings.getWithLanguage(currentLanguage,
+                                      'modal_correct_answer_label'),
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                    color: inkColor,
+                                  ),
                                 ),
                               ),
+                              const SizedBox(width: 12),
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 12, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primary,
-                                  borderRadius: BorderRadius.circular(20),
+                                  color: primaryColor,
+                                  borderRadius: isRetro
+                                      ? BorderRadius.zero
+                                      : BorderRadius.circular(20),
                                 ),
                                 child: Center(
                                   child: Text(
                                     correctAnswer,
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      color: isRetro
+                                          ? AppTheme.retroPage
+                                          : colorScheme.onPrimary,
                                     ),
                                   ),
                                 ),
@@ -312,153 +203,37 @@ class QuestionWidget extends StatefulWidget {
                         Text(
                           AppStrings.getWithLanguage(
                               currentLanguage, 'detail_description_title'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
-                            color: Colors.grey,
+                            color: mutedColor,
                             letterSpacing: 0.5,
                           ),
                         ),
                         const SizedBox(height: 8),
-                        RichText(
-                          text: buildTextWithSoftParenthesis(
+                        Text.rich(
+                          buildTextWithSoftParenthesis(
                             detailedDescription,
-                            const TextStyle(
+                            TextStyle(
                               fontSize: 15,
                               height: 1.6,
-                              color: AppTheme.ink,
+                              color: inkColor,
                             ),
-                            const TextStyle(
+                            TextStyle(
                               fontSize: 15,
                               height: 1.6,
-                              color: AppTheme.muted,
+                              color: mutedColor,
                             ),
                           ),
                         ),
-                        if (isJsonFormat &&
-                            keyPoints != null &&
-                            keyPoints.isNotEmpty) ...[
-                          const SizedBox(height: 24),
-                          Text(
-                            AppStrings.getWithLanguage(
-                                currentLanguage, 'key_points_title'),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ...(keyPoints.map((point) {
-                            return Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    width: 6,
-                                    height: 6,
-                                    margin: const EdgeInsets.only(
-                                        top: 6, right: 10),
-                                    decoration: const BoxDecoration(
-                                      color: AppTheme.primary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: RichText(
-                                      text: TextSpan(
-                                        style: const TextStyle(
-                                          fontSize: 15,
-                                          height: 1.5,
-                                          color: AppTheme.ink,
-                                        ),
-                                        children: [
-                                          TextSpan(
-                                            text: '${point['title']}：',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          TextSpan(
-                                            text: point['content'] ?? '',
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          })),
-                        ],
-                        if (isJsonFormat &&
-                            studyTip != null &&
-                            studyTip.isNotEmpty) ...[
-                          const SizedBox(height: 24),
-                          Text(
-                            AppStrings.getWithLanguage(
-                                currentLanguage, 'study_tip_title'),
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          _StudyTipSection(
-                            showVipBadge: showVipBadgeOnStudyTip,
-                            onTap: showVipBadgeOnStudyTip
-                                ? () {
-                                    Navigator.pop(bottomSheetContext);
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute<void>(
-                                        builder: (_) =>
-                                            const SubscriptionPage(),
-                                      ),
-                                    );
-                                  }
-                                : null,
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.lightbulb_outline,
-                                  color: AppTheme.warning,
-                                  size: 24,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: RichText(
-                                    strutStyle: const StrutStyle(
-                                      fontSize: 14,
-                                      height: 1.6,
-                                      leadingDistribution:
-                                          TextLeadingDistribution.even,
-                                    ),
-                                    text: buildStudyTipMarkdownSpan(studyTip),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                        buildExplanationSupplement(
+                          context,
+                          parsedExplanation: parsedExplanation,
+                          currentLanguage: currentLanguage,
+                          showVipBadgeOnStudyTip: false,
+
+                        ),
                         const SizedBox(height: 24),
-                        if (remainingExplanations != null) ...[
-                          Center(
-                            child: Text(
-                              '${AppStrings.getWithLanguage(currentLanguage, 'remaining_free_explanations')}: $remainingExplanations',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
                       ],
                     ),
                   ),
@@ -468,6 +243,271 @@ class QuestionWidget extends StatefulWidget {
           ),
         );
       },
+    );
+  }
+
+  // 內部工具：將文本中括號內內容用較淡顏色顯示，括號外保持主色
+  static TextSpan buildTextWithSoftParenthesis(
+    String text,
+    TextStyle baseStyle,
+    TextStyle parenthesisStyle,
+  ) {
+    final spans = <TextSpan>[];
+    final regExp = RegExp(r'\([^()]*\)');
+    int currentIndex = 0;
+
+    for (final match in regExp.allMatches(text)) {
+      if (match.start > currentIndex) {
+        spans.add(TextSpan(
+          text: text.substring(currentIndex, match.start),
+          style: baseStyle,
+        ));
+      }
+      spans.add(TextSpan(
+        text: text.substring(match.start, match.end),
+        style: parenthesisStyle,
+      ));
+      currentIndex = match.end;
+    }
+
+    if (currentIndex < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(currentIndex),
+        style: baseStyle,
+      ));
+    }
+
+    return TextSpan(children: spans, style: baseStyle);
+  }
+
+  static TextSpan buildStudyTipMarkdownSpan(String text, BuildContext context) {
+    final primaryColor = AppTheme.primaryFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final normalStyle = TextStyle(
+      fontSize: 14,
+      height: 1.6,
+      color: primaryColor,
+    );
+    final boldKeywordStyle = TextStyle(
+      fontSize: 14,
+      height: 1.6,
+      color: primaryColor,
+      fontWeight: FontWeight.w700,
+    );
+    final trueStyle = TextStyle(
+      fontSize: 14,
+      height: 1.6,
+      color: AppTheme.successFor(context),
+      fontWeight: FontWeight.w700,
+    );
+    final falseStyle = TextStyle(
+      fontSize: 14,
+      height: 1.6,
+      color: AppTheme.dangerFor(context),
+      fontWeight: FontWeight.w700,
+    );
+    final parenthesisStyle = TextStyle(
+      fontSize: 14,
+      height: 1.6,
+      color: mutedColor,
+    );
+
+    List<TextSpan> buildTokenSpans(String raw, TextStyle base) {
+      final spans = <TextSpan>[];
+      // 僅在「獨立詞」或「括號後的對/錯/正確」等高亮，避免「针对」「面对」「对不对」等誤判。
+      // 順序：較長片段優先；單字「对/错/對」需排除常見詞內嵌。
+      final tokenReg = RegExp(
+        r'\b(?:Vero|Falso|True|False)\b'
+        r'|(?<![\u4e00-\u9fff])错误(?![\u4e00-\u9fffA-Za-z0-9])'
+        r'|(?<![\u4e00-\u9fff])錯誤(?![\u4e00-\u9fffA-Za-z0-9])'
+        r'|(?<![\u4e00-\u9fff])正确(?![\u4e00-\u9fffA-Za-z0-9])'
+        r'|(?<![\u4e00-\u9fff])正確(?![\u4e00-\u9fffA-Za-z0-9])'
+        r'|(?<!针|針|面)对(?!不)(?![\u4e00-\u9fffA-Za-z0-9])'
+        r'|(?<!针|針|面)對(?!不)(?![\u4e00-\u9fffA-Za-z0-9])'
+        r'|(?<!不)错(?![\u4e00-\u9fffA-Za-z0-9])'
+        r'|(?<!不)錯(?![\u4e00-\u9fffA-Za-z0-9])',
+        caseSensitive: false,
+      );
+      int current = 0;
+      for (final m in tokenReg.allMatches(raw)) {
+        if (m.start > current) {
+          spans.add(buildTextWithSoftParenthesis(
+            raw.substring(current, m.start),
+            base,
+            parenthesisStyle,
+          ));
+        }
+        final token = raw.substring(m.start, m.end);
+        final lower = token.toLowerCase();
+        bool isTrue;
+        if (lower == 'vero' || lower == 'true') {
+          isTrue = true;
+        } else if (lower == 'falso' || lower == 'false') {
+          isTrue = false;
+        } else {
+          var inner = token;
+          if (inner.length >= 2 &&
+              (inner.startsWith('(') || inner.startsWith('（')) &&
+              (inner.endsWith(')') || inner.endsWith('）'))) {
+            inner = inner.substring(1, inner.length - 1);
+          }
+          isTrue =
+              inner == '正确' || inner == '正確' || inner == '对' || inner == '對';
+        }
+        spans.add(
+            TextSpan(text: token, style: isTrue ? trueStyle : falseStyle));
+        current = m.end;
+      }
+      if (current < raw.length) {
+        spans.add(buildTextWithSoftParenthesis(
+          raw.substring(current),
+          base,
+          parenthesisStyle,
+        ));
+      }
+      return spans;
+    }
+
+    final spans = <TextSpan>[];
+    final boldReg = RegExp(r'\*\*(.+?)\*\*', dotAll: true);
+    int index = 0;
+    for (final m in boldReg.allMatches(text)) {
+      if (m.start > index) {
+        spans.addAll(
+            buildTokenSpans(text.substring(index, m.start), normalStyle));
+      }
+      final boldText = m.group(1) ?? '';
+      spans.addAll(buildTokenSpans(boldText, boldKeywordStyle));
+      index = m.end;
+    }
+    if (index < text.length) {
+      spans.addAll(buildTokenSpans(text.substring(index), normalStyle));
+    }
+
+    return TextSpan(style: normalStyle, children: spans);
+  }
+
+  /// Shared supplementary content: deliberately excludes the description.
+  static Widget buildExplanationSupplement(
+    BuildContext context, {
+    required ParsedExplanation parsedExplanation,
+    required String currentLanguage,
+    bool showVipBadgeOnStudyTip = false,
+    VoidCallback? onStudyTipTap,
+  }) {
+    final keyPoints = parsedExplanation.keyPoints;
+    final studyTip = parsedExplanation.studyTip;
+    final isJsonFormat = parsedExplanation.isJsonFormat;
+    final primaryColor = AppTheme.primaryFor(context);
+    final mutedColor = AppTheme.mutedFor(context);
+    final inkColor = AppTheme.inkFor(context);
+    final isRetro = AppTheme.isRetroFor(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+      if (isJsonFormat &&
+          keyPoints != null &&
+          keyPoints.isNotEmpty) ...[
+        const SizedBox(height: 24),
+        Text(
+          AppStrings.getWithLanguage(
+              currentLanguage, 'key_points_title'),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: mutedColor,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...(keyPoints.map((point) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.only(
+                      top: 6, right: 10),
+                  decoration: BoxDecoration(
+                    color: primaryColor,
+                    shape: isRetro
+                        ? BoxShape.rectangle
+                        : BoxShape.circle,
+                  ),
+                ),
+                Expanded(
+                  child: Text.rich(
+                    TextSpan(
+                      style: TextStyle(
+                        fontSize: 15,
+                        height: 1.5,
+                        color: inkColor,
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '${point['title']}：',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        TextSpan(
+                          text: point['content'] ?? '',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        })),
+      ],
+      if (isJsonFormat &&
+          studyTip != null &&
+          studyTip.isNotEmpty) ...[
+        const SizedBox(height: 24),
+        Text(
+          AppStrings.getWithLanguage(
+              currentLanguage, 'study_tip_title'),
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: mutedColor,
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _StudyTipSection(
+          showVipBadge: false,
+          onTap: null,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.lightbulb_outline,
+                color: AppTheme.warningFor(context),
+                size: 24,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text.rich(
+                  buildStudyTipMarkdownSpan(studyTip, context),
+                  strutStyle: const StrutStyle(
+                    fontSize: 14,
+                    height: 1.6,
+                    leadingDistribution:
+                        TextLeadingDistribution.even,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      ],
     );
   }
 
@@ -518,16 +558,26 @@ class _StudyTipSectionState extends State<_StudyTipSection>
 
   @override
   Widget build(BuildContext context) {
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final vipColor = AppTheme.warningTextFor(context);
+    final vipForeground = isRetro
+        ? AppTheme.retroPage
+        : isDark
+            ? Colors.black
+            : Colors.white;
     Widget content = Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
           padding: const EdgeInsets.fromLTRB(16, 16, 48, 16),
           decoration: BoxDecoration(
-            color: AppTheme.primarySoft,
-            borderRadius: BorderRadius.circular(12),
+            color: AppTheme.primarySoftFor(context),
+            borderRadius:
+                isRetro ? BorderRadius.zero : BorderRadius.circular(12),
             border: Border.all(
-              color: AppTheme.primary.withOpacity(0.22),
+              color: primaryColor.withOpacity(0.22),
               width: 1,
             ),
           ),
@@ -540,23 +590,28 @@ class _StudyTipSectionState extends State<_StudyTipSection>
             child: ScaleTransition(
               scale: _scaleAnimation!,
               child: Container(
-                height: 18,
+                // 最少 18 高：放大字号或较高字形时标签随文字长高，避免裁切。
+                constraints: const BoxConstraints(minHeight: 18),
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(4),
+                  color: isRetro ? AppTheme.retroPrimary : null,
+                  gradient: isRetro
+                      ? null
+                      : LinearGradient(
+                          colors: [vipColor, vipColor.withOpacity(0.82)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(4),
                 ),
-                child: const Text(
+                child: Text(
                   '✨ VIP',
                   style: TextStyle(
                     fontSize: 9,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: vipForeground,
                   ),
                 ),
               ),
@@ -570,7 +625,7 @@ class _StudyTipSectionState extends State<_StudyTipSection>
         color: Colors.transparent,
         child: InkWell(
           onTap: widget.onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: isRetro ? BorderRadius.zero : BorderRadius.circular(12),
           child: content,
         ),
       );
@@ -585,7 +640,14 @@ class _QuestionWidgetState extends State<QuestionWidget>
   bool _showExplanation = false;
   bool _isFavorite = false;
   bool _showTranslation = false; // 翻譯顯示狀態
+  bool _isExplanationOpen = false;
+
+  void _notifyReadingChanged() {
+    widget.onReadingChanged?.call(_showTranslation || _isExplanationOpen);
+  }
   bool _isSpeakingQuestion = false;
+  bool _isPreparingSpeech = false;
+  int _speechSession = 0;
   final QuestionSpeechService _speechService = QuestionSpeechService();
   final ScrollController _scrollController = ScrollController(); // 用於自動滾動
 
@@ -613,6 +675,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
 
   @override
   void dispose() {
+    _speechSession++;
     _speechService.dispose();
     _scrollController.dispose();
     _dragAnimationController?.dispose();
@@ -625,11 +688,13 @@ class _QuestionWidgetState extends State<QuestionWidget>
     super.didUpdateWidget(oldWidget);
     // 如果題目ID改變，重置翻譯和解析顯示狀態，并重置拖拽状态
     if (oldWidget.question.id != widget.question.id) {
+      _speechSession++;
       _speechService.stop();
       setState(() {
         _showTranslation = false;
         _showExplanation = false;
         _isSpeakingQuestion = false;
+        _isPreparingSpeech = false;
         _resetDragState();
       });
     }
@@ -741,15 +806,15 @@ class _QuestionWidgetState extends State<QuestionWidget>
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(
+        Icon(
           Icons.image_not_supported,
           size: 100,
-          color: Colors.grey,
+          color: AppTheme.mutedFor(context),
         ),
         const SizedBox(height: 8),
         Text(
           AppStrings.get('image_load_failed'),
-          style: const TextStyle(color: Colors.grey),
+          style: TextStyle(color: AppTheme.mutedFor(context)),
         ),
       ],
     );
@@ -875,14 +940,17 @@ class _QuestionWidgetState extends State<QuestionWidget>
         }
       },
       child: Container(
-        decoration: AppTheme.pageDecoration,
-        child: Stack(
+        decoration: AppTheme.pageDecorationFor(context),
+        // 内容与操作按钮各占独立空间，互不遮挡：
+        // iOS / Android 手机均在行尾一侧竖排（LTR 在右，RTL 在左），内容区让出这一列。
+        child: Column(
           children: [
-            // 主要内容区域（可滚动，带滑动卡片效果）
-            Column(
-              children: [
-                Expanded(
-                  child: AnimatedBuilder(
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final actions = _buildFloatingButtons(
+                      context, currentLang, questionTextIt);
+                  final content = AnimatedBuilder(
                     animation: _dragAnimationController ??
                         const AlwaysStoppedAnimation(0.0),
                     builder: (context, child) {
@@ -905,8 +973,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
                             key: ValueKey(
                                 widget.question.id), // 使用题目ID作为key，确保题目变化时触发动画
                             controller: _scrollController,
-                            padding: const EdgeInsets.fromLTRB(
-                                20, 24, 20, 180), // 底部留出空间给固定按钮
+                            // 操作按钮不再叠在内容上，末尾只需常规留白。
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                                20, 24, 12, 32),
                             child: _buildMainContent(
                               context,
                               questionTextIt,
@@ -918,14 +987,80 @@ class _QuestionWidgetState extends State<QuestionWidget>
                         ),
                       );
                     },
-                  ),
-                ),
-                // 底部固定的 Vero/Falso 按钮
-                _buildBottomButtons(context),
-              ],
+                  );
+                  // 反馈气泡叠在内容区底部（与原先一样浮在内容之上），不越过侧边操作按钮区域。
+                  final contentWithBubbles = Stack(
+                    children: [
+                      Positioned.fill(child: content),
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 16,
+                        child: _buildFeedbackBubbles(),
+                      ),
+                    ],
+                  );
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(child: contentWithBubbles),
+                      Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                            end: 20, bottom: 16),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (var k = 0; k < actions.length; k++) ...[
+                                if (k > 0) const SizedBox(height: 12),
+                                actions[k],
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
-            // 右侧悬浮按钮
-            _buildFloatingButtons(context, currentLang, questionTextIt),
+            // 底部固定的 Vero/Falso 按钮
+            _buildBottomButtons(context),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 反馈气泡（精通、收藏、答对/答错），垂直排列，显示在内容区底部中间。
+  /// 放在内容区内部，而不是底部按钮区，这样不会盖住侧边操作按钮。
+  Widget _buildFeedbackBubbles() {
+    return Padding(
+      key: const ValueKey('question-feedback-bubbles'),
+      // 两侧留边距；气泡内文字可换行，长语言或放大字号时不会横向溢出。
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // 精通气泡（蓝色背景，最上方）
+            if (widget.showMasteredBadge)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _buildMasteredBadge(),
+              ),
+            // 收藏气泡（蓝色背景）
+            if (widget.showFavoriteBadge)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _buildFavoriteBadge(),
+              ),
+            // 对错提示气泡（最下方）
+            // 如果显示精通气泡，则隐藏"正确"气泡
+            if (widget.isAnswered &&
+                widget.isCorrect != null &&
+                !widget.hideCorrectBadge)
+              _buildFeedbackBadge(),
           ],
         ),
       ),
@@ -940,6 +1075,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
     String? explanationText,
     String currentLang,
   ) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GlassCard(
       padding: const EdgeInsets.all(24),
       borderRadius: BorderRadius.circular(24),
@@ -951,13 +1087,15 @@ class _QuestionWidgetState extends State<QuestionWidget>
             padding: const EdgeInsets.only(bottom: 12),
             child: Text(
               questionTextIt ?? AppStrings.get('question_content_missing'),
+              // 意大利语题干始终从左到右排版（包括乌尔都语界面）。
+              textDirection: TextDirection.ltr,
               textAlign: TextAlign.left,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w600, // SemiBold
                 height: 1.4,
                 letterSpacing: 0,
-                color: AppTheme.ink,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -989,10 +1127,10 @@ class _QuestionWidgetState extends State<QuestionWidget>
               ),
               margin: EdgeInsets.only(top: _showTranslation ? 0.0 : 16.0),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.4),
+                color: colorScheme.surface.withOpacity(0.7),
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.5),
+                  color: colorScheme.outline.withOpacity(0.35),
                   width: 1,
                 ),
               ),
@@ -1016,16 +1154,20 @@ class _QuestionWidgetState extends State<QuestionWidget>
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: AppTheme.primarySoft,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.primary.withOpacity(0.22)),
+                color: AppTheme.primarySoftFor(context),
+                borderRadius: AppTheme.isRetroFor(context)
+                    ? BorderRadius.zero
+                    : BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppTheme.primaryFor(context).withOpacity(0.22),
+                ),
               ),
               child: Text(
                 explanationText,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   height: 1.5,
-                  color: Colors.black87,
+                  color: colorScheme.onSurface,
                 ),
               ),
             ),
@@ -1038,6 +1180,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
   /// 构建重点词汇 Chips
   Widget _buildKeyWordsChips(String currentLang) {
     final keyWords = widget.question.getKeyWords(currentLang);
+    final mutedColor = AppTheme.mutedFor(context);
+    final lineColor = AppTheme.lineFor(context);
+    final isRetro = AppTheme.isRetroFor(context);
 
     // 🔍 调试：打印关键词信息
     if (kDebugMode) {
@@ -1059,7 +1204,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey[400],
+                color: mutedColor,
                 letterSpacing: 0.1,
               ),
             ),
@@ -1067,126 +1212,152 @@ class _QuestionWidgetState extends State<QuestionWidget>
             Expanded(
               child: Container(
                 height: 1,
-                color: Colors.grey[200],
+                color: lineColor.withOpacity(0.7),
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: keyWords.map((keyword) {
-            final itWord = keyword['it'] ?? '';
-            final translation =
-                keyword[currentLang] ?? keyword['en'] ?? keyword['zh'] ?? '';
+        LayoutBuilder(
+          builder: (context, constraints) {
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: keyWords.map((keyword) {
+                final itWord = keyword['it'] ?? '';
+                final translation = keyword[currentLang] ??
+                    keyword['en'] ??
+                    keyword['zh'] ??
+                    '';
 
-            return Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.6),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.8),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 4,
-                    offset: const Offset(0, 1),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    itWord,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
+                return ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface.withOpacity(
+                            0.8,
+                          ),
+                      borderRadius: isRetro
+                          ? BorderRadius.zero
+                          : BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .outline
+                            .withOpacity(0.3),
+                        width: 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .shadow
+                              .withOpacity(0.02),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          itWord,
+                          // 意大利语词始终从左到右排版（乌尔都语界面下“A.B.S.”的句点不跑到左边）。
+                          textDirection: TextDirection.ltr,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        if (translation.isNotEmpty) ...[
+                          Text(
+                            '•',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                          Text(
+                            translation,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    '•',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    translation,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
+                );
+              }).toList(),
             );
-          }).toList(),
+          },
         ),
       ],
     );
   }
 
   /// 构建右侧悬浮按钮
-  Widget _buildFloatingButtons(
+  /// 题目操作按钮（收藏、朗读、解析、翻译）；摆放位置由 build 中的布局决定。
+  List<Widget> _buildFloatingButtons(
     BuildContext context,
     String currentLang,
     String questionTextIt,
   ) {
     // 模拟考试模式下，只显示收藏按钮，不显示翻译和解析按钮
     if (widget.isExamMode) {
-      return Positioned(
-        right: 20,
-        bottom: 160, // 在底部按钮上方
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // 收藏按钮（考试模式下仍然保留）
-            _buildFloatingButton(
-              icon: _isFavorite ? Icons.favorite : Icons.favorite_border,
-              label: AppStrings.getWithLanguage(currentLang, 'favorite'),
-              onTap: _toggleFavorite,
-              isActive: _isFavorite,
-            ),
-          ],
+      return [
+        // 收藏按钮（考试模式下仍然保留）
+        _buildFloatingButton(
+          icon: _isFavorite ? Icons.favorite : Icons.favorite_border,
+          label: AppStrings.getWithLanguage(currentLang, 'favorite'),
+          onTap: _toggleFavorite,
+          isActive: _isFavorite,
+          toggled: _isFavorite,
         ),
-      );
+      ];
     }
 
     // 练习模式下，显示所有按钮
-    return Positioned(
-      right: 20,
-      bottom: 160, // 在底部按钮上方
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+    return [
           // 收藏按钮
           _buildFloatingButton(
             icon: _isFavorite ? Icons.favorite : Icons.favorite_border,
             label: AppStrings.getWithLanguage(currentLang, 'favorite'),
             onTap: _toggleFavorite,
             isActive: _isFavorite,
+            toggled: _isFavorite,
           ),
-          const SizedBox(height: 12),
           // 朗讀按鈕：只朗讀意大利語原文，模擬考場音頻按鈕體驗
           _buildFloatingButton(
-            icon: _isSpeakingQuestion
-                ? Icons.stop_circle_outlined
-                : Icons.volume_up_outlined,
-            label: AppStrings.getWithLanguage(currentLang, 'listen_question'),
+            icon: _isPreparingSpeech
+                ? Icons.hourglass_top_rounded
+                : _isSpeakingQuestion
+                    ? Icons.stop_circle_outlined
+                    : Icons.volume_up_outlined,
+            label: AppStrings.getWithLanguage(
+              currentLang,
+              _isPreparingSpeech
+                  ? 'speech_preparing'
+                  : _isSpeakingQuestion
+                      ? 'speech_stop'
+                      : 'listen_question',
+            ),
             onTap: () {
               _toggleQuestionSpeech(questionTextIt, currentLang);
             },
-            isActive: _isSpeakingQuestion,
+            isActive: _isSpeakingQuestion || _isPreparingSpeech,
           ),
-          const SizedBox(height: 12),
           // 解析按钮
           _buildFloatingButton(
             icon: _showExplanation ? Icons.menu_book : Icons.menu_book_outlined,
@@ -1196,7 +1367,6 @@ class _QuestionWidgetState extends State<QuestionWidget>
             },
             isActive: _showExplanation,
           ),
-          const SizedBox(height: 12),
           // 翻译按钮
           if (widget.currentLanguage != 'it' &&
               widget.question.getQuestionText(widget.currentLanguage) != null)
@@ -1210,108 +1380,220 @@ class _QuestionWidgetState extends State<QuestionWidget>
                     _showExplanation = false;
                   }
                 });
+                _notifyReadingChanged();
               },
               isActive: _showTranslation,
+              toggled: _showTranslation,
             ),
-        ],
-      ),
-    );
+    ];
   }
 
   /// 顯示高保質感解析底部彈窗（委託給靜態方法，便於全 App 複用）
   Future<void> _showRichExplanation(BuildContext context) async {
-    final userStateProvider =
-        Provider.of<UserStateProvider>(context, listen: false);
-    final isVip = userStateProvider.isVip;
-    final questionId = widget.question.id;
-
-    if (!userStateProvider.canViewExplanation(questionId)) {
-      // 今日免費解析次數已用完：引導跳轉訂閱頁
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            AppStrings.getWithLanguage(
-                widget.currentLanguage, 'explanation_limit_reached_message'),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SubscriptionPage(),
-        ),
-      );
-      return;
+    if (_isExplanationOpen) return;
+    _isExplanationOpen = true;
+    _notifyReadingChanged();
+    try {
+      await _openRichExplanation(context);
+    } finally {
+      _isExplanationOpen = false;
+      if (mounted) _notifyReadingChanged();
     }
+  }
 
-    final alreadyUnlockedToday =
-        userStateProvider.isExplanationUnlockedToday(questionId);
-    final remainingBefore = userStateProvider.remainingExplanations;
-
+  Future<void> _openRichExplanation(BuildContext context) async {
     await QuestionWidget.showRichExplanation(
       context,
       question: widget.question,
       currentLanguage: widget.currentLanguage,
-      remainingExplanations:
-          (!isVip && !alreadyUnlockedToday) ? remainingBefore : null,
-      showVipBadgeOnStudyTip: !isVip,
     );
-
-    // 非 VIP 用戶在成功查看後遞增一次計數
-    if (!isVip && !alreadyUnlockedToday) {
-      await userStateProvider.incrementExplanationCount(questionId);
-    }
   }
 
   Future<void> _toggleQuestionSpeech(
     String questionText,
     String currentLang,
   ) async {
-    if (_isSpeakingQuestion) {
+    if (_isPreparingSpeech || _isSpeakingQuestion) {
+      _speechSession++;
       await _speechService.stop();
       if (mounted) {
         setState(() {
           _isSpeakingQuestion = false;
+          _isPreparingSpeech = false;
         });
       }
       return;
     }
 
+    final session = ++_speechSession;
+    if (mounted) {
+      setState(() => _isPreparingSpeech = true);
+    }
+
     try {
+      var preferNaturalAudio = true;
+      final shouldOfferPack =
+          await _speechService.shouldOfferVoicePack(widget.question.id);
+      if (!mounted || session != _speechSession) return;
+
+      if (shouldOfferPack) {
+        final manageVoicePacks = await _showVoicePackChoice(currentLang);
+        if (!mounted || session != _speechSession) return;
+        if (manageVoicePacks == null) {
+          setState(() => _isPreparingSpeech = false);
+          return;
+        }
+        if (manageVoicePacks) {
+          setState(() => _isPreparingSpeech = false);
+          await Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => const VoicePackScreen(),
+            ),
+          );
+          return;
+        }
+
+        await _speechService.rememberSystemVoiceChoice();
+        preferNaturalAudio = false;
+      }
+
+      var stoppedBeforeStartReturned = false;
       final started = await _speechService.speakItalian(
         questionText,
+        questionId: widget.question.id,
+        preferNaturalAudio: preferNaturalAudio,
         onStart: () {
-          if (mounted) {
+          if (mounted && session == _speechSession) {
             setState(() {
+              _isPreparingSpeech = false;
               _isSpeakingQuestion = true;
             });
           }
         },
         onStop: () {
-          if (mounted) {
+          stoppedBeforeStartReturned = true;
+          if (mounted && session == _speechSession) {
             setState(() {
               _isSpeakingQuestion = false;
+              _isPreparingSpeech = false;
             });
           }
         },
       );
 
-      if (mounted && started) {
+      if (!mounted || session != _speechSession) return;
+      if (started && !stoppedBeforeStartReturned) {
         setState(() {
+          _isPreparingSpeech = false;
           _isSpeakingQuestion = true;
         });
-      } else if (mounted) {
+      } else if (!started) {
         _showSpeechUnavailableMessage(currentLang);
       }
     } catch (_) {
-      if (mounted) {
+      if (mounted && session == _speechSession) {
         setState(() {
+          _isPreparingSpeech = false;
           _isSpeakingQuestion = false;
         });
         _showSpeechUnavailableMessage(currentLang);
       }
+    } finally {
+      if (mounted && session == _speechSession && _isPreparingSpeech) {
+        setState(() => _isPreparingSpeech = false);
+      }
     }
+  }
+
+  /// true：前往管理語音包；false：沿用系統語音；null：取消。
+  Future<bool?> _showVoicePackChoice(String currentLang) {
+    return showModalBottomSheet<bool>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        final colorScheme = Theme.of(sheetContext).colorScheme;
+        final isRetro = AppTheme.isRetroFor(sheetContext);
+        return Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: isRetro
+                ? BorderRadius.zero
+                : const BorderRadius.vertical(top: Radius.circular(24)),
+            border: isRetro ? Border.all(color: AppTheme.retroLine) : null,
+          ),
+          padding: EdgeInsets.fromLTRB(
+            24,
+            20,
+            24,
+            MediaQuery.viewPaddingOf(sheetContext).bottom + 16,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 42,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.outlineVariant,
+                    borderRadius: isRetro
+                        ? BorderRadius.zero
+                        : BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Icon(
+                Icons.graphic_eq_rounded,
+                size: 38,
+                color: colorScheme.primary,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                AppStrings.getWithLanguage(
+                    currentLang, 'voice_pack_prompt_title'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                AppStrings.getWithLanguage(
+                    currentLang, 'voice_pack_prompt_message'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.of(sheetContext).pop(true),
+                icon: const Icon(Icons.download_rounded),
+                label: Text(
+                  AppStrings.getWithLanguage(currentLang, 'voice_pack_manage'),
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => Navigator.of(sheetContext).pop(false),
+                child: Text(
+                  AppStrings.getWithLanguage(
+                      currentLang, 'voice_pack_use_system_voice'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   void _showSpeechUnavailableMessage(String currentLang) {
@@ -1330,45 +1612,63 @@ class _QuestionWidgetState extends State<QuestionWidget>
     required String label,
     required VoidCallback onTap,
     bool isActive = false,
+    bool? toggled,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: GlassCard(
-        padding: EdgeInsets.zero,
-        borderRadius: BorderRadius.circular(48),
-        child: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: isActive
-                ? AppTheme.primary.withOpacity(0.12)
-                : Colors.transparent,
-            border: isActive
-                ? Border.all(
-                    color: AppTheme.primary.withOpacity(0.3),
-                    width: 1,
-                  )
-                : null,
-            borderRadius: BorderRadius.circular(48),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: 20,
-                color: isActive ? AppTheme.primary : const Color(0xFF475569),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                  color: isActive ? AppTheme.primary : const Color(0xFF64748B),
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    // 读屏：报为按钮；收藏、翻译这类开关同时报出当前是否已开启。
+    return Semantics(
+      button: true,
+      toggled: toggled,
+      child: GestureDetector(
+        onTap: onTap,
+        child: GlassCard(
+          padding: EdgeInsets.zero,
+          borderRadius: BorderRadius.circular(48),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color:
+                  isActive ? primaryColor.withOpacity(0.12) : Colors.transparent,
+              border: isActive
+                  ? Border.all(
+                      color: primaryColor.withOpacity(0.3),
+                      width: 1,
+                    )
+                  : null,
+              borderRadius:
+                  isRetro ? BorderRadius.zero : BorderRadius.circular(48),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 20,
+                  color: isActive ? primaryColor : colorScheme.onSurfaceVariant,
                 ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                SizedBox(
+                  width: 42,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                        color: isActive
+                            ? primaryColor
+                            : colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1399,6 +1699,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                   children: [
                     Expanded(
                       child: _buildAnswerButton(
+                        context: context,
                         label: 'VERO',
                         isVero: true,
                       ),
@@ -1406,44 +1707,13 @@ class _QuestionWidgetState extends State<QuestionWidget>
                     const SizedBox(width: 20),
                     Expanded(
                       child: _buildAnswerButton(
+                        context: context,
                         label: 'FALSO',
                         isVero: false,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ),
-          ),
-          // 反馈气泡（在两个按钮上方中间位置，确保高于按钮）
-          // 垂直排列多个气泡，避免重叠
-          Positioned(
-            bottom: 120, // 按钮高度(70) + 上方间距(50)，确保气泡高于按钮
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // 精通气泡（蓝色背景，最上方）
-                  if (widget.showMasteredBadge)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _buildMasteredBadge(),
-                    ),
-                  // 收藏气泡（蓝色背景）
-                  if (widget.showFavoriteBadge)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: _buildFavoriteBadge(),
-                    ),
-                  // 对错提示气泡（最下方）
-                  // 如果显示精通气泡，则隐藏"正确"气泡
-                  if (widget.isAnswered &&
-                      widget.isCorrect != null &&
-                      !widget.hideCorrectBadge)
-                    _buildFeedbackBadge(),
-                ],
               ),
             ),
           ),
@@ -1454,45 +1724,56 @@ class _QuestionWidgetState extends State<QuestionWidget>
 
   /// 构建答案按钮
   Widget _buildAnswerButton({
+    required BuildContext context,
     required String label,
     required bool isVero,
   }) {
     // 判断按钮是否被用户选中
-    final isSelected = widget.isAnswered && widget.userChoice == isVero;
+    final displayedChoice = widget.userChoice ?? widget.selectedAnswer;
+    final isSelected = widget.isAnswered && displayedChoice == isVero;
 
-    // 按钮背景色：如果已答题且被选中，变为蓝色；否则为白色
-    final buttonColor = isSelected
-        ? AppTheme.primary // 蓝色激活态
-        : Colors.white; // 白色初始态
+    // 按钮背景色：如果已答题且被选中，变为主题主色；否则为表面色。
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final buttonColor = isSelected ? colorScheme.primary : colorScheme.surface;
 
-    // 文字颜色：如果已答题且被选中，变为白色；否则为深灰色
-    final textColor = isSelected ? Colors.white : AppTheme.ink;
+    // 文字颜色由主题决定，避免夜间/复古模式固定使用白色或深灰色。
+    final textColor =
+        isSelected ? colorScheme.onPrimary : colorScheme.onSurface;
 
     return GestureDetector(
       onTap: widget.isAnswered ? null : () => widget.onAnswerSelected(isVero),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeInOut,
-        height: 70, // 固定高度
-        decoration: BoxDecoration(
-          color: buttonColor,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 18, // 字号18
-              fontWeight: FontWeight.w700, // 字重w700
-              color: textColor,
-              letterSpacing: 1.0,
+      child: AnimatedScale(
+        scale: isSelected ? 1.01 : 1,
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          height: 70, // 固定高度
+          decoration: BoxDecoration(
+            color: buttonColor,
+            borderRadius:
+                isRetro ? BorderRadius.zero : BorderRadius.circular(24),
+            boxShadow: isRetro
+                ? const []
+                : [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isSelected ? 0.09 : 0.05),
+                      blurRadius: isSelected ? 10 : 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 18, // 字号18
+                fontWeight: FontWeight.w700, // 字重w700
+                color: textColor,
+                letterSpacing: 1.0,
+              ),
             ),
           ),
         ),
@@ -1506,33 +1787,59 @@ class _QuestionWidgetState extends State<QuestionWidget>
       return const SizedBox.shrink();
     }
 
-    // 使用 TweenAnimationBuilder 实现流畅的入场动画
+    // 使用短距淡入，避免大幅回彈造成整個畫面像閃了一下。
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic, // 流畅的缓动曲线
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeOutCubic,
       builder: (context, value, child) {
+        final opacityValue = value.clamp(0.0, 1.0).toDouble();
+        final isRetro = AppTheme.isRetroFor(context);
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final feedbackBackground = widget.isCorrect!
+            ? isRetro
+                ? AppTheme.retroPrimary
+                : isDark
+                    ? const Color(0xFF14532D)
+                    : const Color(0xFF166534)
+            : isRetro
+                ? AppTheme.retroDanger
+                : isDark
+                    ? const Color(0xFF7F1D1D)
+                    : const Color(0xFFB91C1C);
+        final feedbackForeground = isRetro
+            ? AppTheme.retroPage
+            : isDark
+                ? (widget.isCorrect!
+                    ? const Color(0xFFD1FAE5)
+                    : const Color(0xFFFECACA))
+                : Colors.white;
         return Opacity(
-          opacity: value, // 淡入效果
+          opacity: opacityValue,
           child: Transform.translate(
-            offset: Offset(0, 30 * (1 - value)), // 从下往上滑入（30px距离）
+            offset: Offset(0, 8 * (1 - value)),
             child: Transform.scale(
-              scale: 0.8 + (0.2 * value), // 从0.8缩放到1.0，增加弹性感
+              scale: 0.96 + (0.04 * value),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: widget.isCorrect!
-                      ? const Color(0xFF4ADE80) // 正确：绿色
-                      : const Color(0xFFFF5252), // 错误：红色
-                  borderRadius: BorderRadius.circular(20), // 胶囊型
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15 * value), // 阴影也跟随动画
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: feedbackBackground,
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(20),
+                  border:
+                      isRetro ? Border.all(color: AppTheme.retroLine) : null,
+                  boxShadow: isRetro
+                      ? const []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(
+                              0.15 * opacityValue,
+                            ), // 阴影也跟随动画
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -1542,33 +1849,40 @@ class _QuestionWidgetState extends State<QuestionWidget>
                       children: [
                         Icon(
                           widget.isCorrect! ? Icons.check : Icons.close,
-                          color: Colors.white,
+                          color: feedbackForeground,
                           size: 18,
                         ),
                         const SizedBox(width: 6),
-                        Text(
-                          widget.isCorrect!
-                              ? AppStrings.getWithLanguage(
-                                  widget.currentLanguage, 'correct')
-                              : AppStrings.getWithLanguage(
-                                  widget.currentLanguage, 'wrong'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+                        Flexible(
+                          child: Text(
+                            widget.isCorrect!
+                                ? AppStrings.getWithLanguage(
+                                    widget.currentLanguage, 'correct')
+                                : AppStrings.getWithLanguage(
+                                    widget.currentLanguage, 'wrong'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: feedbackForeground,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ],
                     ),
+                    if (widget.isCorrect!) ...[
+                      const SizedBox(height: 6),
+                      _buildCorrectMomentum(opacityValue),
+                    ],
                     // 错题已彻底消灭提示
                     if (widget.isCorrect! && widget.mistakeEliminated) ...[
                       const SizedBox(height: 4),
                       Text(
                         AppStrings.getWithLanguage(widget.currentLanguage,
                             'mistake_cleared_celebration'),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: feedbackForeground,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 0.3,
@@ -1585,6 +1899,159 @@ class _QuestionWidgetState extends State<QuestionWidget>
     );
   }
 
+  /// 以短標籤和 3 格進度呈現本次連對與單題掌握度。
+  Widget _buildCorrectMomentum(double animationValue) {
+    final safeAnimationValue = animationValue.clamp(0.0, 1.0).toDouble();
+    final isRetro = AppTheme.isRetroFor(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final feedbackForeground = isRetro
+        ? AppTheme.retroPage
+        : isDark
+            ? const Color(0xFFD1FAE5)
+            : Colors.white;
+    final flameColor = isRetro ? feedbackForeground : const Color(0xFFFFC247);
+    final masteryStep = widget.questionMasteryStep.clamp(0, 3).toInt();
+    final streakLabel = AppStrings.getWithLanguage(
+      widget.currentLanguage,
+      'answer_streak_short',
+    ).replaceAll('{count}', '${widget.sessionCorrectStreak}');
+    final masteryLabel = AppStrings.getWithLanguage(
+      widget.currentLanguage,
+      'question_mastery_progress_short',
+    ).replaceAll('{current}', '$masteryStep').replaceAll('{total}', '3');
+    final semanticParts = <String>[
+      if (widget.sessionCorrectStreak >= 1) streakLabel,
+      masteryLabel,
+    ];
+
+    return Semantics(
+      label: semanticParts.join(', '),
+      child: ExcludeSemantics(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 10,
+          runSpacing: 5,
+          children: [
+            if (widget.sessionCorrectStreak >= 1)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                decoration: BoxDecoration(
+                  color: feedbackForeground.withOpacity(0.18),
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      key: ValueKey<String>(
+                        'streak-flame-${widget.question.id}-${widget.sessionCorrectStreak}',
+                      ),
+                      tween: Tween<double>(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 520),
+                      builder: (context, value, child) {
+                        final scale = switch (value) {
+                          <= 0.42 => 0.62 +
+                              (0.8 *
+                                  Curves.easeOutCubic.transform(value / 0.42)),
+                          <= 0.72 => 1.42 -
+                              (0.5 *
+                                  Curves.easeInOut.transform(
+                                    (value - 0.42) / 0.3,
+                                  )),
+                          _ => 0.92 +
+                              (0.08 *
+                                  Curves.easeOutCubic.transform(
+                                    (value - 0.72) / 0.28,
+                                  )),
+                        };
+
+                        double rotation;
+                        if (value <= 0.22) {
+                          rotation =
+                              -0.16 * Curves.easeOut.transform(value / 0.22);
+                        } else if (value <= 0.5) {
+                          rotation = -0.16 +
+                              (0.3 *
+                                  Curves.easeInOut.transform(
+                                    (value - 0.22) / 0.28,
+                                  ));
+                        } else {
+                          rotation = 0.14 *
+                              (1 -
+                                  Curves.easeOut.transform(
+                                    (value - 0.5) / 0.5,
+                                  ));
+                        }
+
+                        final lift = value <= 0.42
+                            ? 3 - (5 * (value / 0.42))
+                            : -2 + (2 * ((value - 0.42) / 0.58));
+                        return Transform.translate(
+                          offset: Offset(0, lift),
+                          child: Transform.rotate(
+                            angle: rotation,
+                            child: Transform.scale(scale: scale, child: child),
+                          ),
+                        );
+                      },
+                      child: Icon(
+                        Icons.local_fire_department_rounded,
+                        color: flameColor,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      streakLabel,
+                      style: TextStyle(
+                        color: feedbackForeground,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  masteryLabel,
+                  style: TextStyle(
+                    color: feedbackForeground,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                ...List.generate(3, (index) {
+                  final isFilled = index < masteryStep;
+                  return Container(
+                    width: 15,
+                    height: 5,
+                    margin: EdgeInsets.only(right: index == 2 ? 0 : 3),
+                    decoration: BoxDecoration(
+                      color: isFilled
+                          ? feedbackForeground.withOpacity(
+                              0.45 + (0.55 * safeAnimationValue),
+                            )
+                          : feedbackForeground.withOpacity(0.25),
+                      borderRadius: isRetro
+                          ? BorderRadius.zero
+                          : BorderRadius.circular(999),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 构建收藏气泡（Badge）
   Widget _buildFavoriteBadge() {
     // 使用 TweenAnimationBuilder 实现流畅的入场动画
@@ -1593,6 +2060,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
+        final isRetro = AppTheme.isRetroFor(context);
+        final primaryColor = AppTheme.primaryFor(context);
+        final foregroundColor = Theme.of(context).colorScheme.onPrimary;
         return Opacity(
           opacity: value,
           child: Transform.translate(
@@ -1603,33 +2073,40 @@ class _QuestionWidgetState extends State<QuestionWidget>
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15 * value),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: primaryColor,
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(20),
+                  boxShadow: isRetro
+                      ? const []
+                      : [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.15 * value),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.favorite,
-                      color: Colors.white,
+                      color: isRetro ? AppTheme.retroPage : foregroundColor,
                       size: 18,
                     ),
                     const SizedBox(width: 6),
-                    Text(
-                      AppStrings.getWithLanguage(
-                          widget.currentLanguage, 'favorited'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
+                    Flexible(
+                      child: Text(
+                        AppStrings.getWithLanguage(
+                            widget.currentLanguage, 'favorited'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color:
+                              isRetro ? AppTheme.retroPage : foregroundColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ],
@@ -1644,51 +2121,71 @@ class _QuestionWidgetState extends State<QuestionWidget>
 
   /// 构建精通气泡（Badge）
   Widget _buildMasteredBadge() {
-    // 使用 TweenAnimationBuilder 实现流畅的入场动画
+    // 精通提示也保持短距、無回彈，避免連答時產生閃動。
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
+        final opacityValue = value.clamp(0.0, 1.0).toDouble();
+        final isRetro = AppTheme.isRetroFor(context);
+        final primaryColor = AppTheme.primaryFor(context);
+        final foregroundColor = Theme.of(context).colorScheme.onPrimary;
         return Opacity(
-          opacity: value,
+          opacity: opacityValue,
           child: Transform.translate(
-            offset: Offset(0, 30 * (1 - value)),
+            offset: Offset(0, 8 * (1 - value)),
             child: Transform.scale(
-              scale: 0.8 + (0.2 * value),
+              scale: 0.96 + (0.04 * value),
               child: Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15 * value),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: primaryColor,
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(20),
+                  boxShadow: isRetro
+                      ? const []
+                      : [
+                          BoxShadow(
+                            color:
+                                Colors.black.withOpacity(0.15 * opacityValue),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                 ),
-                child: Row(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.star,
-                      color: Colors.white,
-                      size: 18,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.star,
+                          color: isRetro ? AppTheme.retroPage : foregroundColor,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            AppStrings.getWithLanguage(
+                                widget.currentLanguage, 'mastered_badge_short'),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: isRetro
+                                  ? AppTheme.retroPage
+                                  : foregroundColor,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      AppStrings.getWithLanguage(
-                          widget.currentLanguage, 'mastered_badge_short'),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+                    const SizedBox(height: 6),
+                    _buildCorrectMomentum(opacityValue),
                   ],
                 ),
               ),

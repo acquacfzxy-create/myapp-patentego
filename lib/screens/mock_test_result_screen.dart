@@ -110,10 +110,11 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       // 毛玻璃 AppBar
       appBar: _buildGlassAppBar(context),
       body: Container(
-        decoration: AppTheme.pageDecoration,
+        decoration: AppTheme.pageDecorationFor(context),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -146,17 +147,22 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
 
   /// 構建毛玻璃 AppBar
   PreferredSizeWidget _buildGlassAppBar(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: ClipRRect(
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(
+            sigmaX: isRetro ? 0 : 20,
+            sigmaY: isRetro ? 0 : 20,
+          ),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.7),
+              color: colorScheme.surface.withOpacity(0.82),
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.black.withOpacity(0.05),
+                  color: colorScheme.outline.withOpacity(0.2),
                   width: 0.5,
                 ),
               ),
@@ -170,8 +176,9 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                   children: [
                     // 左側：返回按鈕（純圖標，與練習模式一致）
                     IconButton(
+                      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
                       icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-                      color: const Color(0xFF475569),
+                      color: colorScheme.onSurfaceVariant,
                       onPressed: () => Navigator.of(context).pop(),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -181,10 +188,10 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                       child: Center(
                         child: Text(
                           AppStrings.get('test_result'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E293B),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -203,6 +210,7 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
 
   /// 構建狀態圖標（帶動畫效果）
   Widget _buildStatusIcon(bool isPassed, Color statusColor) {
+    final isRetro = AppTheme.isRetroFor(context);
     final iconWidget = Stack(
       alignment: Alignment.center,
       children: [
@@ -211,7 +219,7 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
           width: 96,
           height: 96,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
+            shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
             border: Border.all(
               color: statusColor.withOpacity(0.2),
               width: 2,
@@ -223,7 +231,7 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
           width: 96,
           height: 96,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
+            shape: isRetro ? BoxShape.rectangle : BoxShape.circle,
             color: statusColor.withOpacity(0.1),
           ),
           child: Icon(
@@ -253,26 +261,27 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
 
   /// 構建主卡片：狀態圖標和文字
   Widget _buildResultCard() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     final isPassed = widget.isPassed;
     final statusColor =
-        isPassed ? const Color(0xFF22C55E) : const Color(0xFFEF4444);
+        isPassed ? AppTheme.successFor(context) : AppTheme.dangerFor(context);
+    final cardRadius = isRetro ? BorderRadius.zero : BorderRadius.circular(32);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: cardRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(
+          sigmaX: isRetro ? 0 : 20,
+          sigmaY: isRetro ? 0 : 20,
+        ),
         child: Container(
           padding: const EdgeInsets.all(40),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF137FEC).withOpacity(0.05),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            color: colorScheme.surface.withOpacity(0.9),
+            borderRadius: cardRadius,
+            border: Border.all(color: AppTheme.lineFor(context)),
+            boxShadow: AppTheme.cardShadowFor(context),
           ),
           child: Column(
             children: [
@@ -288,7 +297,7 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                   fontSize: 36,
                   fontWeight: FontWeight.w800,
                   color: statusColor,
-                  letterSpacing: -0.5,
+                  letterSpacing: 0,
                 ),
               ),
               const SizedBox(height: 8),
@@ -298,7 +307,7 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  color: Colors.grey[600],
+                  color: colorScheme.onSurfaceVariant,
                 ),
               ),
               // 獎勵標籤（僅及格時顯示）
@@ -309,7 +318,11 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(999),
+                    borderRadius: isRetro
+                        ? BorderRadius.zero
+                        : BorderRadius.circular(999),
+                    border:
+                        isRetro ? Border.all(color: AppTheme.retroLine) : null,
                   ),
                   child: Text(
                     AppStrings.get('congratulations'),
@@ -317,7 +330,7 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: statusColor,
-                      letterSpacing: 1.2,
+                      letterSpacing: 0,
                     ),
                   ),
                 ),
@@ -331,22 +344,23 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
 
   /// 構建數據統計行（三個立柱式統計項）
   Widget _buildStatsRow() {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final cardRadius = isRetro ? BorderRadius.zero : BorderRadius.circular(32);
     return ClipRRect(
-      borderRadius: BorderRadius.circular(32),
+      borderRadius: cardRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(
+          sigmaX: isRetro ? 0 : 20,
+          sigmaY: isRetro ? 0 : 20,
+        ),
         child: Container(
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.7),
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF137FEC).withOpacity(0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            color: colorScheme.surface.withOpacity(0.9),
+            borderRadius: cardRadius,
+            border: Border.all(color: AppTheme.lineFor(context)),
+            boxShadow: AppTheme.cardShadowFor(context),
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -400,22 +414,24 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
     required String value,
     required bool isPrimary,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
     return Column(
       children: [
         Icon(
           icon,
           size: 20,
-          color: isPrimary ? const Color(0xFF137FEC) : Colors.grey[400],
+          color: isPrimary ? colorScheme.primary : colorScheme.onSurfaceVariant,
         ),
         const SizedBox(height: 4),
         Text(
           label,
           textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 10,
+            fontSize: isRetro ? 12 : 11,
             fontWeight: FontWeight.bold,
-            color: Colors.grey[400],
-            letterSpacing: 0.3,
+            color: colorScheme.onSurfaceVariant,
+            letterSpacing: 0,
           ),
         ),
         const SizedBox(height: 4),
@@ -425,8 +441,7 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
           style: TextStyle(
             fontSize: isPrimary ? 18 : 20,
             fontWeight: FontWeight.bold,
-            color:
-                isPrimary ? const Color(0xFF137FEC) : const Color(0xFF1E293B),
+            color: isPrimary ? colorScheme.primary : colorScheme.onSurface,
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -488,33 +503,42 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
     required String label,
     required bool isPrimary,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final primaryColor = AppTheme.primaryFor(context);
+    final buttonRadius =
+        isRetro ? BorderRadius.zero : BorderRadius.circular(20);
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: buttonRadius,
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+        filter: ImageFilter.blur(
+          sigmaX: isRetro ? 0 : 20,
+          sigmaY: isRetro ? 0 : 20,
+        ),
         child: Material(
-          color: isPrimary
-              ? const Color(0xFF1E293B) // 黑色背景
-              : Colors.white.withOpacity(0.7), // 白色背景
+          color:
+              isPrimary ? primaryColor : colorScheme.surface.withOpacity(0.82),
           child: InkWell(
             onTap: onPressed,
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: buttonRadius,
                 border: isPrimary
                     ? null
                     : Border.all(
-                        color: Colors.grey[300]!,
+                        color: colorScheme.outlineVariant,
                         width: 1,
                       ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                boxShadow: isRetro
+                    ? const []
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -522,7 +546,9 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                   Icon(
                     icon,
                     size: 20,
-                    color: isPrimary ? Colors.white : const Color(0xFF1E293B),
+                    color: isPrimary
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurface,
                   ),
                   const SizedBox(width: 8),
                   Flexible(
@@ -534,8 +560,8 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: isPrimary
-                              ? Colors.white
-                              : const Color(0xFF1E293B),
+                              ? colorScheme.onPrimary
+                              : colorScheme.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,

@@ -1,0 +1,21 @@
+{
+ "_source": "assets/italy_quiz.db (read-only export after keyword batch 13; keywords_json is the stored string). 6694 keeps an existing entry (assicurazione R.C.A.) whose Urdu meaning is 53 characters long: longer than the 52 characters of the earlier samples (en 58 and ru 71 equal the earlier samples). The list is the complete final list of batch 13, nothing was removed or shortened for the test.",
+ "questions": [
+  {
+   "id": "6694",
+   "image_name": null,
+   "answer": false,
+   "chapter": 23,
+   "translations": {
+    "en": "After signing the R.C.A. (civil liability auto) insurance contract, the insurance company must issue the customer a booklet on first aid notions.",
+    "it": "Dopo la firma del contratto di assicurazione R.C.A. (responsabilità civile auto), l'impresa assicuratrice deve rilasciare al cliente un libretto sulle nozioni di pronto soccorso",
+    "pa": "آر سی اے (سول ذمہ داری آٹو) انشورنس معاہدے تے دستخط کرن توں بعد، انشورنس کمپنی نوں گاہک نوں ابتدائی طبی امداد دے تصورات اتے اک کتابچہ جاری کرنا چاہیدا اے۔",
+    "ru": "После подписания договора страхования R.C.A. (гражданской ответственности автовладельцев), страховая компания должна выдать клиенту брошюру о понятиях первой помощи.",
+    "uk": "Після підписання договору страхування R.C.A. (цивільної відповідальності авто), страхова компанія повинна видати клієнту брошуру про поняття першої допомоги.",
+    "ur": "آر سی اے (سول لائبلیٹی آٹو) انشورنس معاہدے پر دستخط کرنے کے بعد، انشورنس کمپنی کو صارف کو ابتدائی طبی امداد کے تصورات پر ایک کتابچہ جاری کرنا چاہیے۔",
+    "zh": "在签署R.C.A.（汽车民事责任）保险合同后，保险公司必须向客户发放一本关于急救知识的小册子。"
+   },
+   "keywords_json": "[{\"it\": \"dopo\", \"zh\": \"在…之后\", \"en\": \"after\", \"ru\": \"после\", \"uk\": \"після\", \"pa\": \"ਤੋਂ ਬਾਅਦ\", \"ur\": \"کے بعد\"}, {\"it\": \"firma\", \"zh\": \"签署（签字）\", \"en\": \"signing\", \"ru\": \"подписание\", \"uk\": \"підписання\", \"pa\": \"ਦਸਤਖ਼ਤ\", \"ur\": \"دستخط\"}, {\"it\": \"contratto\", \"zh\": \"合同\", \"en\": \"contract\", \"ru\": \"договор\", \"uk\": \"договір\", \"pa\": \"ਇਕਰਾਰਨਾਮਾ\", \"ur\": \"معاہدہ\"}, {\"it\": \"assicurazione R.C.A.\", \"zh\": \"汽车民事责任保险\", \"en\": \"R.C.A. insurance (motor vehicle civil liability insurance)\", \"ru\": \"Страхование гражданской ответственности владельцев транспортных средств\", \"uk\": \"Страхування цивільної відповідальності власників транспортних засобів\", \"pa\": \"ਆਰ.ਸੀ.ਏ. ਬੀਮਾ (ਮੋਟਰ ਵਾਹਨ ਸਿਵਲ ਜ਼ਿੰਮੇਵਾਰੀ ਬੀਮਾ)\", \"ur\": \"آر سی اے انشورنس (موٹر گاڑی کی شہری ذمہ داری کا بیمہ)\"}, {\"it\": \"responsabilità civile auto\", \"zh\": \"汽车民事责任\", \"en\": \"motor third-party liability\", \"ru\": \"автогражданская ответственность\", \"uk\": \"автоцивільна відповідальність\", \"pa\": \"ਗੱਡੀ ਦੀ ਤੀਜੀ ਧਿਰ ਜ਼ਿੰਮੇਵਾਰੀ\", \"ur\": \"گاڑی کی تیسری فریق ذمہ داری\"}, {\"it\": \"impresa assicuratrice\", \"zh\": \"保险公司\", \"en\": \"insurance company\", \"ru\": \"страховая компания\", \"uk\": \"страхова компанія\", \"pa\": \"ਬੀਮਾ ਕੰਪਨੀ\", \"ur\": \"بیمہ کمپنی\"}, {\"it\": \"deve rilasciare\", \"zh\": \"必须发给\", \"en\": \"must issue\", \"ru\": \"должна выдать\", \"uk\": \"має видати\", \"pa\": \"ਦੇਣਾ ਲਾਜ਼ਮੀ ਹੈ\", \"ur\": \"دینا لازمی ہے\"}, {\"it\": \"cliente\", \"zh\": \"客户\", \"en\": \"customer\", \"ru\": \"клиент\", \"uk\": \"клієнт\", \"pa\": \"ਗਾਹਕ\", \"ur\": \"گاہک\"}, {\"it\": \"libretto\", \"zh\": \"小册子\", \"en\": \"booklet\", \"ru\": \"брошюра\", \"uk\": \"брошура\", \"pa\": \"ਕਿਤਾਬਚਾ\", \"ur\": \"کتابچہ\"}, {\"it\": \"nozioni\", \"zh\": \"基本知识\", \"en\": \"basic notions\", \"ru\": \"основные сведения\", \"uk\": \"основні відомості\", \"pa\": \"ਮੁੱਢਲੀ ਜਾਣਕਾਰੀ\", \"ur\": \"بنیادی معلومات\"}, {\"it\": \"pronto soccorso\", \"zh\": \"急救\", \"en\": \"first aid\", \"ru\": \"первая помощь\", \"uk\": \"перша допомога\", \"pa\": \"ਮੁੱਢਲੀ ਸਹਾਇਤਾ\", \"ur\": \"ابتدائی طبی امداد\"}]"
+  }
+ ]
+}
