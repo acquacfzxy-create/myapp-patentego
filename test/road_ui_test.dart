@@ -11,6 +11,7 @@ import 'package:lingua_patente/models/question.dart';
 import 'package:lingua_patente/providers/user_state_provider.dart';
 import 'package:lingua_patente/screens/exam_review_screen.dart';
 import 'package:lingua_patente/screens/mock_test_result_screen.dart';
+import 'package:lingua_patente/widgets/bouncy_press.dart';
 import 'package:lingua_patente/widgets/learning_route_card.dart';
 import 'package:lingua_patente/widgets/question_widget.dart';
 import 'package:lingua_patente/widgets/road_segmented_tabs.dart';
@@ -139,6 +140,37 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+  });
+
+  testWidgets('bouncy press shrinks while held and springs back',
+      (tester) async {
+    var taps = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: Center(
+        child: BouncyPress(
+          child: GestureDetector(
+            onTap: () => taps++,
+            child: const SizedBox(width: 100, height: 100, child: Text('tile')),
+          ),
+        ),
+      ),
+    ));
+    double scale() => tester
+        .widget<ScaleTransition>(find.descendant(
+          of: find.byType(BouncyPress),
+          matching: find.byType(ScaleTransition),
+        ))
+        .scale
+        .value;
+    final gesture =
+        await tester.startGesture(tester.getCenter(find.text('tile')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 120));
+    expect(scale(), lessThan(0.95));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(scale(), closeTo(1.0, 0.001));
+    expect(taps, 1, reason: 'the wrapped tap still fires');
   });
 
   testWidgets('segmented tabs report taps and mark the selected tab',

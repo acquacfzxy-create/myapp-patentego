@@ -21,6 +21,7 @@ import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/circular_progress_card.dart';
 import '../widgets/learning_route_card.dart';
+import '../widgets/bouncy_press.dart';
 import '../widgets/road_sign_icon.dart';
 
 /// 首頁
@@ -1717,7 +1718,9 @@ class _HomeScreenState extends State<HomeScreen>
     // 道路主題用路牌圖標取代方塊圖示；復古與 Web 保持原樣。
     final useSign = sign != null && AppTheme.usesRoadPalette && !isRetro;
     final effectiveIconColor = isRetro ? AppTheme.retroPrimary : iconColor;
-    return GlassCard(
+    return BouncyPress(
+      enabled: onTap != null,
+      child: GlassCard(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
       borderRadius: BorderRadius.circular(20),
       onTap: onTap,
@@ -1781,6 +1784,7 @@ class _HomeScreenState extends State<HomeScreen>
           ),
         ],
       ),
+    ),
     );
   }
 
