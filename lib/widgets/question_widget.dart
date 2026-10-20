@@ -1603,6 +1603,28 @@ class _QuestionWidgetState extends State<QuestionWidget>
 
   /// 构建底部固定按钮
   Widget _buildBottomButtons(BuildContext context) {
+    final buttons = Row(
+      children: [
+        Expanded(
+          child: _buildAnswerButton(
+            context: context,
+            label: 'VERO',
+            isVero: true,
+          ),
+        ),
+        const SizedBox(width: 20),
+        Expanded(
+          child: _buildAnswerButton(
+            context: context,
+            label: 'FALSO',
+            isVero: false,
+          ),
+        ),
+      ],
+    );
+    // 道路主題的按鈕帶厚底陰影；外層若再裁切（毛玻璃）會把陰影底部切平，
+    // 而這層背景本就透明，因此道路主題下直接不裁切。
+    final isRoad = AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context);
     return SafeArea(
       child: Stack(
         clipBehavior: Clip.none, // 允许气泡向上弹出，不被父容器遮挡
@@ -1618,35 +1640,20 @@ class _QuestionWidgetState extends State<QuestionWidget>
             decoration: const BoxDecoration(
               color: Colors.transparent,
             ),
-            child: ClipRRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: _buildAnswerButton(
-                        context: context,
-                        label: 'VERO',
-                        isVero: true,
-                      ),
+            child: isRoad
+                ? buttons
+                : ClipRRect(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                      child: buttons,
                     ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: _buildAnswerButton(
-                        context: context,
-                        label: 'FALSO',
-                        isVero: false,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ),
         ],
       ),
     );
   }
+
 
   /// 构建答案按钮
   Widget _buildAnswerButton({
