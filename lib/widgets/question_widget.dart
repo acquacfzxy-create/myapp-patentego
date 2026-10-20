@@ -12,6 +12,7 @@ import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../screens/voice_pack_screen.dart';
 import 'glass_card.dart';
+import 'explanation_emphasis.dart';
 import 'translation_panel.dart';
 
 /// 題目顯示組件
@@ -213,17 +214,13 @@ class QuestionWidget extends StatefulWidget {
                         ),
                         const SizedBox(height: 8),
                         Text.rich(
-                          buildTextWithSoftParenthesis(
+                          ExplanationEmphasis.build(
+                            context,
                             detailedDescription,
-                            TextStyle(
+                            base: TextStyle(
                               fontSize: 15,
                               height: 1.6,
                               color: inkColor,
-                            ),
-                            TextStyle(
-                              fontSize: 15,
-                              height: 1.6,
-                              color: mutedColor,
                             ),
                           ),
                         ),
@@ -281,111 +278,17 @@ class QuestionWidget extends StatefulWidget {
     return TextSpan(children: spans, style: baseStyle);
   }
 
+  /// 教練小貼士：與詳細說明、考點使用同一套重點標記規則（見 ExplanationEmphasis）。
   static TextSpan buildStudyTipMarkdownSpan(String text, BuildContext context) {
-    final primaryColor = AppTheme.primaryFor(context);
-    final mutedColor = AppTheme.mutedFor(context);
-    final normalStyle = TextStyle(
-      fontSize: 14,
-      height: 1.6,
-      color: primaryColor,
+    return ExplanationEmphasis.build(
+      context,
+      text,
+      base: TextStyle(
+        fontSize: 14,
+        height: 1.6,
+        color: AppTheme.primaryFor(context),
+      ),
     );
-    final boldKeywordStyle = TextStyle(
-      fontSize: 14,
-      height: 1.6,
-      color: primaryColor,
-      fontWeight: FontWeight.w700,
-    );
-    final trueStyle = TextStyle(
-      fontSize: 14,
-      height: 1.6,
-      color: AppTheme.successFor(context),
-      fontWeight: FontWeight.w700,
-    );
-    final falseStyle = TextStyle(
-      fontSize: 14,
-      height: 1.6,
-      color: AppTheme.dangerFor(context),
-      fontWeight: FontWeight.w700,
-    );
-    final parenthesisStyle = TextStyle(
-      fontSize: 14,
-      height: 1.6,
-      color: mutedColor,
-    );
-
-    List<TextSpan> buildTokenSpans(String raw, TextStyle base) {
-      final spans = <TextSpan>[];
-      // 僅在「獨立詞」或「括號後的對/錯/正確」等高亮，避免「针对」「面对」「对不对」等誤判。
-      // 順序：較長片段優先；單字「对/错/對」需排除常見詞內嵌。
-      final tokenReg = RegExp(
-        r'\b(?:Vero|Falso|True|False)\b'
-        r'|(?<![\u4e00-\u9fff])错误(?![\u4e00-\u9fffA-Za-z0-9])'
-        r'|(?<![\u4e00-\u9fff])錯誤(?![\u4e00-\u9fffA-Za-z0-9])'
-        r'|(?<![\u4e00-\u9fff])正确(?![\u4e00-\u9fffA-Za-z0-9])'
-        r'|(?<![\u4e00-\u9fff])正確(?![\u4e00-\u9fffA-Za-z0-9])'
-        r'|(?<!针|針|面)对(?!不)(?![\u4e00-\u9fffA-Za-z0-9])'
-        r'|(?<!针|針|面)對(?!不)(?![\u4e00-\u9fffA-Za-z0-9])'
-        r'|(?<!不)错(?![\u4e00-\u9fffA-Za-z0-9])'
-        r'|(?<!不)錯(?![\u4e00-\u9fffA-Za-z0-9])',
-        caseSensitive: false,
-      );
-      int current = 0;
-      for (final m in tokenReg.allMatches(raw)) {
-        if (m.start > current) {
-          spans.add(buildTextWithSoftParenthesis(
-            raw.substring(current, m.start),
-            base,
-            parenthesisStyle,
-          ));
-        }
-        final token = raw.substring(m.start, m.end);
-        final lower = token.toLowerCase();
-        bool isTrue;
-        if (lower == 'vero' || lower == 'true') {
-          isTrue = true;
-        } else if (lower == 'falso' || lower == 'false') {
-          isTrue = false;
-        } else {
-          var inner = token;
-          if (inner.length >= 2 &&
-              (inner.startsWith('(') || inner.startsWith('（')) &&
-              (inner.endsWith(')') || inner.endsWith('）'))) {
-            inner = inner.substring(1, inner.length - 1);
-          }
-          isTrue =
-              inner == '正确' || inner == '正確' || inner == '对' || inner == '對';
-        }
-        spans.add(
-            TextSpan(text: token, style: isTrue ? trueStyle : falseStyle));
-        current = m.end;
-      }
-      if (current < raw.length) {
-        spans.add(buildTextWithSoftParenthesis(
-          raw.substring(current),
-          base,
-          parenthesisStyle,
-        ));
-      }
-      return spans;
-    }
-
-    final spans = <TextSpan>[];
-    final boldReg = RegExp(r'\*\*(.+?)\*\*', dotAll: true);
-    int index = 0;
-    for (final m in boldReg.allMatches(text)) {
-      if (m.start > index) {
-        spans.addAll(
-            buildTokenSpans(text.substring(index, m.start), normalStyle));
-      }
-      final boldText = m.group(1) ?? '';
-      spans.addAll(buildTokenSpans(boldText, boldKeywordStyle));
-      index = m.end;
-    }
-    if (index < text.length) {
-      spans.addAll(buildTokenSpans(text.substring(index), normalStyle));
-    }
-
-    return TextSpan(style: normalStyle, children: spans);
   }
 
   /// Shared supplementary content: deliberately excludes the description.
@@ -448,14 +351,24 @@ class QuestionWidget extends StatefulWidget {
                         color: inkColor,
                       ),
                       children: [
-                        TextSpan(
-                          text: '${point['title']}：',
-                          style: const TextStyle(
+                        ExplanationEmphasis.build(
+                          context,
+                          '${point['title']}：',
+                          base: TextStyle(
+                            fontSize: 15,
+                            height: 1.5,
+                            color: inkColor,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        TextSpan(
-                          text: point['content'] ?? '',
+                        ExplanationEmphasis.build(
+                          context,
+                          point['content'] ?? '',
+                          base: TextStyle(
+                            fontSize: 15,
+                            height: 1.5,
+                            color: inkColor,
+                          ),
                         ),
                       ],
                     ),

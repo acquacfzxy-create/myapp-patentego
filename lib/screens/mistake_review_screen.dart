@@ -7,6 +7,7 @@ import '../services/database_service.dart';
 import '../services/access_policy.dart';
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
+import '../widgets/explanation_emphasis.dart';
 import '../widgets/road_segmented_tabs.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/empty_state_view.dart';
@@ -1488,12 +1489,15 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           ),
           const SizedBox(height: 8),
           // 詳細說明內容
-          Text(
-            detailedDescription,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.6,
-              color: colorScheme.onSurface,
+          Text.rich(
+            ExplanationEmphasis.build(
+              context,
+              detailedDescription,
+              base: TextStyle(
+                fontSize: 14,
+                height: 1.6,
+                color: colorScheme.onSurface,
+              ),
             ),
           ),
           if (isJsonFormat && keyPoints != null && keyPoints.isNotEmpty) ...[
@@ -1537,14 +1541,24 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                             color: colorScheme.onSurface,
                           ),
                           children: [
-                            TextSpan(
-                              text: '$title：',
-                              style: const TextStyle(
+                            ExplanationEmphasis.build(
+                              context,
+                              '$title：',
+                              base: TextStyle(
+                                fontSize: 14,
+                                height: 1.5,
+                                color: colorScheme.onSurface,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            TextSpan(
-                              text: content,
+                            ExplanationEmphasis.build(
+                              context,
+                              content,
+                              base: TextStyle(
+                                fontSize: 14,
+                                height: 1.5,
+                                color: colorScheme.onSurface,
+                              ),
                             ),
                           ],
                         ),
@@ -1578,12 +1592,15 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: Text(
-                      studyTip,
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.6,
-                        color: colorScheme.primary,
+                    child: Text.rich(
+                      ExplanationEmphasis.build(
+                        context,
+                        studyTip,
+                        base: TextStyle(
+                          fontSize: 13,
+                          height: 1.6,
+                          color: colorScheme.primary,
+                        ),
                       ),
                     ),
                   ),

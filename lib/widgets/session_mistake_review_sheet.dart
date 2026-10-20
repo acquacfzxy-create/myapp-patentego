@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../config/app_strings.dart';
 import '../models/question.dart';
 import '../services/explanation_parser.dart';
+import 'explanation_emphasis.dart';
 import 'question_widget.dart';
 
 /// A snapshot of the first answer, independent of the current practice card.
@@ -167,9 +168,13 @@ class _SessionMistakeReviewSheetState extends State<SessionMistakeReviewSheet> {
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        Text(reason.trim().isEmpty
-                            ? _text('explanation_missing_short')
-                            : reason),
+                        reason.trim().isEmpty
+                            ? Text(_text('explanation_missing_short'))
+                            : Text.rich(ExplanationEmphasis.build(
+                                context,
+                                reason,
+                                base: DefaultTextStyle.of(context).style,
+                              )),
                       ],
                     ),
                   ),
