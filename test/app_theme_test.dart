@@ -39,8 +39,8 @@ void main() {
     final theme = AppTheme.darkTheme(language: 'zh');
 
     expect(theme.brightness, Brightness.dark);
-    expect(theme.scaffoldBackgroundColor, AppTheme.nightPage);
-    expect(theme.cardTheme.color, AppTheme.nightSurface);
+    expect(theme.scaffoldBackgroundColor, AppTheme.roadNightPage);
+    expect(theme.cardTheme.color, AppTheme.roadNightSurface);
     expect(theme.textTheme.bodyMedium?.fontFamily, 'NotoSansSC');
   });
 
@@ -71,10 +71,11 @@ void main() {
   test('night component surfaces stay inside the night palette', () {
     final theme = AppTheme.darkTheme(language: 'zh');
 
-    expect(theme.bottomSheetTheme.modalBackgroundColor, AppTheme.nightSurface);
-    expect(theme.inputDecorationTheme.fillColor, AppTheme.nightSurfaceAlt);
-    expect(theme.chipTheme.backgroundColor, AppTheme.nightSurfaceAlt);
-    expect(theme.colorScheme.primary, AppTheme.nightPrimary);
+    expect(
+        theme.bottomSheetTheme.modalBackgroundColor, AppTheme.roadNightSurface);
+    expect(theme.inputDecorationTheme.fillColor, AppTheme.roadNightSurfaceAlt);
+    expect(theme.chipTheme.backgroundColor, AppTheme.roadNightSurfaceAlt);
+    expect(theme.colorScheme.primary, AppTheme.roadNightPrimary);
   });
 
   testWidgets('semantic status colors adapt to every app theme',
@@ -104,19 +105,19 @@ void main() {
     expect(
       await resolveColors(AppTheme.lightTheme(language: 'zh')),
       [
-        AppTheme.primary,
-        AppTheme.roadGreenText,
-        AppTheme.warningText,
-        AppTheme.danger,
+        AppTheme.roadPrimary,
+        AppTheme.roadPrimary,
+        AppTheme.roadAccentText,
+        AppTheme.roadDanger,
       ],
     );
     expect(
       await resolveColors(AppTheme.darkTheme(language: 'zh')),
       const [
-        AppTheme.nightPrimary,
-        Color(0xFF4ADE80),
-        Color(0xFFFBBF24),
-        Color(0xFFF87171),
+        AppTheme.roadNightPrimary,
+        AppTheme.roadNightPrimary,
+        AppTheme.roadAccent,
+        AppTheme.roadNightDanger,
       ],
     );
     expect(
@@ -128,6 +129,47 @@ void main() {
         AppTheme.retroDanger,
       ],
     );
+  });
+
+  test('web keeps the legacy blue theme while mobile uses road colors', () {
+    final web = AppTheme.webTheme();
+    expect(web.colorScheme.primary, AppTheme.primary);
+    expect(AppTheme.lightTheme(language: 'zh').colorScheme.primary,
+        AppTheme.roadPrimary);
+  });
+
+  testWidgets('road palette exposes the sign-yellow accent and chunky shadow',
+      (tester) async {
+    late Color accent;
+    late Color onAccent;
+    late List<BoxShadow> shadow;
+    late List<BoxShadow> retroShadow;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme(language: 'zh'),
+        home: Builder(builder: (context) {
+          accent = AppTheme.accentFor(context);
+          onAccent = AppTheme.onAccentFor(context);
+          shadow = AppTheme.chunkyShadowFor(context);
+          return const SizedBox.shrink();
+        }),
+      ),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        key: UniqueKey(),
+        theme: AppTheme.retroTheme(language: 'zh'),
+        home: Builder(builder: (context) {
+          retroShadow = AppTheme.chunkyShadowFor(context);
+          return const SizedBox.shrink();
+        }),
+      ),
+    );
+    expect(accent, AppTheme.roadAccent);
+    expect(onAccent, AppTheme.roadInk);
+    expect(shadow.single.blurRadius, 0);
+    expect(shadow.single.offset, const Offset(0, 4));
+    expect(retroShadow, isEmpty);
   });
 
   test('theme mode storage keeps classic and night compatibility', () {

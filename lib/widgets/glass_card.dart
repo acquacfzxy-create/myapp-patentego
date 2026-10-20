@@ -33,10 +33,12 @@ class GlassCard extends StatelessWidget {
         border: Border.all(
           color: isRetro
               ? AppTheme.retroLine
-              : isDark
-                  ? AppTheme.nightLine.withOpacity(0.9)
-                  : Colors.white.withOpacity(0.78),
-          width: 1,
+              : AppTheme.usesRoadPalette
+                  ? AppTheme.lineFor(context)
+                  : isDark
+                      ? AppTheme.nightLine.withOpacity(0.9)
+                      : Colors.white.withOpacity(0.78),
+          width: AppTheme.usesRoadPalette && !isRetro ? 1.5 : 1,
         ),
         boxShadow: AppTheme.cardShadowFor(context),
       ),
@@ -45,7 +47,8 @@ class GlassCard extends StatelessWidget {
             ? BorderRadius.zero
             : borderRadius ?? BorderRadius.circular(AppTheme.radiusLg),
         child: BackdropFilter(
-          filter: isRetro
+          // 道路主題卡片為實色底，不需要背景模糊。
+          filter: isRetro || AppTheme.usesRoadPalette
               ? ImageFilter.blur(sigmaX: 0, sigmaY: 0)
               : ImageFilter.blur(sigmaX: 14, sigmaY: 14),
           child: Padding(

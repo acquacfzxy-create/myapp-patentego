@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 enum AppThemeMode { classic, night, retro }
@@ -94,6 +95,30 @@ class AppTheme {
   static const Color premiumBlue = Color(0xFF1E3A8A);
   static const Color premiumGold = Color(0xFFFACC15);
 
+  // 道路標誌主題（移動端經典／夜間）。上方舊藍色常量保留給 Web 端，
+  // Web 介面暫不跟隨本輪改版。
+  static const Color roadPrimary = Color(0xFF0A6B45);
+  static const Color roadPrimaryDark = Color(0xFF06472E);
+  static const Color roadPrimarySoft = Color(0xFFE3F1EA);
+  static const Color roadAccent = Color(0xFFFFC20E);
+  static const Color roadAccentSoft = Color(0xFFFFF3C4);
+  static const Color roadAccentText = Color(0xFF7A5200);
+  static const Color roadDanger = Color(0xFFC8102E);
+  static const Color roadInk = Color(0xFF13201A);
+  static const Color roadMuted = Color(0xFF5A635D);
+  static const Color roadLine = Color(0xFFD6D2C7);
+  static const Color roadPage = Color(0xFFF3F1EC);
+  static const Color roadSurface = Color(0xFFFFFFFF);
+  static const Color roadNightPage = Color(0xFF101512);
+  static const Color roadNightSurface = Color(0xFF1A211D);
+  static const Color roadNightSurfaceAlt = Color(0xFF232B26);
+  static const Color roadNightPrimary = Color(0xFF4CC38A);
+  static const Color roadNightPrimarySoft = Color(0xFF173A2A);
+  static const Color roadNightInk = Color(0xFFF3F1EC);
+  static const Color roadNightMuted = Color(0xFFA9B3AC);
+  static const Color roadNightLine = Color(0xFF34403A);
+  static const Color roadNightDanger = Color(0xFFFF6B7A);
+
   static const double radiusSm = 12;
   static const double radiusMd = 16;
   static const double radiusLg = 20;
@@ -148,11 +173,22 @@ class AppTheme {
     ),
   );
 
+  /// 移動端經典／夜間使用道路標誌配色；Web 端仍保持舊藍色主題。
+  static bool get usesRoadPalette => !kIsWeb;
+
+  static bool _isDark(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark;
+
   static BoxDecoration pageDecorationFor(BuildContext context) {
     if (isRetroFor(context)) {
       return retroPageDecoration;
     }
-    if (Theme.of(context).brightness == Brightness.dark) {
+    if (usesRoadPalette) {
+      return BoxDecoration(
+        color: _isDark(context) ? roadNightPage : roadPage,
+      );
+    }
+    if (_isDark(context)) {
       return const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -170,80 +206,100 @@ class AppTheme {
 
   static Color primaryFor(BuildContext context) {
     if (isRetroFor(context)) return retroPrimary;
-    return Theme.of(context).brightness == Brightness.dark
-        ? nightPrimary
-        : primary;
+    if (usesRoadPalette) {
+      return _isDark(context) ? roadNightPrimary : roadPrimary;
+    }
+    return _isDark(context) ? nightPrimary : primary;
+  }
+
+  /// 主行動按鈕用的標誌黃；復古主題沿用主色。
+  static Color accentFor(BuildContext context) {
+    if (isRetroFor(context)) return retroPrimary;
+    if (usesRoadPalette) return roadAccent;
+    return _isDark(context) ? nightPrimary : primary;
+  }
+
+  /// 標誌黃底上的文字／圖示顏色。
+  static Color onAccentFor(BuildContext context) {
+    if (isRetroFor(context)) return retroPage;
+    if (usesRoadPalette) return roadInk;
+    return _isDark(context) ? nightPage : Colors.white;
   }
 
   static Color inkFor(BuildContext context) {
     if (isRetroFor(context)) return retroInk;
-    return Theme.of(context).brightness == Brightness.dark ? nightInk : ink;
+    if (usesRoadPalette) return _isDark(context) ? roadNightInk : roadInk;
+    return _isDark(context) ? nightInk : ink;
   }
 
   static Color mutedFor(BuildContext context) {
     if (isRetroFor(context)) return retroMuted;
-    return Theme.of(context).brightness == Brightness.dark ? nightMuted : muted;
+    if (usesRoadPalette) return _isDark(context) ? roadNightMuted : roadMuted;
+    return _isDark(context) ? nightMuted : muted;
   }
 
   static Color lineFor(BuildContext context) {
     if (isRetroFor(context)) return retroLine;
-    return Theme.of(context).brightness == Brightness.dark ? nightLine : line;
+    if (usesRoadPalette) return _isDark(context) ? roadNightLine : roadLine;
+    return _isDark(context) ? nightLine : line;
   }
 
   static Color primarySoftFor(BuildContext context) {
     if (isRetroFor(context)) return retroPageAlt;
-    return Theme.of(context).brightness == Brightness.dark
-        ? nightPrimarySoft
-        : primarySoft;
+    if (usesRoadPalette) {
+      return _isDark(context) ? roadNightPrimarySoft : roadPrimarySoft;
+    }
+    return _isDark(context) ? nightPrimarySoft : primarySoft;
   }
 
   static Color surfaceFor(BuildContext context) {
     if (isRetroFor(context)) return retroSurface;
-    return Theme.of(context).brightness == Brightness.dark
-        ? nightSurface
-        : surface;
+    if (usesRoadPalette) {
+      return _isDark(context) ? roadNightSurface : roadSurface;
+    }
+    return _isDark(context) ? nightSurface : surface;
   }
 
   static Color successFor(BuildContext context) {
     if (isRetroFor(context)) return retroPrimary;
-    return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF4ADE80)
-        : roadGreen;
+    if (usesRoadPalette) {
+      return _isDark(context) ? roadNightPrimary : roadPrimary;
+    }
+    return _isDark(context) ? const Color(0xFF4ADE80) : roadGreen;
   }
 
   static Color successSoftFor(BuildContext context) {
     if (isRetroFor(context)) return retroPrimary.withOpacity(0.14);
-    return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF14532D)
-        : roadGreenSoft;
+    if (usesRoadPalette) {
+      return _isDark(context) ? roadNightPrimarySoft : roadPrimarySoft;
+    }
+    return _isDark(context) ? const Color(0xFF14532D) : roadGreenSoft;
   }
 
   static Color warningFor(BuildContext context) {
     if (isRetroFor(context)) return retroPrimary;
-    return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFFBBF24)
-        : warning;
+    if (usesRoadPalette) return roadAccent;
+    return _isDark(context) ? const Color(0xFFFBBF24) : warning;
   }
 
   static Color successTextFor(BuildContext context) {
     if (isRetroFor(context)) return retroPrimary;
-    return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFF4ADE80)
-        : roadGreenText;
+    if (usesRoadPalette) {
+      return _isDark(context) ? roadNightPrimary : roadPrimary;
+    }
+    return _isDark(context) ? const Color(0xFF4ADE80) : roadGreenText;
   }
 
   static Color warningTextFor(BuildContext context) {
     if (isRetroFor(context)) return retroPrimary;
-    return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFFBBF24)
-        : warningText;
+    if (usesRoadPalette) return _isDark(context) ? roadAccent : roadAccentText;
+    return _isDark(context) ? const Color(0xFFFBBF24) : warningText;
   }
 
   static Color dangerFor(BuildContext context) {
     if (isRetroFor(context)) return retroDanger;
-    return Theme.of(context).brightness == Brightness.dark
-        ? const Color(0xFFF87171)
-        : danger;
+    if (usesRoadPalette) return _isDark(context) ? roadNightDanger : roadDanger;
+    return _isDark(context) ? const Color(0xFFF87171) : danger;
   }
 
   static Color dangerSoftFor(BuildContext context) {
@@ -277,7 +333,17 @@ class AppTheme {
 
   static List<BoxShadow> cardShadowFor(BuildContext context) {
     if (isRetroFor(context)) return const [];
-    if (Theme.of(context).brightness == Brightness.dark) {
+    if (usesRoadPalette) {
+      // 厚底實色陰影，不模糊：卡片看起來「可按」，也比玻璃風更省繪製。
+      return [
+        BoxShadow(
+          color: lineFor(context),
+          blurRadius: 0,
+          offset: const Offset(0, 3),
+        ),
+      ];
+    }
+    if (_isDark(context)) {
       return [
         BoxShadow(
           color: Colors.black.withOpacity(0.22),
@@ -287,6 +353,23 @@ class AppTheme {
       ];
     }
     return cardShadow;
+  }
+
+  /// 主行動按鈕與答題按鈕的厚底陰影；[pressed] 時收起，配合下沉位移。
+  static List<BoxShadow> chunkyShadowFor(
+    BuildContext context, {
+    Color? color,
+    bool pressed = false,
+  }) {
+    if (isRetroFor(context) || pressed) return const [];
+    return [
+      BoxShadow(
+        color: color ??
+            (_isDark(context) ? Colors.black.withOpacity(0.55) : roadInk),
+        blurRadius: 0,
+        offset: const Offset(0, 4),
+      ),
+    ];
   }
 
   static ThemeData retroTheme({String language = 'zh'}) {
@@ -501,45 +584,45 @@ class AppTheme {
     final textTheme = materialTheme.textTheme.apply(
       fontFamily: fontFamily,
       fontFamilyFallback: fontFallback,
-      bodyColor: ink,
-      displayColor: ink,
+      bodyColor: roadInk,
+      displayColor: roadInk,
     );
     final primaryTextTheme = materialTheme.primaryTextTheme.apply(
       fontFamily: fontFamily,
       fontFamilyFallback: fontFallback,
     );
     final scheme = ColorScheme.fromSeed(
-      seedColor: primary,
-      primary: primary,
-      secondary: roadGreen,
-      error: danger,
+      seedColor: roadPrimary,
+      primary: roadPrimary,
+      secondary: roadPrimaryDark,
+      error: roadDanger,
       surface: Colors.white,
-      background: pageMid,
+      background: roadPage,
     );
 
     return ThemeData(
       colorScheme: scheme,
       useMaterial3: true,
-      scaffoldBackgroundColor: pageMid,
+      scaffoldBackgroundColor: roadPage,
       fontFamily: fontFamily,
       fontFamilyFallback: fontFallback,
       textTheme: textTheme,
       primaryTextTheme: primaryTextTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: ink,
+        foregroundColor: roadInk,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
           fontFamily: fontFamily,
           fontFamilyFallback: fontFallback,
-          color: ink,
+          color: roadInk,
           fontSize: 18,
           fontWeight: FontWeight.w700,
         ),
       ),
       cardTheme: CardThemeData(
-        color: surface,
+        color: roadSurface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -561,14 +644,14 @@ class AppTheme {
         titleTextStyle: TextStyle(
           fontFamily: fontFamily,
           fontFamilyFallback: fontFallback,
-          color: ink,
+          color: roadInk,
           fontSize: 20,
           fontWeight: FontWeight.w800,
         ),
         contentTextStyle: TextStyle(
           fontFamily: fontFamily,
           fontFamilyFallback: fontFallback,
-          color: muted,
+          color: roadMuted,
           fontSize: 15,
           height: 1.45,
         ),
@@ -582,55 +665,57 @@ class AppTheme {
             top: Radius.circular(radiusXl),
           ),
         ),
-        dragHandleColor: line,
+        dragHandleColor: roadLine,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: Colors.white.withOpacity(0.82),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: line),
+          borderSide: const BorderSide(color: roadLine),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: line),
+          borderSide: const BorderSide(color: roadLine),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: primary, width: 2),
+          borderSide: const BorderSide(color: roadPrimary, width: 2),
         ),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: Colors.white.withOpacity(0.82),
-        selectedColor: primarySoft,
-        disabledColor: line.withOpacity(0.5),
-        side: const BorderSide(color: line),
+        selectedColor: roadPrimarySoft,
+        disabledColor: roadLine.withOpacity(0.5),
+        side: const BorderSide(color: roadLine),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusSm),
         ),
-        labelStyle: const TextStyle(color: ink),
-        secondaryLabelStyle: const TextStyle(color: ink),
+        labelStyle: const TextStyle(color: roadInk),
+        secondaryLabelStyle: const TextStyle(color: roadInk),
       ),
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
-          return states.contains(WidgetState.selected) ? primary : muted;
+          return states.contains(WidgetState.selected)
+              ? roadPrimary
+              : roadMuted;
         }),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
-              ? primary
+              ? roadPrimary
               : Colors.transparent;
         }),
         checkColor: const WidgetStatePropertyAll(Colors.white),
-        side: const BorderSide(color: muted),
+        side: const BorderSide(color: roadMuted),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: roadPrimary,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -647,7 +732,7 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: primary,
+          backgroundColor: roadPrimary,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -662,7 +747,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: primary,
+          foregroundColor: roadPrimary,
           textStyle: TextStyle(
             fontFamily: fontFamily,
             fontFamilyFallback: fontFallback,
@@ -671,15 +756,15 @@ class AppTheme {
         ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: primary,
+        color: roadPrimary,
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          return states.contains(WidgetState.selected) ? primary : null;
+          return states.contains(WidgetState.selected) ? roadPrimary : null;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
-              ? primary.withOpacity(0.28)
+              ? roadPrimary.withOpacity(0.28)
               : null;
         }),
       ),
@@ -693,47 +778,47 @@ class AppTheme {
     final textTheme = materialTheme.textTheme.apply(
       fontFamily: fontFamily,
       fontFamilyFallback: fontFallback,
-      bodyColor: nightInk,
-      displayColor: nightInk,
+      bodyColor: roadNightInk,
+      displayColor: roadNightInk,
     );
     final primaryTextTheme = materialTheme.primaryTextTheme.apply(
       fontFamily: fontFamily,
       fontFamilyFallback: fontFallback,
     );
     final scheme = ColorScheme.fromSeed(
-      seedColor: nightPrimary,
+      seedColor: roadNightPrimary,
       brightness: Brightness.dark,
-      primary: nightPrimary,
-      secondary: const Color(0xFF4ADE80),
-      error: const Color(0xFFF87171),
-      surface: nightSurface,
-      background: nightPage,
+      primary: roadNightPrimary,
+      secondary: roadAccent,
+      error: roadNightDanger,
+      surface: roadNightSurface,
+      background: roadNightPage,
     );
 
     return ThemeData(
       colorScheme: scheme,
       brightness: Brightness.dark,
       useMaterial3: true,
-      scaffoldBackgroundColor: nightPage,
+      scaffoldBackgroundColor: roadNightPage,
       fontFamily: fontFamily,
       fontFamilyFallback: fontFallback,
       textTheme: textTheme,
       primaryTextTheme: primaryTextTheme,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: nightInk,
+        foregroundColor: roadNightInk,
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
           fontFamily: fontFamily,
           fontFamilyFallback: fontFallback,
-          color: nightInk,
+          color: roadNightInk,
           fontSize: 18,
           fontWeight: FontWeight.w700,
         ),
       ),
       cardTheme: CardThemeData(
-        color: nightSurface,
+        color: roadNightSurface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
@@ -742,18 +827,18 @@ class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: nightSurfaceAlt,
+        backgroundColor: roadNightSurfaceAlt,
         contentTextStyle: TextStyle(
           fontFamily: fontFamily,
           fontFamilyFallback: fontFallback,
-          color: nightInk,
+          color: roadNightInk,
         ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusSm),
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: nightSurface,
+        backgroundColor: roadNightSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusLg),
@@ -761,79 +846,79 @@ class AppTheme {
         titleTextStyle: TextStyle(
           fontFamily: fontFamily,
           fontFamilyFallback: fontFallback,
-          color: nightInk,
+          color: roadNightInk,
           fontSize: 20,
           fontWeight: FontWeight.w800,
         ),
         contentTextStyle: TextStyle(
           fontFamily: fontFamily,
           fontFamilyFallback: fontFallback,
-          color: nightMuted,
+          color: roadNightMuted,
           fontSize: 15,
           height: 1.45,
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: nightSurface,
-        modalBackgroundColor: nightSurface,
+        backgroundColor: roadNightSurface,
+        modalBackgroundColor: roadNightSurface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(radiusXl),
           ),
         ),
-        dragHandleColor: nightLine,
+        dragHandleColor: roadNightLine,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: nightSurfaceAlt,
+        fillColor: roadNightSurfaceAlt,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: nightLine),
+          borderSide: const BorderSide(color: roadNightLine),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: nightLine),
+          borderSide: const BorderSide(color: roadNightLine),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMd),
-          borderSide: const BorderSide(color: nightPrimary, width: 2),
+          borderSide: const BorderSide(color: roadNightPrimary, width: 2),
         ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: nightSurfaceAlt,
-        selectedColor: nightPrimarySoft,
-        disabledColor: nightLine.withOpacity(0.5),
-        side: const BorderSide(color: nightLine),
+        backgroundColor: roadNightSurfaceAlt,
+        selectedColor: roadNightPrimarySoft,
+        disabledColor: roadNightLine.withOpacity(0.5),
+        side: const BorderSide(color: roadNightLine),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusSm),
         ),
-        labelStyle: const TextStyle(color: nightInk),
-        secondaryLabelStyle: const TextStyle(color: nightInk),
+        labelStyle: const TextStyle(color: roadNightInk),
+        secondaryLabelStyle: const TextStyle(color: roadNightInk),
       ),
       radioTheme: RadioThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
-              ? nightPrimary
-              : nightMuted;
+              ? roadNightPrimary
+              : roadNightMuted;
         }),
       ),
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
-              ? nightPrimary
+              ? roadNightPrimary
               : Colors.transparent;
         }),
-        checkColor: const WidgetStatePropertyAll(nightPage),
-        side: const BorderSide(color: nightMuted),
+        checkColor: const WidgetStatePropertyAll(roadNightPage),
+        side: const BorderSide(color: roadNightMuted),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: nightPrimary,
-          foregroundColor: nightPage,
+          backgroundColor: roadNightPrimary,
+          foregroundColor: roadNightPage,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
@@ -849,8 +934,8 @@ class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: nightPrimary,
-          foregroundColor: nightPage,
+          backgroundColor: roadNightPrimary,
+          foregroundColor: roadNightPage,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMd),
@@ -864,7 +949,7 @@ class AppTheme {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: nightPrimary,
+          foregroundColor: roadNightPrimary,
           textStyle: TextStyle(
             fontFamily: fontFamily,
             fontFamilyFallback: fontFallback,
@@ -873,15 +958,17 @@ class AppTheme {
         ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: nightPrimary,
+        color: roadNightPrimary,
       ),
       switchTheme: SwitchThemeData(
         thumbColor: WidgetStateProperty.resolveWith((states) {
-          return states.contains(WidgetState.selected) ? nightPrimary : null;
+          return states.contains(WidgetState.selected)
+              ? roadNightPrimary
+              : null;
         }),
         trackColor: WidgetStateProperty.resolveWith((states) {
           return states.contains(WidgetState.selected)
-              ? nightPrimary.withOpacity(0.35)
+              ? roadNightPrimary.withOpacity(0.35)
               : null;
         }),
       ),

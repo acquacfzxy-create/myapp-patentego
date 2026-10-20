@@ -1732,6 +1732,16 @@ class _QuestionWidgetState extends State<QuestionWidget>
     final displayedChoice = widget.userChoice ?? widget.selectedAnswer;
     final isSelected = widget.isAnswered && displayedChoice == isVero;
 
+    if (AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context)) {
+      return _buildRoadAnswerButton(
+        context: context,
+        label: label,
+        isVero: isVero,
+        isSelected: isSelected,
+        displayedChoice: displayedChoice,
+      );
+    }
+
     // 按钮背景色：如果已答题且被选中，变为主题主色；否则为表面色。
     final colorScheme = Theme.of(context).colorScheme;
     final isRetro = AppTheme.isRetroFor(context);
@@ -1781,6 +1791,104 @@ class _QuestionWidgetState extends State<QuestionWidget>
     );
   }
 
+  /// 道路主題的答題按鈕：厚底、粗描邊；作答後直接在按鈕上標出對錯，
+  /// 答錯時同時把正確選項標綠，不另外彈出需要點擊的卡片，保持自動跳題節奏。
+  Widget _buildRoadAnswerButton({
+    required BuildContext context,
+    required String label,
+    required bool isVero,
+    required bool isSelected,
+    required bool? displayedChoice,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = AppTheme.inkFor(context);
+    final success = AppTheme.successFor(context);
+    final danger = AppTheme.dangerFor(context);
+    final hasVerdict = widget.isAnswered &&
+        widget.isCorrect != null &&
+        displayedChoice != null;
+    final correctChoice = hasVerdict
+        ? (widget.isCorrect! ? displayedChoice : !displayedChoice)
+        : null;
+    final isCorrectOption = hasVerdict && correctChoice == isVero;
+    final isWrongPick = hasVerdict && isSelected && !widget.isCorrect!;
+
+    Color background = AppTheme.surfaceFor(context);
+    Color foreground = ink;
+    Color border = AppTheme.lineFor(context);
+    Color shadow = AppTheme.lineFor(context);
+    IconData? icon;
+    if (isCorrectOption) {
+      background = success;
+      foreground = isDark ? AppTheme.roadNightPage : Colors.white;
+      border = isDark ? success : AppTheme.roadPrimaryDark;
+      shadow = isDark ? Colors.black : AppTheme.roadPrimaryDark;
+      icon = Icons.check_rounded;
+    } else if (isWrongPick) {
+      foreground = danger;
+      border = danger;
+      shadow = danger.withOpacity(0.35);
+      icon = Icons.close_rounded;
+    } else if (isSelected) {
+      // 無對錯資訊時（例如回看已選答案）只標記選擇。
+      background = AppTheme.primaryFor(context);
+      foreground = isDark ? AppTheme.roadNightPage : Colors.white;
+      border = background;
+      shadow = isDark ? Colors.black : AppTheme.roadPrimaryDark;
+    } else if (hasVerdict) {
+      foreground = AppTheme.mutedFor(context);
+    }
+
+    return Semantics(
+      button: true,
+      enabled: !widget.isAnswered,
+      selected: isSelected,
+      child: GestureDetector(
+        onTap: widget.isAnswered ? null : () => widget.onAnswerSelected(isVero),
+        child: AnimatedScale(
+          scale: isCorrectOption ? 1.02 : 1,
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutBack,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
+            height: 66,
+            decoration: BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: border, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: shadow,
+                  blurRadius: 0,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 22, color: foreground),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: foreground,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// 构建反馈标签（Badge）
   Widget _buildFeedbackBadge() {
     if (!widget.isAnswered || widget.isCorrect == null) {
@@ -1796,24 +1904,43 @@ class _QuestionWidgetState extends State<QuestionWidget>
         final opacityValue = value.clamp(0.0, 1.0).toDouble();
         final isRetro = AppTheme.isRetroFor(context);
         final isDark = Theme.of(context).brightness == Brightness.dark;
-        final feedbackBackground = widget.isCorrect!
-            ? isRetro
-                ? AppTheme.retroPrimary
-                : isDark
-                    ? const Color(0xFF14532D)
-                    : const Color(0xFF166534)
-            : isRetro
-                ? AppTheme.retroDanger
-                : isDark
-                    ? const Color(0xFF7F1D1D)
-                    : const Color(0xFFB91C1C);
+        final isRoad = AppTheme.usesRoadPalette && !isRetro;
+        // 道路主題：答錯用深墨色而非大紅，語氣溫和，並直接告訴正確答案。
+        final feedbackBackground = isRoad
+            ? widget.isCorrect!
+                ? (isDark
+                    ? AppTheme.roadNightPrimarySoft
+                    : AppTheme.roadPrimary)
+                : (isDark ? AppTheme.roadNightSurfaceAlt : AppTheme.roadInk)
+            : widget.isCorrect!
+                ? isRetro
+                    ? AppTheme.retroPrimary
+                    : isDark
+                        ? const Color(0xFF14532D)
+                        : const Color(0xFF166534)
+                : isRetro
+                    ? AppTheme.retroDanger
+                    : isDark
+                        ? const Color(0xFF7F1D1D)
+                        : const Color(0xFFB91C1C);
         final feedbackForeground = isRetro
             ? AppTheme.retroPage
-            : isDark
-                ? (widget.isCorrect!
-                    ? const Color(0xFFD1FAE5)
-                    : const Color(0xFFFECACA))
-                : Colors.white;
+            : isRoad
+                ? Colors.white
+                : isDark
+                    ? (widget.isCorrect!
+                        ? const Color(0xFFD1FAE5)
+                        : const Color(0xFFFECACA))
+                    : Colors.white;
+        final displayedChoice = widget.userChoice ?? widget.selectedAnswer;
+        final feedbackLabel = widget.isCorrect!
+            ? AppStrings.getWithLanguage(widget.currentLanguage, 'correct')
+            : isRoad && displayedChoice != null
+                ? AppStrings.getWithLanguage(
+                    widget.currentLanguage,
+                    'answer_feedback_wrong_gentle',
+                  ).replaceAll('{answer}', displayedChoice ? 'FALSO' : 'VERO')
+                : AppStrings.getWithLanguage(widget.currentLanguage, 'wrong');
         return Opacity(
           opacity: opacityValue,
           child: Transform.translate(
@@ -1827,8 +1954,15 @@ class _QuestionWidgetState extends State<QuestionWidget>
                   color: feedbackBackground,
                   borderRadius:
                       isRetro ? BorderRadius.zero : BorderRadius.circular(20),
-                  border:
-                      isRetro ? Border.all(color: AppTheme.retroLine) : null,
+                  border: isRetro
+                      ? Border.all(color: AppTheme.retroLine)
+                      : isRoad && isDark
+                          ? Border.all(
+                              color: widget.isCorrect!
+                                  ? AppTheme.roadNightPrimary
+                                  : AppTheme.roadNightLine,
+                            )
+                          : null,
                   boxShadow: isRetro
                       ? const []
                       : [
@@ -1849,17 +1983,15 @@ class _QuestionWidgetState extends State<QuestionWidget>
                       children: [
                         Icon(
                           widget.isCorrect! ? Icons.check : Icons.close,
-                          color: feedbackForeground,
+                          color: isRoad && widget.isCorrect!
+                              ? AppTheme.roadAccent
+                              : feedbackForeground,
                           size: 18,
                         ),
                         const SizedBox(width: 6),
                         Flexible(
                           child: Text(
-                            widget.isCorrect!
-                                ? AppStrings.getWithLanguage(
-                                    widget.currentLanguage, 'correct')
-                                : AppStrings.getWithLanguage(
-                                    widget.currentLanguage, 'wrong'),
+                            feedbackLabel,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: feedbackForeground,

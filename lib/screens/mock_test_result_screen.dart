@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'dart:ui';
 import '../config/mock_test_config.dart';
 import '../config/app_strings.dart';
@@ -123,7 +124,9 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 // 主卡片：狀態圖標和文字
-                _buildResultCard(),
+                _isRoad ? _buildRoadResultCard() : _buildResultCard(),
+
+                if (_isRoad) ..._buildRoadStickers(),
 
                 const SizedBox(height: 24),
 
@@ -145,27 +148,317 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
     );
   }
 
+  bool get _isRoad => AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context);
+
+  /// 道路主題結果卡：通過時給一張「模擬駕照」，未通過時語氣溫和並指向錯題。
+  Widget _buildRoadResultCard() {
+    final isPassed = widget.isPassed;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final statusColor =
+        isPassed ? AppTheme.successFor(context) : AppTheme.dangerFor(context);
+    final ink = AppTheme.inkFor(context);
+    final muted = AppTheme.mutedFor(context);
+    final now = DateTime.now();
+    final dateText = '${now.year}-${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+
+    final headline = Column(
+      children: [
+        Text(
+          isPassed ? AppStrings.get('idoneo') : AppStrings.get('non_idoneo'),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 40,
+            fontWeight: FontWeight.w900,
+            color: statusColor,
+            letterSpacing: 1,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          isPassed
+              ? AppStrings.get('congratulations')
+              : AppStrings.get('mock_result_fail_gentle')
+                  .replaceAll('{count}', '${widget.errors}'),
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: ink,
+            height: 1.4,
+          ),
+        ),
+      ],
+    );
+
+    if (!isPassed) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.fromLTRB(24, 28, 24, 28),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceFor(context),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppTheme.lineFor(context), width: 1.5),
+          boxShadow: AppTheme.cardShadowFor(context),
+        ),
+        child: Column(
+          children: [
+            _buildStatusIcon(isPassed, statusColor),
+            const SizedBox(height: 16),
+            headline,
+          ],
+        ),
+      );
+    }
+
+    // 模擬駕照：意大利駕照的粉色卡面，略微傾斜，像剛拿到手。
+    const licensePink = Color(0xFFF4D7DC);
+    const licenseInk = Color(0xFF2A1E21);
+    const licenseMuted = Color(0xFF5C474C);
+    Widget code(String text) => Text(
+          text,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: licenseMuted,
+          ),
+        );
+    Widget field(Widget lead, String value, {double size = 14}) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            SizedBox(width: 34, child: lead),
+            Flexible(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: size,
+                  fontWeight: FontWeight.w800,
+                  color: licenseInk,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        headline,
+        const SizedBox(height: 24),
+        Transform.rotate(
+          angle: -2 * math.pi / 180,
+          child: Container(
+            key: const Key('mock_result_license_card'),
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: licensePink,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: licenseInk, width: 2),
+              boxShadow: AppTheme.chunkyShadowFor(
+                context,
+                color: isDark ? Colors.black : AppTheme.roadPrimaryDark,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        'PATENTE DI GUIDA',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1,
+                          color: licenseInk,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF1F4E9E),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Text(
+                        'I',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w900,
+                          color: AppTheme.roadAccent,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  AppStrings.get('mock_license_subtitle'),
+                  style: const TextStyle(fontSize: 12, color: licenseMuted),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 88,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8BCC4),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.person_rounded,
+                        size: 44,
+                        color: licenseMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          field(code('4a.'), dateText),
+                          field(code('9.'), 'B', size: 18),
+                          field(
+                            const Icon(Icons.check_rounded,
+                                size: 16, color: licenseMuted),
+                            '${widget.correctAnswers} / ${widget.totalQuestions}',
+                            size: 22,
+                          ),
+                          field(
+                            const Icon(Icons.timer_outlined,
+                                size: 16, color: licenseMuted),
+                            _formatTime(_timeUsed),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          '${AppStrings.get('error_count')}: ${widget.errors}',
+          style: TextStyle(fontSize: 14, color: muted),
+        ),
+      ],
+    );
+  }
+
+  /// 本次成績換來的貼紙：只由本場結果推得，不寫入任何資料。
+  List<Widget> _buildRoadStickers() {
+    final stickers = <({IconData icon, String key, Color color})>[
+      if (widget.isPassed)
+        (
+          icon: Icons.verified_rounded,
+          key: 'sticker_passed',
+          color: AppTheme.successFor(context),
+        ),
+      if (widget.errors == 0)
+        (
+          icon: Icons.workspace_premium_rounded,
+          key: 'sticker_perfect',
+          color: AppTheme.warningTextFor(context),
+        ),
+      if (widget.isPassed && _timeUsed <= MockTestConfig.timeLimitSeconds ~/ 2)
+        (
+          icon: Icons.bolt_rounded,
+          key: 'sticker_fast',
+          color: AppTheme.warningTextFor(context),
+        ),
+    ];
+    if (stickers.isEmpty) return const [];
+    final ink = AppTheme.inkFor(context);
+    return [
+      const SizedBox(height: 24),
+      Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Text(
+          AppStrings.get('stickers_earned_title'),
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: ink,
+          ),
+        ),
+      ),
+      const SizedBox(height: 10),
+      Wrap(
+        key: const Key('mock_result_stickers'),
+        spacing: 10,
+        runSpacing: 10,
+        children: [
+          for (var i = 0; i < stickers.length; i++)
+            Transform.rotate(
+              angle: (i.isEven ? -2 : 2) * math.pi / 180,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceFor(context),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: ink, width: 1.5),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(stickers[i].icon, size: 22, color: stickers[i].color),
+                    const SizedBox(width: 6),
+                    Text(
+                      AppStrings.get(stickers[i].key),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: ink,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    ];
+  }
+
   /// 構建毛玻璃 AppBar
   PreferredSizeWidget _buildGlassAppBar(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final isRetro = AppTheme.isRetroFor(context);
+    // 道路主題：標題欄與頁面同為實色底，不再使用灰色毛玻璃。
+    final isRoad = _isRoad;
     return PreferredSize(
       preferredSize: const Size.fromHeight(kToolbarHeight),
       child: ClipRRect(
         child: BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: isRetro ? 0 : 20,
-            sigmaY: isRetro ? 0 : 20,
+            sigmaX: isRetro || isRoad ? 0 : 20,
+            sigmaY: isRetro || isRoad ? 0 : 20,
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: colorScheme.surface.withOpacity(0.82),
-              border: Border(
-                bottom: BorderSide(
-                  color: colorScheme.outline.withOpacity(0.2),
-                  width: 0.5,
-                ),
-              ),
+              color: isRoad
+                  ? AppTheme.pageDecorationFor(context).color
+                  : colorScheme.surface.withOpacity(0.82),
+              border: isRoad
+                  ? null
+                  : Border(
+                      bottom: BorderSide(
+                        color: colorScheme.outline.withOpacity(0.2),
+                        width: 0.5,
+                      ),
+                    ),
             ),
             child: SafeArea(
               bottom: false,
@@ -190,8 +483,10 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
                           AppStrings.get('test_result'),
                           style: TextStyle(
                             fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: colorScheme.onSurface,
+                            fontWeight: isRoad ? FontWeight.w800 : FontWeight.w600,
+                            color: isRoad
+                                ? AppTheme.inkFor(context)
+                                : colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -508,6 +803,60 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
     final primaryColor = AppTheme.primaryFor(context);
     final buttonRadius =
         isRetro ? BorderRadius.zero : BorderRadius.circular(20);
+    if (_isRoad) {
+      final background =
+          isPrimary ? AppTheme.accentFor(context) : AppTheme.surfaceFor(context);
+      final foreground =
+          isPrimary ? AppTheme.onAccentFor(context) : AppTheme.inkFor(context);
+      final radius = BorderRadius.circular(14);
+      return DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          boxShadow: AppTheme.chunkyShadowFor(
+            context,
+            color: isPrimary ? null : AppTheme.lineFor(context),
+          ),
+        ),
+        child: Material(
+          color: background,
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: BorderSide(
+              color: isPrimary ? AppTheme.roadInk : AppTheme.lineFor(context),
+              width: 2,
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 20, color: foreground),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: foreground,
+                        ),
+                        maxLines: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return ClipRRect(
       borderRadius: buttonRadius,
       child: BackdropFilter(

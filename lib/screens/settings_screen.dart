@@ -681,7 +681,7 @@ class SettingsScreen extends StatelessWidget {
                       _buildSwitchCard(
                         context,
                         icon: Icons.filter_list,
-                        iconColor: const Color(0xFF8B5CF6),
+                        iconColor: AppTheme.warningTextFor(context),
                         title: AppStrings.get('skip_mastered_questions'),
                         value: userStateProvider.skipMastered,
                         onChanged: (bool value) {

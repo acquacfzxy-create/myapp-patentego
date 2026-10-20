@@ -15,10 +15,12 @@ import '../services/access_policy.dart';
 import '../services/firebase_status.dart';
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
+import '../config/chapter_config.dart';
 import '../config/route_observer.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/circular_progress_card.dart';
+import '../widgets/learning_route_card.dart';
 
 /// 首頁
 /// 提供應用的主要功能入口
@@ -158,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen>
   late Animation<double> _coverageAnimation;
   late Animation<double> _masteryAnimation;
   int? _recommendedWeakChapterId;
+  Map<int, Map<String, int>> _chapterProgress = const {};
 
   // 獲取當前語言
   String get _currentLanguage {
@@ -286,10 +289,16 @@ class _HomeScreenState extends State<HomeScreen>
         userStateProvider.refreshDueReviewCount(),
         userStateProvider.refreshLearningStreak(),
       ]);
-      final weakChapters = await DatabaseService.getTopWeakChapters(
+      final weakChaptersFuture = DatabaseService.getTopWeakChapters(
         userId: userStateProvider.effectiveUserId,
         limit: 3,
       );
+      final chapterProgressFuture = DatabaseService.getChaptersProgress(
+        ChapterConfig.chapters.map((chapter) => chapter.id).toList(),
+        userId: userStateProvider.effectiveUserId,
+      );
+      final weakChapters = await weakChaptersFuture;
+      final chapterProgress = await chapterProgressFuture;
       int? recommendedWeakChapter;
       for (final entry in weakChapters) {
         final chapterId = entry['chapter'];
@@ -303,6 +312,7 @@ class _HomeScreenState extends State<HomeScreen>
       if (mounted) {
         setState(() {
           _recommendedWeakChapterId = recommendedWeakChapter;
+          _chapterProgress = chapterProgress;
         });
       }
     } catch (e) {
@@ -318,13 +328,14 @@ class _HomeScreenState extends State<HomeScreen>
         final dbError = DatabaseService.initError;
         final isDbReady = DatabaseService.isInitialized;
 
-        return _buildHomeContent(context, dbError, isDbReady);
+        return _buildHomeContent(
+            context, dbError, isDbReady, userStateProvider);
       },
     );
   }
 
-  Widget _buildHomeContent(
-      BuildContext context, String? dbError, bool isDbReady) {
+  Widget _buildHomeContent(BuildContext context, String? dbError,
+      bool isDbReady, UserStateProvider userStateProvider) {
     // 顯示數據庫錯誤提示
     if (dbError != null && !isDbReady) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -383,14 +394,22 @@ class _HomeScreenState extends State<HomeScreen>
               SliverToBoxAdapter(
                 child: _buildHeader(context),
               ),
-              // 进度卡片
+              // 今日路程：首頁唯一主行動
               SliverToBoxAdapter(
                 child: Padding(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                  child: _buildProgressCard(context),
+                  child: _buildDailyGoalStrip(context, userStateProvider),
                 ),
               ),
+              // 學習路線
+              if (isDbReady)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 12, 24, 4),
+                    child: _buildLearningRoute(context, userStateProvider),
+                  ),
+                ),
               // 功能网格
               SliverPadding(
                 padding:
@@ -515,6 +534,14 @@ class _HomeScreenState extends State<HomeScreen>
                           : null,
                     ),
                   ]),
+                ),
+              ),
+              // 进度卡片
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  child: _buildProgressCard(context),
                 ),
               ),
               // 收藏按钮
@@ -907,8 +934,6 @@ class _HomeScreenState extends State<HomeScreen>
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
-                _buildDailyGoalStrip(context, userStateProvider),
               ],
             ),
           ),
@@ -917,13 +942,77 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
+  /// 道路主題下今日路程是綠色路牌卡：用局部 Theme 把卡內文字改成白色，
+  /// 主按鈕改成標誌黃厚底按鈕；復古與 Web 保持原樣。
   Widget _buildDailyGoalStrip(
+    BuildContext context,
+    UserStateProvider userStateProvider,
+  ) {
+    final isRoadHero =
+        AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context);
+    if (!isRoadHero) {
+      return _buildDailyGoalStripBody(context, userStateProvider);
+    }
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final heroTheme = theme.copyWith(
+      colorScheme: theme.colorScheme.copyWith(
+        primary: Colors.white,
+        onSurface: Colors.white,
+        onSurfaceVariant: Colors.white.withOpacity(0.86),
+        surface: isDark ? AppTheme.roadNightPrimarySoft : AppTheme.roadPrimary,
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppTheme.roadAccent,
+          foregroundColor: AppTheme.roadInk,
+          // 額度用完：深綠實底，與可點的黃色按鈕明顯區分。
+          disabledBackgroundColor:
+              isDark ? Colors.black.withOpacity(0.35) : AppTheme.roadPrimaryDark,
+          disabledForegroundColor: Colors.white.withOpacity(0.86),
+          minimumSize: const Size.fromHeight(52),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: const BorderSide(color: AppTheme.roadInk, width: 2),
+          ),
+          // 沿用主題字體（含多語言 fallback），只加粗加大。
+          textStyle: theme.textTheme.labelLarge?.copyWith(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+    return Theme(
+      data: heroTheme,
+      child: Builder(
+        builder: (heroContext) =>
+            _buildDailyGoalStripBody(heroContext, userStateProvider),
+      ),
+    );
+  }
+
+  Widget _buildDailyGoalStripBody(
     BuildContext context,
     UserStateProvider userStateProvider,
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     final isRetro = AppTheme.isRetroFor(context);
-    final primaryColor = AppTheme.primaryFor(context);
+    final isRoadHero = AppTheme.usesRoadPalette && !isRetro;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // 綠色路牌卡上，主色元素改用標誌黃，複習改用白色，保證對比度。
+    final primaryColor =
+        isRoadHero ? AppTheme.roadAccent : AppTheme.primaryFor(context);
+    final reviewColor = isRetro
+        ? primaryColor
+        : isRoadHero
+            ? Colors.white
+            : const Color(0xFF7C3AED);
+    final streakColor = isRetro
+        ? primaryColor
+        : isRoadHero
+            ? AppTheme.roadAccent
+            : const Color(0xFFF59E0B);
     final plan = userStateProvider.currentDailyPlan;
     final streak = userStateProvider.learningStreak;
     final estimatedText = plan.newGoal == 0
@@ -936,18 +1025,28 @@ class _HomeScreenState extends State<HomeScreen>
     );
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(isRoadHero ? 16 : 14),
       decoration: BoxDecoration(
         color: isRetro
             ? AppTheme.retroSurface
-            : colorScheme.surface.withOpacity(0.62),
+            : isRoadHero
+                ? colorScheme.surface
+                : colorScheme.surface.withOpacity(0.62),
         borderRadius: isRetro ? BorderRadius.zero : BorderRadius.circular(18),
         border: Border.all(
           color: isRetro
               ? AppTheme.retroLine
-              : colorScheme.onSurface.withOpacity(0.1),
-          width: 1,
+              : isRoadHero
+                  ? (isDark ? AppTheme.roadNightPrimary : AppTheme.roadPrimary)
+                  : colorScheme.onSurface.withOpacity(0.1),
+          width: isRoadHero ? 2 : 1,
         ),
+        boxShadow: isRoadHero
+            ? AppTheme.chunkyShadowFor(
+                context,
+                color: isDark ? Colors.black : AppTheme.roadPrimaryDark,
+              )
+            : null,
       ),
       child: Column(
         children: [
@@ -959,7 +1058,7 @@ class _HomeScreenState extends State<HomeScreen>
                 decoration: BoxDecoration(
                   color: isRetro
                       ? AppTheme.retroPageAlt
-                      : AppTheme.primary.withOpacity(0.12),
+                      : primaryColor.withOpacity(0.12),
                   borderRadius:
                       isRetro ? BorderRadius.zero : BorderRadius.circular(10),
                 ),
@@ -1017,7 +1116,7 @@ class _HomeScreenState extends State<HomeScreen>
             ),
             completed: userStateProvider.dailyReviewQuestionCount,
             goal: plan.reviewGoal,
-            color: isRetro ? primaryColor : const Color(0xFF7C3AED),
+            color: reviewColor,
           ),
           const SizedBox(height: 7),
           Row(
@@ -1027,7 +1126,7 @@ class _HomeScreenState extends State<HomeScreen>
               Icon(
                 Icons.schedule_rounded,
                 size: 14,
-                color: isRetro ? primaryColor : const Color(0xFF7C3AED),
+                color: reviewColor,
               ),
               const SizedBox(width: 5),
               Expanded(
@@ -1067,8 +1166,8 @@ class _HomeScreenState extends State<HomeScreen>
                 fontSize: 10,
                 fontWeight: FontWeight.w600,
                 color: streak.activeToday
-                    ? isRetro
-                        ? primaryColor
+                    ? isRetro || isRoadHero
+                        ? streakColor
                         : const Color(0xFFD97706)
                     : colorScheme.onSurfaceVariant,
               ),
@@ -1081,7 +1180,7 @@ class _HomeScreenState extends State<HomeScreen>
                     Icon(
                       Icons.local_fire_department_rounded,
                       size: 18,
-                      color: isRetro ? primaryColor : const Color(0xFFF59E0B),
+                      color: streakColor,
                     ),
                     const SizedBox(width: 5),
                     Expanded(
@@ -1110,28 +1209,42 @@ class _HomeScreenState extends State<HomeScreen>
             );
           }),
           const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              key: const Key('start_daily_plan_button'),
-              onPressed: userStateProvider.canPractice()
-                  ? () => _startDailyPlan(userStateProvider)
+          DecoratedBox(
+            // 厚底按鈕：實色陰影只在可點擊時出現。
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: isRoadHero && userStateProvider.canPractice()
+                  ? AppTheme.chunkyShadowFor(context, color: AppTheme.roadInk)
                   : null,
-              icon: Icon(
-                Icons.play_arrow_rounded,
-                size: 20,
-                color: isRetro ? AppTheme.retroPage : null,
-              ),
-              label: Text(
-                AppStrings.getWithLanguage(
-                  _currentLanguage,
-                  'daily_goal_start_today_plan',
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const Key('start_daily_plan_button'),
+                onPressed: userStateProvider.canPractice()
+                    ? () => _startDailyPlan(userStateProvider)
+                    : null,
+                icon: Icon(
+                  isRoadHero && !userStateProvider.canPractice()
+                      ? Icons.lock_clock_rounded
+                      : Icons.play_arrow_rounded,
+                  size: 20,
+                  color: isRetro ? AppTheme.retroPage : null,
+                ),
+                label: Text(
+                  AppStrings.getWithLanguage(
+                    _currentLanguage,
+                    // 道路主題下額度用完直接說明原因，而不是只顯示灰掉的按鈕。
+                    isRoadHero && !userStateProvider.canPractice()
+                        ? 'quiz_limit_reached'
+                        : 'daily_goal_start_today_plan',
+                  ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          _buildTodayRecommendation(userStateProvider),
+          SizedBox(height: isRoadHero ? 14 : 10),
+          _buildTodayRecommendation(userStateProvider, context),
         ],
       ),
     );
@@ -1195,12 +1308,15 @@ class _HomeScreenState extends State<HomeScreen>
     );
   }
 
-  Widget _buildTodayRecommendation(UserStateProvider userStateProvider) {
+  Widget _buildTodayRecommendation(
+    UserStateProvider userStateProvider,
+    BuildContext themeContext,
+  ) {
     if (!userStateProvider.canPractice()) {
       return const SizedBox.shrink();
     }
 
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme.of(themeContext).colorScheme;
 
     final hasMistakes = userStateProvider.mistakeCount > 0;
     final hasAvailableWeakChapter = _recommendedWeakChapterId != null &&
@@ -1452,6 +1568,84 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   /// 構建功能卡片（使用玻璃態卡片）
+  /// 章節掌握率達到此比例即視為「已通過這一站」。
+  static const double _routeStationDoneRatio = 0.8;
+
+  /// 首頁學習路線：顯示當前章節前後共 4 站，點擊進入章節選擇。
+  Widget _buildLearningRoute(
+    BuildContext context,
+    UserStateProvider userStateProvider,
+  ) {
+    final chapters = [...ChapterConfig.chapters]
+      ..sort((a, b) => a.id.compareTo(b.id));
+    if (chapters.isEmpty) return const SizedBox.shrink();
+
+    int percentOf(int chapterId) {
+      final progress = _chapterProgress[chapterId];
+      final total = progress?['total'] ?? 0;
+      if (total == 0) return 0;
+      return ((progress?['mastered'] ?? 0) * 100 / total).floor();
+    }
+
+    bool isDone(int chapterId) =>
+        percentOf(chapterId) >= _routeStationDoneRatio * 100;
+
+    var currentIndex = chapters.indexWhere((chapter) =>
+        !isDone(chapter.id) && !userStateProvider.isChapterLocked(chapter.id));
+    if (currentIndex < 0) {
+      currentIndex = chapters.indexWhere((chapter) => !isDone(chapter.id));
+    }
+    if (currentIndex < 0) currentIndex = chapters.length - 1;
+
+    const windowSize = 4;
+    var start = max(0, currentIndex - 1);
+    final end = min(chapters.length, start + windowSize);
+    start = max(0, end - windowSize);
+
+    final stations = [
+      for (var i = start; i < end; i++)
+        LearningRouteStation(
+          chapterId: chapters[i].id,
+          title: chapters[i].getTitle(_currentLanguage),
+          masteredPercent: percentOf(chapters[i].id),
+          isDone: isDone(chapters[i].id),
+          isCurrent: i == currentIndex,
+          isLocked: userStateProvider.isChapterLocked(chapters[i].id),
+        ),
+    ];
+    final doneCount = chapters.where((chapter) => isDone(chapter.id)).length;
+
+    String text(String key) =>
+        AppStrings.getWithLanguage(_currentLanguage, key);
+
+    return LearningRouteCard(
+      key: const Key('home_learning_route'),
+      title: text('learning_route_title'),
+      summary: text('learning_route_summary')
+          .replaceAll('{done}', '$doneCount')
+          .replaceAll('{total}', '${chapters.length}'),
+      stations: stations,
+      stationLabel: (station) {
+        final key = station.isLocked
+            ? 'learning_route_station_locked'
+            : station.isCurrent
+                ? 'learning_route_station_current'
+                : 'learning_route_station';
+        return text(key)
+            .replaceAll('{n}', '${station.chapterId}')
+            .replaceAll('{percent}', '${station.masteredPercent}');
+      },
+      onStationTap: (_) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const ChapterSelectionScreen(),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildFeatureCard(
     BuildContext context, {
     required String title,
@@ -1483,7 +1677,7 @@ class _HomeScreenState extends State<HomeScreen>
               borderRadius:
                   isRetro ? BorderRadius.zero : BorderRadius.circular(16),
               border: isRetro ? Border.all(color: AppTheme.retroLine) : null,
-              boxShadow: isRetro
+              boxShadow: isRetro || AppTheme.usesRoadPalette
                   ? const []
                   : [
                       BoxShadow(
@@ -1557,7 +1751,7 @@ class _HomeScreenState extends State<HomeScreen>
             size: 18,
             color: AppTheme.isRetroFor(context)
                 ? AppTheme.retroPrimary
-                : AppTheme.danger.withOpacity(0.7),
+                : AppTheme.dangerFor(context).withOpacity(0.7),
           ),
           const SizedBox(width: 8),
           Text(

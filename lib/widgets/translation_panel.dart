@@ -27,9 +27,11 @@ class TranslationPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: isRetro
             ? AppTheme.retroPageAlt
-            : isDark
-                ? AppTheme.nightPrimarySoft.withOpacity(0.92)
-                : AppTheme.primarySoft.withOpacity(0.78),
+            : AppTheme.usesRoadPalette
+                ? AppTheme.primarySoftFor(context)
+                : isDark
+                    ? AppTheme.nightPrimarySoft.withOpacity(0.92)
+                    : AppTheme.primarySoft.withOpacity(0.78),
         borderRadius: isRetro
             ? BorderRadius.zero
             : BorderRadius.circular(AppTheme.radiusSm),

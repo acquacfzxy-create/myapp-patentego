@@ -201,10 +201,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 statusBarBrightness:
                     isDarkMode ? Brightness.dark : Brightness.light,
                 systemNavigationBarColor: isDarkMode
-                    ? AppTheme.nightPage
+                    ? (AppTheme.usesRoadPalette
+                        ? AppTheme.roadNightPage
+                        : AppTheme.nightPage)
                     : isRetroMode
                         ? AppTheme.retroPage
-                        : Colors.white,
+                        : AppTheme.usesRoadPalette
+                            ? AppTheme.roadPage
+                            : Colors.white,
                 systemNavigationBarIconBrightness:
                     isDarkMode ? Brightness.light : Brightness.dark,
               ),
