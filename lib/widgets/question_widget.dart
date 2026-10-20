@@ -15,6 +15,7 @@ import 'glass_card.dart';
 import 'answer_motion.dart';
 import 'bouncy_press.dart';
 import 'explanation_emphasis.dart';
+import 'streak_jitter.dart';
 import 'translation_panel.dart';
 
 /// 題目顯示組件
@@ -1982,7 +1983,28 @@ class _QuestionWidgetState extends State<QuestionWidget>
         : isDark
             ? const Color(0xFFD1FAE5)
             : Colors.white;
-    final flameColor = isRetro ? feedbackForeground : const Color(0xFFFFC247);
+    // 連對分檔：3 起火焰變大變橙，5 起徽章轉橙紅漸層並發光，10 起火力全開。
+    final streak = widget.sessionCorrectStreak;
+    final isRoad = AppTheme.usesRoadPalette && !isRetro;
+    final tier = !isRoad
+        ? 0
+        : streak >= 10
+            ? 3
+            : streak >= 5
+                ? 2
+                : streak >= 3
+                    ? 1
+                    : 0;
+    const tierFlameColors = [
+      Color(0xFFFFC247),
+      Color(0xFFFF9F1C),
+      Color(0xFFFFE08A),
+      Color(0xFFFFF3C4),
+    ];
+    final flameColor =
+        isRetro ? feedbackForeground : tierFlameColors[tier];
+    final flameSize = const [18.0, 24.0, 30.0, 36.0][tier];
+    final streakFontSize = const [12.0, 14.0, 17.0, 20.0][tier];
     final masteryStep = widget.questionMasteryStep.clamp(0, 3).toInt();
     final streakLabel = AppStrings.getWithLanguage(
       widget.currentLanguage,
@@ -2007,12 +2029,58 @@ class _QuestionWidgetState extends State<QuestionWidget>
           runSpacing: 5,
           children: [
             if (widget.sessionCorrectStreak >= 1)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+              StreakJitter(
+                strength: tier >= 3 ? 2 : (tier >= 2 ? 1 : 0),
+                child: Container(
+                key: ValueKey('streak-chip-tier-$tier'),
+                padding: EdgeInsets.symmetric(
+                  horizontal: tier >= 2 ? 12 : 7,
+                  vertical: tier >= 2 ? 5 : 3,
+                ),
                 decoration: BoxDecoration(
-                  color: feedbackForeground.withOpacity(0.18),
+                  color: tier >= 2 ? null : feedbackForeground.withOpacity(0.18),
+                  // 黃→橙→紅的亮色漸層，連對越多越紅越亮。
+                  gradient: tier >= 2
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: tier >= 3
+                              ? const [
+                                  Color(0xFFFFD43B),
+                                  Color(0xFFFF7A00),
+                                  Color(0xFFFF1E00),
+                                ]
+                              : const [
+                                  Color(0xFFFFE066),
+                                  Color(0xFFFF9F1C),
+                                  Color(0xFFFF5A1F),
+                                ],
+                        )
+                      : null,
+                  border: tier >= 2
+                      ? Border.all(
+                          color: const Color(0xFFFFF3C4).withOpacity(0.9),
+                          width: 1.5,
+                        )
+                      : null,
                   borderRadius:
                       isRetro ? BorderRadius.zero : BorderRadius.circular(999),
+                  boxShadow: tier >= 2
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFFFF7A00)
+                                .withOpacity(tier >= 3 ? 0.9 : 0.65),
+                            blurRadius: tier >= 3 ? 24 : 14,
+                            spreadRadius: tier >= 3 ? 2 : 0,
+                          ),
+                          if (tier >= 3)
+                            const BoxShadow(
+                              color: Color(0x66FFD43B),
+                              blurRadius: 36,
+                              spreadRadius: 4,
+                            ),
+                        ]
+                      : null,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -2072,7 +2140,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                       child: Icon(
                         Icons.local_fire_department_rounded,
                         color: flameColor,
-                        size: 18,
+                        size: flameSize,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -2080,12 +2148,23 @@ class _QuestionWidgetState extends State<QuestionWidget>
                       streakLabel,
                       style: TextStyle(
                         color: feedbackForeground,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
+                        fontSize: streakFontSize,
+                        fontWeight:
+                            tier >= 2 ? FontWeight.w900 : FontWeight.w700,
+                        shadows: tier >= 2
+                            ? const [
+                                Shadow(
+                                  color: Color(0xCC9A1B00),
+                                  blurRadius: 3,
+                                  offset: Offset(0, 1),
+                                ),
+                              ]
+                            : null,
                       ),
                     ),
                   ],
                 ),
+              ),
               ),
             Row(
               mainAxisSize: MainAxisSize.min,

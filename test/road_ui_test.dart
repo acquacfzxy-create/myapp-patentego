@@ -16,6 +16,7 @@ import 'package:lingua_patente/widgets/bouncy_press.dart';
 import 'package:lingua_patente/widgets/learning_route_card.dart';
 import 'package:lingua_patente/widgets/question_widget.dart';
 import 'package:lingua_patente/widgets/road_segmented_tabs.dart';
+import 'package:lingua_patente/widgets/streak_fire_overlay.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -140,6 +141,37 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('streak fire', () {
+    test('intensity starts at 5 in a row and is full at 10', () {
+      expect(StreakFireOverlay.intensityFor(4), 0);
+      expect(StreakFireOverlay.intensityFor(5), greaterThan(0.3));
+      expect(StreakFireOverlay.intensityFor(7),
+          greaterThan(StreakFireOverlay.intensityFor(5)));
+      expect(StreakFireOverlay.intensityFor(10), 1);
+      expect(StreakFireOverlay.intensityFor(25), 1);
+    });
+
+    testWidgets('overlay is hidden below 5 and fades in from 5',
+        (tester) async {
+      Widget app(int streak) => MaterialApp(
+            home: Stack(children: [
+              Positioned.fill(child: StreakFireOverlay(streak: streak)),
+            ]),
+          );
+      double opacity() => tester
+          .widget<AnimatedOpacity>(find.byKey(const Key('streak_fire_overlay')))
+          .opacity;
+      await tester.pumpWidget(app(3));
+      expect(opacity(), 0);
+      await tester.pumpWidget(app(6));
+      expect(opacity(), 1);
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpWidget(app(0));
+      expect(opacity(), 0, reason: 'a wrong answer puts the fire out');
+      await tester.pump(const Duration(seconds: 1));
     });
   });
 
@@ -291,6 +323,35 @@ void main() {
       expect(find.byIcon(Icons.close_rounded), findsOneWidget);
       // 反饋層不提供「下一題」按鈕：跳題交給練習頁的自動前進。
       expect(find.text('下一题'), findsNothing);
+    });
+
+    testWidgets('streak chip grows with the streak', (tester) async {
+      SharedPreferences.setMockInitialValues({'current_language': 'zh'});
+      for (final (streak, tier) in [(2, 0), (4, 1), (6, 2), (12, 3)]) {
+        await tester.pumpWidget(
+          ChangeNotifierProvider<UserStateProvider>.value(
+            value: UserStateProvider(),
+            child: MaterialApp(
+              theme: AppTheme.lightTheme(language: 'zh'),
+              home: Scaffold(
+                body: QuestionWidget(
+                  key: ValueKey(streak),
+                  question: question,
+                  currentLanguage: 'zh',
+                  onAnswerSelected: (_) {},
+                  isAnswered: true,
+                  isCorrect: true,
+                  userChoice: question.answer,
+                  sessionCorrectStreak: streak,
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pump(const Duration(milliseconds: 600));
+        expect(find.byKey(ValueKey('streak-chip-tier-$tier')), findsOneWidget,
+            reason: 'streak $streak');
+      }
     });
 
     testWidgets('a correct pick marks only that option', (tester) async {

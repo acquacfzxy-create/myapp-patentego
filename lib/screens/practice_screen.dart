@@ -14,6 +14,7 @@ import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/question_widget.dart';
 import '../widgets/session_mistake_review_sheet.dart';
+import '../widgets/streak_fire_overlay.dart';
 import 'subscription_page.dart';
 
 /// 練習模式頁面
@@ -1657,7 +1658,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
           return Scaffold(
             // 頁面底色由主題提供，內容較短時也不會露出黑色窗口底。
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            body: Container(
+            body: Stack(
+              children: [
+                Positioned.fill(child: Container(
               decoration: AppTheme.pageDecorationFor(context),
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
@@ -1716,6 +1719,13 @@ class _PracticeScreenState extends State<PracticeScreen> {
                             ),
                           ],
                         ),
+            )),
+                // 連對 5 題起畫面邊緣開始燃燒（只在道路主題）。
+                if (AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context))
+                  Positioned.fill(
+                    child: StreakFireOverlay(streak: _sessionCorrectStreak),
+                  ),
+              ],
             ),
           );
         },
