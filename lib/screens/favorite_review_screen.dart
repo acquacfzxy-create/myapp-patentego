@@ -124,7 +124,7 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: AppTheme.pageBackgroundFor(context),
       appBar: AppBar(
         title: Text(
           AppStrings.get('favorite_questions'),
@@ -134,8 +134,11 @@ class _FavoriteReviewScreenState extends State<FavoriteReviewScreen> {
             color: colorScheme.onSurface,
           ),
         ),
-        backgroundColor: colorScheme.surface,
+        backgroundColor: AppTheme.pageBackgroundFor(context),
         elevation: 0,
+        // 滾動時不疊加 Material 3 的表面著色，頂欄保持頁面底色。
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           icon: Icon(

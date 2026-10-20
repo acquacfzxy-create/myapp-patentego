@@ -309,7 +309,7 @@ class _MockTestScreenState extends State<MockTestScreen> {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
-              color: colorScheme.surface.withOpacity(0.82),
+              color: AppTheme.headerBackgroundFor(context),
               border: Border(
                 bottom: BorderSide(
                   color: colorScheme.outline.withOpacity(0.2),

@@ -1686,11 +1686,12 @@ class _HomeScreenState extends State<HomeScreen>
             .replaceAll('{n}', '${station.chapterId}')
             .replaceAll('{percent}', '${station.masteredPercent}');
       },
-      onStationTap: (_) {
+      onStationTap: (station) {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const ChapterSelectionScreen(),
+            builder: (context) =>
+                ChapterSelectionScreen(focusChapterId: station.chapterId),
           ),
         );
       },

@@ -927,6 +927,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context))
+                ..._buildRoadSummaryHeader(
+                  sheetContext,
+                  language: language,
+                  answeredCount: answeredCount,
+                  correctCount: correctCount,
+                )
+              else ...[
               Text(
                 AppStrings.getWithLanguage(
                     language, 'growth_session_summary_title'),
@@ -956,6 +964,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     language, 'growth_mistakes_resolved'),
                 _mistakesResolvedCount,
               ),
+              ],
               const SizedBox(height: 16),
               if (_sessionMistakes.isNotEmpty) ...[
                 FilledButton.icon(
@@ -995,6 +1004,169 @@ class _PracticeScreenState extends State<PracticeScreen> {
     } else if (mounted) {
       _autoAdvance.resume('summary');
     }
+  }
+
+  /// 道路主題的練習結算頭部：按正確率給一句鼓勵、大號正確率、
+  /// 四格成績，以及本次獲得的貼紙（新掌握／消滅錯題）。
+  List<Widget> _buildRoadSummaryHeader(
+    BuildContext context, {
+    required String language,
+    required int answeredCount,
+    required int correctCount,
+  }) {
+    String t(String key) => AppStrings.getWithLanguage(language, key);
+    final ink = AppTheme.inkFor(context);
+    final muted = AppTheme.mutedFor(context);
+    final rate =
+        answeredCount == 0 ? 0 : (correctCount * 100 / answeredCount).round();
+    final cheerKey = rate >= 90
+        ? 'session_cheer_great'
+        : rate >= 70
+            ? 'session_cheer_good'
+            : 'session_cheer_keep';
+
+    Widget tile(String label, int value, Color color) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceFor(context),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppTheme.lineFor(context), width: 1.5),
+        ),
+        child: Column(
+          children: [
+            Text(
+              '$value',
+              style: TextStyle(
+                fontSize: 26,
+                height: 1.1,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 12, color: muted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget sticker(IconData icon, String text, Color color, double angle) {
+      return Transform.rotate(
+        angle: angle,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceFor(context),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: ink, width: 1.5),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 20, color: color),
+              const SizedBox(width: 6),
+              Text(
+                text,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: ink,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final stickers = <Widget>[
+      if (_newlyMasteredCount > 0)
+        sticker(
+          Icons.workspace_premium_rounded,
+          '${t('growth_newly_mastered')} +$_newlyMasteredCount',
+          AppTheme.warningTextFor(context),
+          -0.035,
+        ),
+      if (_mistakesResolvedCount > 0)
+        sticker(
+          Icons.cleaning_services_rounded,
+          '${t('growth_mistakes_resolved')} +$_mistakesResolvedCount',
+          AppTheme.successFor(context),
+          0.035,
+        ),
+    ];
+
+    return [
+      Text(
+        t(cheerKey),
+        key: const Key('session_summary_cheer'),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w900,
+          color: ink,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        t('growth_session_summary_title'),
+        textAlign: TextAlign.center,
+        style: TextStyle(fontSize: 13, color: muted),
+      ),
+      const SizedBox(height: 14),
+      Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppTheme.accentFor(context),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: AppTheme.roadInk, width: 2),
+          ),
+          child: Text(
+            '$rate%',
+            style: TextStyle(
+              fontSize: 30,
+              height: 1.1,
+              fontWeight: FontWeight.w900,
+              color: AppTheme.onAccentFor(context),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 16),
+      GridView.count(
+        crossAxisCount: 2,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 10,
+        crossAxisSpacing: 10,
+        childAspectRatio: 1.9,
+        children: [
+          tile(t('growth_session_answered'), answeredCount, ink),
+          tile(t('growth_session_correct'), correctCount,
+              AppTheme.successTextFor(context)),
+          tile(t('growth_newly_mastered'), _newlyMasteredCount,
+              AppTheme.warningTextFor(context)),
+          tile(t('growth_mistakes_resolved'), _mistakesResolvedCount,
+              AppTheme.successTextFor(context)),
+        ],
+      ),
+      if (stickers.isNotEmpty) ...[
+        const SizedBox(height: 14),
+        Wrap(
+          key: const Key('session_summary_stickers'),
+          alignment: WrapAlignment.center,
+          spacing: 10,
+          runSpacing: 10,
+          children: stickers,
+        ),
+      ],
+    ];
   }
 
   Widget _buildSummaryMetric(String label, int value, {Color? valueColor}) {
@@ -1371,7 +1543,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: colors.surface.withOpacity(0.4),
+        color: AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context)
+            ? AppTheme.headerBackgroundFor(context)
+            : colors.surface.withOpacity(0.4),
         border: Border(bottom: BorderSide(
           color: colors.outline.withOpacity(0.2), width: 0.5,
         )),
@@ -1470,7 +1644,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
           }
 
           return Scaffold(
-            backgroundColor: Colors.transparent,
+            // 頁面底色由主題提供，內容較短時也不會露出黑色窗口底。
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: Container(
               decoration: AppTheme.pageDecorationFor(context),
               child: _isLoading

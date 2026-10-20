@@ -22,10 +22,12 @@ class SubscriptionPage extends StatefulWidget {
 
 class _SubscriptionPageState extends State<SubscriptionPage>
     with SingleTickerProviderStateMixin {
-  static const Color _background = Color(0xFF0B0F14);
-  static const Color _surface = Color(0xFF1B2430);
-  static const Color _softText = Color(0xFFAAB5C4);
-  static const Color _line = Color(0xFF2C3746);
+  // 道路主題的深色公路配色（僅視覺；購買與權益邏輯不變）。
+  static const Color _background = Color(0xFF0E1712);
+  static const Color _surface = Color(0xFF18241D);
+  static const Color _softText = Color(0xFFB5C2B9);
+  static const Color _line = Color(0xFF2B3A31);
+  static const Color _accentGreen = Color(0xFF7FD3A8);
 
   late final AnimationController _ctaScaleController;
   Animation<double> _ctaScale = const AlwaysStoppedAnimation(1.0);
@@ -213,15 +215,15 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           alignment: Alignment.center,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: AppTheme.premiumGold.withOpacity(0.12),
+            color: AppTheme.roadAccent.withOpacity(0.12),
             border: Border.all(
-              color: AppTheme.premiumGold.withOpacity(0.55),
+              color: AppTheme.roadAccent.withOpacity(0.55),
             ),
           ),
           child: const Icon(
             Icons.workspace_premium_rounded,
             size: 34,
-            color: AppTheme.premiumGold,
+            color: AppTheme.roadAccent,
           ),
         ),
         const SizedBox(height: 16),
@@ -275,7 +277,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       decoration: BoxDecoration(
         color: _surface,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFF3C4A5E)),
+        border: Border.all(color: _line),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -295,7 +297,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.premiumGold,
+                  color: AppTheme.roadAccent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -432,14 +434,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           icon: Icons.menu_book_rounded,
           titleKey: 'sub_feature_unlimited_practice',
           descKey: 'sub_feature_unlimited_practice_desc',
-          color: AppTheme.premiumGold,
+          color: AppTheme.roadAccent,
         ),
         Divider(height: 1, color: _line, indent: 56),
         _VipFeatureRow(
           icon: Icons.assignment_turned_in_rounded,
           titleKey: 'sub_feature_unlimited_mock',
           descKey: 'sub_feature_unlimited_mock_desc',
-          color: Color(0xFF60A5FA),
+          color: _accentGreen,
         ),
         Divider(height: 1, color: _line, indent: 56),
         _VipFeatureRow(
@@ -467,7 +469,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         Expanded(
           child: _TimelineItem(
             icon: Icons.lock_open_rounded,
-            color: AppTheme.premiumGold,
+            color: AppTheme.roadAccent,
             title: AppStrings.get('sub_timeline_today'),
             subtitle: AppStrings.get('sub_timeline_today_desc'),
           ),
@@ -476,7 +478,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         Expanded(
           child: _TimelineItem(
             icon: Icons.autorenew_rounded,
-            color: const Color(0xFF60A5FA),
+            color: _accentGreen,
             title: AppStrings.get('sub_timeline_renewal'),
             subtitle: AppStrings.get('sub_timeline_renewal_desc'),
           ),
@@ -508,11 +510,12 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           style: FilledButton.styleFrom(
             minimumSize: const Size.fromHeight(52),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            backgroundColor: AppTheme.primary,
-            disabledBackgroundColor: const Color(0xFF344154),
-            foregroundColor: Colors.white,
+            backgroundColor: AppTheme.roadAccent,
+            disabledBackgroundColor: _line,
+            foregroundColor: AppTheme.roadInk,
+            disabledForegroundColor: _softText,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
             ),
           ),
           child: isPurchaseInProgress
@@ -521,7 +524,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: AppTheme.roadInk,
                   ),
                 )
               : Text(
@@ -563,7 +566,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           onPressed: _iapService.isPurchasing ? null : _handleRestorePurchase,
           child: Text(
             AppStrings.get('restore_purchase'),
-            style: const TextStyle(fontSize: 11, color: Color(0xFFBFDBFE)),
+            style: const TextStyle(fontSize: 11, color: _softText),
           ),
         ),
         if (_iapService.usesStoreBilling)
@@ -572,7 +575,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 _openExternalUrl(context, _iapService.subscriptionCenterUrl),
             child: Text(
               AppStrings.get('manage_subscription'),
-              style: const TextStyle(fontSize: 11, color: Color(0xFFBFDBFE)),
+              style: const TextStyle(fontSize: 11, color: _softText),
             ),
           ),
         TextButton(

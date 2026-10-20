@@ -212,6 +212,22 @@ class AppTheme {
     return _isDark(context) ? nightPrimary : primary;
   }
 
+  /// 二級頁頁面底色：道路主題與頁面同色，其餘沿用卡片表面色。
+  static Color pageBackgroundFor(BuildContext context) {
+    if (!isRetroFor(context) && usesRoadPalette) {
+      return _isDark(context) ? roadNightPage : roadPage;
+    }
+    return Theme.of(context).colorScheme.surface;
+  }
+
+  /// 二級頁頂欄底色：道路主題為實色頁面底，不再用白色毛玻璃。
+  static Color headerBackgroundFor(BuildContext context) {
+    if (!isRetroFor(context) && usesRoadPalette) {
+      return _isDark(context) ? roadNightPage : roadPage;
+    }
+    return Theme.of(context).colorScheme.surface.withOpacity(0.82);
+  }
+
   /// 主行動按鈕用的標誌黃；復古主題沿用主色。
   static Color accentFor(BuildContext context) {
     if (isRetroFor(context)) return retroPrimary;

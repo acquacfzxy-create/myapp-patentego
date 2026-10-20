@@ -129,7 +129,8 @@ class _MockTestErrorsScreenState extends State<MockTestErrorsScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // 頁面底色由主題提供，內容較短時也不會露出黑色窗口底。
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(AppStrings.get('view_test_errors')),
         backgroundColor: Colors.transparent,

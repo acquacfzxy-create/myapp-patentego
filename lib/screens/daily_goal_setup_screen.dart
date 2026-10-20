@@ -195,7 +195,8 @@ class _DailyGoalSetupScreenState extends State<DailyGoalSetupScreen> {
     return Directionality(
       textDirection: _isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: Colors.transparent,
+        // 頁面底色由主題提供，內容較短時也不會露出黑色窗口底。
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Container(
           decoration: AppTheme.pageDecorationFor(context),
           child: SafeArea(
@@ -211,29 +212,17 @@ class _DailyGoalSetupScreenState extends State<DailyGoalSetupScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         if (widget.isEditing) ...[
-                          Row(
-                            children: [
-                              IconButton(
-                                tooltip: MaterialLocalizations.of(context)
-                                    .backButtonTooltip,
-                                onPressed: () => Navigator.of(context).pop(),
-                                icon: const Icon(Icons.arrow_back_ios_new),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  _t('daily_goal_manage_title'),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: colorScheme.onSurface,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 48),
-                            ],
+                          // 卡片內已有同名大標題，頂部只保留返回按鈕。
+                          Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: IconButton(
+                              tooltip: MaterialLocalizations.of(context)
+                                  .backButtonTooltip,
+                              onPressed: () => Navigator.of(context).pop(),
+                              icon: const Icon(Icons.arrow_back_ios_new),
+                            ),
                           ),
-                          const SizedBox(height: 14),
+                          const SizedBox(height: 8),
                         ],
                         GlassCard(
                           borderRadius: BorderRadius.circular(32),
@@ -410,13 +399,15 @@ class _DailyGoalSetupScreenState extends State<DailyGoalSetupScreen> {
                                           },
                                         ),
                                       ),
-                                      PositionedDirectional(
-                                        top: 42,
-                                        start: markerStart,
-                                        child: _FreeQuotaBadge(
-                                          label: _t('daily_goal_free_quota'),
+                                      // 會員不受免費額度限制，不顯示這個刻度。
+                                      if (!isVip)
+                                        PositionedDirectional(
+                                          top: 42,
+                                          start: markerStart,
+                                          child: _FreeQuotaBadge(
+                                            label: _t('daily_goal_free_quota'),
+                                          ),
                                         ),
-                                      ),
                                     ],
                                   );
                                 },

@@ -138,7 +138,8 @@ class _AuthPageState extends State<AuthPage> {
     final isRetro = AppTheme.isRetroFor(context);
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // 頁面底色由主題提供，內容較短時也不會露出黑色窗口底。
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Container(
         decoration: AppTheme.pageDecorationFor(context),
         child: Stack(

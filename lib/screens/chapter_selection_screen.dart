@@ -7,13 +7,17 @@ import '../config/app_strings.dart';
 import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/road_segmented_tabs.dart';
 import 'practice_screen.dart';
 import 'subscription_page.dart';
 
 /// 章节选择页面
 /// 参考 Stitch 设计稿，实现主要章节和次要章节的 Tab 切换
 class ChapterSelectionScreen extends StatefulWidget {
-  const ChapterSelectionScreen({super.key});
+  const ChapterSelectionScreen({super.key, this.focusChapterId});
+
+  /// 從首頁學習路線進入時要定位並高亮的章節。
+  final int? focusChapterId;
 
   @override
   State<ChapterSelectionScreen> createState() => _ChapterSelectionScreenState();
@@ -21,10 +25,17 @@ class ChapterSelectionScreen extends StatefulWidget {
 
 class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
   int _selectedTab = 0; // 0: 主要章节, 1: 次要章节
+  final _focusKey = GlobalKey();
+  bool _focusScrolled = false;
 
   @override
   void initState() {
     super.initState();
+    final focus = widget.focusChapterId;
+    if (focus != null &&
+        ChapterConfig.secondaryChapters.any((c) => c.id == focus)) {
+      _selectedTab = 1;
+    }
     // 如果 Provider 中还没有缓存，则触发加载
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userStateProvider =
@@ -162,7 +173,8 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
     final secondaryChapters = ChapterConfig.secondaryChapters;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // 頁面底色由主題提供，內容較短時也不會露出黑色窗口底。
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Container(
         decoration: AppTheme.pageDecorationFor(context),
         child: SafeArea(
@@ -205,9 +217,12 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
   /// 构建顶部 Header
   Widget _buildHeader(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final isRoad = AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context);
     return Container(
       decoration: BoxDecoration(
-        color: colorScheme.surface.withOpacity(0.6),
+        color: isRoad
+            ? AppTheme.headerBackgroundFor(context)
+            : colorScheme.surface.withOpacity(0.6),
         border: Border(
           bottom: BorderSide(
             color: colorScheme.outline.withOpacity(0.2),
@@ -259,6 +274,19 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
 
   /// 构建 Tab 切换按钮
   Widget _buildTabSwitcher(BuildContext context, String currentLanguage) {
+    if (AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context)) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        child: RoadSegmentedTabs(
+          labels: [
+            AppStrings.getWithLanguage(currentLanguage, 'principal_chapters'),
+            AppStrings.getWithLanguage(currentLanguage, 'secondary_chapters'),
+          ],
+          selectedIndex: _selectedTab,
+          onSelected: (index) => setState(() => _selectedTab = index),
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -397,31 +425,69 @@ class _ChapterSelectionScreenState extends State<ChapterSelectionScreen> {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: chapters.length,
-      itemBuilder: (context, index) {
-        final chapter = chapters[index];
-        final progress = chaptersProgress[chapter.id] ??
-            {
-              'total': 0,
-              'practiced': 0,
-              'mastered': 0,
-            };
-        final isLocked = userStateProvider.isChapterLocked(chapter.id);
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 16),
-          child: _buildChapterCard(
-            context,
-            chapter,
-            currentLanguage,
-            progress: progress,
-            isLocked: isLocked,
-            onTap: () => _navigateToPractice(chapter.id),
-          ),
+    // 章節數量有限（最多 15 個），一次建好才能把路線點進來的章節滾到可見處。
+    final focusId = widget.focusChapterId;
+    if (!_focusScrolled && chapters.any((c) => c.id == focusId)) {
+      _focusScrolled = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final target = _focusKey.currentContext;
+        if (!mounted || target == null) return;
+        Scrollable.ensureVisible(
+          target,
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeOutCubic,
+          alignment: 0.1,
         );
-      },
+      });
+    }
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          for (final chapter in chapters)
+            Padding(
+              key: chapter.id == focusId ? _focusKey : null,
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _wrapFocus(
+                context,
+                isFocus: chapter.id == focusId,
+                child: _buildChapterCard(
+                  context,
+                  chapter,
+                  currentLanguage,
+                  progress: chaptersProgress[chapter.id] ??
+                      {
+                        'total': 0,
+                        'practiced': 0,
+                        'mastered': 0,
+                      },
+                  isLocked: userStateProvider.isChapterLocked(chapter.id),
+                  onTap: () => _navigateToPractice(chapter.id),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 路線點進來的章節：外加一圈標誌黃描邊，與首頁「你在這裡」呼應。
+  Widget _wrapFocus(
+    BuildContext context, {
+    required bool isFocus,
+    required Widget child,
+  }) {
+    if (!isFocus) return child;
+    final isRetro = AppTheme.isRetroFor(context);
+    return Container(
+      key: const Key('chapter_focus_highlight'),
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppTheme.accentFor(context),
+        borderRadius:
+            isRetro ? BorderRadius.zero : BorderRadius.circular(23),
+      ),
+      child: child,
     );
   }
 

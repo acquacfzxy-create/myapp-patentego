@@ -144,6 +144,9 @@ class AppStrings {
       'learning_streak_active_today': 'Continuità mantenuta',
       'learning_streak_remaining': 'Ancora {count} per la continuità',
       'growth_session_summary_title': 'Risultati della sessione',
+      'session_cheer_great': 'Guida perfetta!',
+      'session_cheer_good': 'Procedi sicuro!',
+      'session_cheer_keep': 'Ogni domanda è un passo avanti',
       'growth_session_answered': 'Risposte',
       'growth_session_correct': 'Corrette',
       'growth_newly_mastered': 'Nuove domande padroneggiate',
@@ -566,11 +569,12 @@ class AppStrings {
           'Nessun punto debole evidente. Continua così!',
       'explanation_missing_short': 'Nessuna spiegazione disponibile',
       // Modalità eliminazione errori（專項複習）
+      'mistake_mode_vip_unlocked': 'Sbloccato con VIP: puoi iniziare quando vuoi.',
       'mistake_mode_title': 'Modalità elimina errori',
       'mistake_mode_description':
           'Verranno allenate in modo mirato le domande che hai sbagliato ({count}). Ogni risposta corretta riduce il contatore di 1, finché l\'errore sparisce.',
       'mistake_mode_vip_suffix':
-          '✨ Questa funzione è riservata agli utenti VIP e ti aiuta a colpire con precisione i tuoi punti deboli.',
+          'Questa funzione è riservata agli utenti VIP e ti aiuta a colpire con precisione i tuoi punti deboli.',
       'remaining_free_explanations': 'Spiegazioni gratuite rimanenti oggi',
       'explanation_limit_reached_message':
           'Hai usato tutte le spiegazioni gratuite per oggi. Passa a VIP per sbloccare spiegazioni approfondite su tutte le 7.139 domande.',
@@ -796,6 +800,9 @@ class AppStrings {
       'learning_streak_active_today': '今日已保持',
       'learning_streak_remaining': '再做 {count} 题保持连续',
       'growth_session_summary_title': '本次练习成果',
+      'session_cheer_great': '完美驾驶！',
+      'session_cheer_good': '稳稳前进！',
+      'session_cheer_keep': '每一题都在进步',
       'growth_session_answered': '已答',
       'growth_session_correct': '答对',
       'growth_newly_mastered': '新掌握',
@@ -1156,10 +1163,11 @@ class AppStrings {
       'explanation_missing_short': '暂无详细解析',
       'remaining_free_explanations': '今日剩余免费解析次数',
       // 消灭错题模式
+      'mistake_mode_vip_unlocked': '会员已解锁，随时可以开始。',
       'mistake_mode_title': '消灭错题模式',
       'mistake_mode_description':
           '将针对当前的 {count} 道错题进行专项训练。每答对一次，错误次数减 1，直到彻底消灭！',
-      'mistake_mode_vip_suffix': '✨ 本功能为 VIP 会员专享，助你精准提分。',
+      'mistake_mode_vip_suffix': '本功能为 VIP 会员专享，助你精准提分。',
       'explanation_limit_reached_message':
           '今日免费名师解析额度已用完，升级 VIP 解锁全库 7139 题深度解析。',
       'mistake_tab_practice': '专项复习',
@@ -1370,6 +1378,9 @@ class AppStrings {
       'learning_streak_active_today': 'Streak maintained',
       'learning_streak_remaining': '{count} more to keep your streak',
       'growth_session_summary_title': 'Session results',
+      'session_cheer_great': 'Perfect drive!',
+      'session_cheer_good': 'Steady progress!',
+      'session_cheer_keep': 'Every question moves you forward',
       'growth_session_answered': 'Answered',
       'growth_session_correct': 'Correct',
       'growth_newly_mastered': 'Newly mastered',
@@ -1780,11 +1791,12 @@ class AppStrings {
       'no_weak_chapters_placeholder': 'No weak chapters. Keep it up!',
       'explanation_missing_short': 'No explanation available',
       // Mistake elimination mode
+      'mistake_mode_vip_unlocked': 'Unlocked with VIP: start any time.',
       'mistake_mode_title': 'Mistake elimination mode',
       'mistake_mode_description':
           'We will drill the questions you got wrong ({count}) in a dedicated session. Each correct answer reduces the wrong count by 1 until it disappears completely.',
       'mistake_mode_vip_suffix':
-          '✨ This feature is VIP‑only and helps you target your weak spots precisely.',
+          'This feature is VIP‑only and helps you target your weak spots precisely.',
       'remaining_free_explanations': 'Remaining free explanations today',
       'explanation_limit_reached_message':
           'You have used all free explanations for today. Upgrade to VIP to unlock deep explanations for all 7,139 questions.',
@@ -2015,6 +2027,9 @@ class AppStrings {
       'learning_streak_active_today': 'Серия сохранена',
       'learning_streak_remaining': 'Ещё {count}, чтобы сохранить серию',
       'growth_session_summary_title': 'Результаты занятия',
+      'session_cheer_great': 'Идеальная поездка!',
+      'session_cheer_good': 'Уверенно вперёд!',
+      'session_cheer_keep': 'Каждый вопрос — шаг вперёд',
       'growth_session_answered': 'Отвечено',
       'growth_session_correct': 'Верно',
       'growth_newly_mastered': 'Освоено впервые',
@@ -2369,11 +2384,12 @@ class AppStrings {
       'remaining_free_explanations': 'Осталось бесплатных объяснений сегодня',
       'explanation_limit_reached_message':
           'Бесплатные объяснения на сегодня закончились. Перейдите на VIP, чтобы открыть подробные объяснения ко всем 7 139 вопросам.',
+      'mistake_mode_vip_unlocked': 'Открыто с VIP: можно начать в любое время.',
       'mistake_mode_title': 'Режим устранения ошибок',
       'mistake_mode_description':
           'Мы целенаправленно отработаем ваши вопросы с ошибками ({count}). Каждый правильный ответ уменьшает счётчик ошибок на 1, пока ошибка не исчезнет.',
       'mistake_mode_vip_suffix':
-          '✨ Эта функция доступна только VIP и помогает точечно закрывать слабые места.',
+          'Эта функция доступна только VIP и помогает точечно закрывать слабые места.',
       'mistake_tab_practice': 'Целевая практика',
       'mistake_tab_list': 'Список ошибок',
       'hidden_mistakes_banner_prefix': 'Скрыто ',
@@ -2669,6 +2685,9 @@ class AppStrings {
       'learning_streak_active_today': 'آج کا سلسلہ مکمل',
       'learning_streak_remaining': 'سلسلہ جاری رکھنے کے لیے {count} مزید',
       'growth_session_summary_title': 'اس نشست کے نتائج',
+      'session_cheer_great': 'بہترین ڈرائیو!',
+      'session_cheer_good': 'مضبوطی سے آگے!',
+      'session_cheer_keep': 'ہر سوال آگے بڑھنے کا قدم ہے',
       'growth_session_answered': 'جواب دیے',
       'growth_session_correct': 'درست',
       'growth_newly_mastered': 'نئے سیکھے گئے',
@@ -3017,11 +3036,12 @@ class AppStrings {
       'remaining_free_explanations': 'آج باقی مفت وضاحتیں',
       'explanation_limit_reached_message':
           'آج کی تمام مفت وضاحتیں استعمال ہو چکی ہیں۔ تمام 7,139 سوالات کی گہری وضاحتیں کھولنے کے لیے VIP پر جائیں۔',
+      'mistake_mode_vip_unlocked': 'VIP کے ساتھ کھلا ہے: کسی بھی وقت شروع کریں۔',
       'mistake_mode_title': 'غلطی ختم کرنے کا موڈ',
       'mistake_mode_description':
           'آپ کے غلط جواب والے سوالات ({count}) پر خاص مشق ہو گی۔ ہر درست جواب غلطی گنتی کو 1 کم کرتا ہے، یہاں تک کہ غلطی ختم ہو جائے۔',
       'mistake_mode_vip_suffix':
-          '✨ یہ فیچر صرف VIP کے لیے ہے اور کمزور نکات کو ٹھیک نشانہ بنانے میں مدد کرتا ہے۔',
+          'یہ فیچر صرف VIP کے لیے ہے اور کمزور نکات کو ٹھیک نشانہ بنانے میں مدد کرتا ہے۔',
       'mistake_tab_practice': 'ہدفی مشق',
       'mistake_tab_list': 'غلطیوں کی فہرست',
       'hidden_mistakes_banner_prefix': 'چھپے ہوئے ',
@@ -3313,6 +3333,9 @@ class AppStrings {
       'learning_streak_active_today': 'ਅੱਜ ਲੜੀ ਬਣੀ ਰਹੀ',
       'learning_streak_remaining': 'ਲੜੀ ਰੱਖਣ ਲਈ ਹੋਰ {count}',
       'growth_session_summary_title': 'ਇਸ ਸੈਸ਼ਨ ਦੇ ਨਤੀਜੇ',
+      'session_cheer_great': 'ਸ਼ਾਨਦਾਰ ਡਰਾਈਵ!',
+      'session_cheer_good': 'ਮਜ਼ਬੂਤੀ ਨਾਲ ਅੱਗੇ!',
+      'session_cheer_keep': 'ਹਰ ਸਵਾਲ ਅੱਗੇ ਵਧਣ ਦਾ ਕਦਮ ਹੈ',
       'growth_session_answered': 'ਜਵਾਬ ਦਿੱਤੇ',
       'growth_session_correct': 'ਸਹੀ',
       'growth_newly_mastered': 'ਨਵੇਂ ਸਿੱਖੇ',
@@ -3659,11 +3682,12 @@ class AppStrings {
       'remaining_free_explanations': 'ਅੱਜ ਬਾਕੀ ਮੁਫ਼ਤ ਸਮਝਾਓ',
       'explanation_limit_reached_message':
           'ਅੱਜ ਦੇ ਸਾਰੇ ਮੁਫ਼ਤ ਸਮਝਾਓ ਵਰਤੇ ਜਾ ਚੁੱਕੇ ਹਨ। ਸਾਰੇ 7,139 ਸਵਾਲਾਂ ਦੇ ਡੂੰਘੇ ਸਮਝਾਓ ਖੋਲ੍ਹਣ ਲਈ VIP ਤੇ ਜਾਓ।',
+      'mistake_mode_vip_unlocked': 'VIP ਨਾਲ ਖੁੱਲ੍ਹਾ ਹੈ: ਕਦੇ ਵੀ ਸ਼ੁਰੂ ਕਰੋ।',
       'mistake_mode_title': 'ਗਲਤੀ ਖਤਮ ਕਰਨ ਮੋਡ',
       'mistake_mode_description':
           'ਤੁਹਾਡੇ ਗਲਤ ਜਵਾਬ ਵਾਲੇ ਸਵਾਲਾਂ ({count}) ’ਤੇ ਖਾਸ ਅਭਿਆਸ ਹੋਵੇਗਾ। ਹਰ ਸਹੀ ਜਵਾਬ ਗਲਤੀ ਗਿਣਤੀ ਨੂੰ 1 ਘਟਾਉਂਦਾ ਹੈ, ਜਦ ਤੱਕ ਗਲਤੀ ਗਾਇਬ ਨਾ ਹੋ ਜਾਵੇ।',
       'mistake_mode_vip_suffix':
-          '✨ ਇਹ ਫੀਚਰ ਸਿਰਫ਼ VIP ਲਈ ਹੈ ਅਤੇ ਕਮਜ਼ੋਰ ਬਿੰਦੂਆਂ ਨੂੰ ਸਹੀ ਤਰੀਕੇ ਨਾਲ ਸੁਧਾਰਨ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ।',
+          'ਇਹ ਫੀਚਰ ਸਿਰਫ਼ VIP ਲਈ ਹੈ ਅਤੇ ਕਮਜ਼ੋਰ ਬਿੰਦੂਆਂ ਨੂੰ ਸਹੀ ਤਰੀਕੇ ਨਾਲ ਸੁਧਾਰਨ ਵਿੱਚ ਮਦਦ ਕਰਦਾ ਹੈ।',
       'mistake_tab_practice': 'ਟੀਚੇਬੱਧ ਅਭਿਆਸ',
       'mistake_tab_list': 'ਗਲਤੀ ਸੂਚੀ',
       'hidden_mistakes_banner_prefix': 'ਲੁਕਾਏ ਗਏ ',
@@ -3956,6 +3980,9 @@ class AppStrings {
       'learning_streak_active_today': 'Серію збережено',
       'learning_streak_remaining': 'Ще {count}, щоб зберегти серію',
       'growth_session_summary_title': 'Результати заняття',
+      'session_cheer_great': 'Ідеальна поїздка!',
+      'session_cheer_good': 'Упевнено вперед!',
+      'session_cheer_keep': 'Кожне питання — крок уперед',
       'growth_session_answered': 'Відповідей',
       'growth_session_correct': 'Правильно',
       'growth_newly_mastered': 'Ново освоєно',
@@ -4312,11 +4339,12 @@ class AppStrings {
           'Безкоштовних пояснень залишилося сьогодні',
       'explanation_limit_reached_message':
           'Безкоштовні пояснення на сьогодні закінчилися. Перейдіть на VIP, щоб відкрити глибокі пояснення до всіх 7 139 питань.',
+      'mistake_mode_vip_unlocked': 'Відкрито з VIP: можна почати будь-коли.',
       'mistake_mode_title': 'Режим усунення помилок',
       'mistake_mode_description':
           'Ми цілеспрямовано відпрацюємо ваші питання з помилками ({count}). Кожна правильна відповідь зменшує лічильник помилок на 1, доки помилка не зникне.',
       'mistake_mode_vip_suffix':
-          '✨ Ця функція доступна лише VIP і допомагає точно закривати слабкі місця.',
+          'Ця функція доступна лише VIP і допомагає точно закривати слабкі місця.',
       'mistake_tab_practice': 'Цільова практика',
       'mistake_tab_list': 'Список помилок',
       'hidden_mistakes_banner_prefix': 'Приховано ',

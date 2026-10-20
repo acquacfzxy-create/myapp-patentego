@@ -13,6 +13,7 @@ import 'package:lingua_patente/screens/exam_review_screen.dart';
 import 'package:lingua_patente/screens/mock_test_result_screen.dart';
 import 'package:lingua_patente/widgets/learning_route_card.dart';
 import 'package:lingua_patente/widgets/question_widget.dart';
+import 'package:lingua_patente/widgets/road_segmented_tabs.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -138,6 +139,33 @@ void main() {
       );
       expect(tester.takeException(), isNull);
     });
+  });
+
+  testWidgets('segmented tabs report taps and mark the selected tab',
+      (tester) async {
+    var selected = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme(language: 'zh'),
+        home: Scaffold(
+          body: StatefulBuilder(
+            builder: (context, setState) => RoadSegmentedTabs(
+              labels: const ['专项复习', '错题列表'],
+              selectedIndex: selected,
+              onSelected: (i) => setState(() => selected = i),
+            ),
+          ),
+        ),
+      ),
+    );
+    Color? colorOf(String label) =>
+        tester.widget<Text>(find.text(label)).style?.color;
+    expect(colorOf('专项复习'), Colors.white);
+    await tester.tap(find.text('错题列表'));
+    await tester.pumpAndSettle();
+    expect(selected, 1);
+    expect(colorOf('错题列表'), Colors.white);
+    expect(colorOf('专项复习'), AppTheme.roadInk);
   });
 
   group('QuestionWidget road answers', () {

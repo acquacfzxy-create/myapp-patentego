@@ -7,6 +7,7 @@ import '../services/database_service.dart';
 import '../services/access_policy.dart';
 import '../config/app_strings.dart';
 import '../config/app_theme.dart';
+import '../widgets/road_segmented_tabs.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/empty_state_view.dart';
 import '../widgets/question_widget.dart';
@@ -319,6 +320,19 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
   /// 構建 Tab 切換欄
   Widget _buildTabBar() {
     final colorScheme = Theme.of(context).colorScheme;
+    if (AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context)) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: RoadSegmentedTabs(
+          labels: [
+            AppStrings.get('mistake_tab_practice'),
+            AppStrings.get('mistake_tab_list'),
+          ],
+          selectedIndex: _selectedTab,
+          onSelected: (index) => setState(() => _selectedTab = index),
+        ),
+      );
+    }
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
       padding: const EdgeInsets.all(4),
@@ -431,6 +445,9 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
 
   /// 構建專項複習引導卡片
   Widget _buildPracticeGuide() {
+    if (AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context)) {
+      return _buildRoadPracticeGuide();
+    }
     final colorScheme = Theme.of(context).colorScheme;
     final isRetro = AppTheme.isRetroFor(context);
     final cardRadius =
@@ -560,6 +577,157 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
     );
   }
 
+  /// 道路主題的「消滅錯題」入口：大號錯題數 + 標誌黃厚底按鈕；
+  /// 會員看到「已解鎖」，非會員看到會員說明並進入訂閱頁。
+  Widget _buildRoadPracticeGuide() {
+    final mistakeCount = _errorQuestions.length;
+    final isVip =
+        Provider.of<UserStateProvider>(context, listen: true).isVip;
+    final ink = AppTheme.inkFor(context);
+    final muted = AppTheme.mutedFor(context);
+    final enabled = mistakeCount > 0;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 420),
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceFor(context),
+            borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+            border: Border.all(color: AppTheme.lineFor(context), width: 1.5),
+            boxShadow: AppTheme.cardShadowFor(context),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: AppTheme.accentFor(context),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppTheme.roadInk, width: 2.5),
+                ),
+                child: Icon(
+                  Icons.gps_fixed_rounded,
+                  size: 34,
+                  color: AppTheme.onAccentFor(context),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                AppStrings.get('mistake_mode_title'),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  color: ink,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '$mistakeCount',
+                key: const Key('mistake_mode_count'),
+                style: TextStyle(
+                  fontSize: 56,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                  color: AppTheme.dangerFor(context),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                AppStrings.get('mistake_mode_description')
+                    .replaceAll('{count}', '$mistakeCount'),
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, height: 1.6, color: muted),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isVip ? Icons.verified_rounded : Icons.lock_outline,
+                    size: 16,
+                    color: isVip
+                        ? AppTheme.successFor(context)
+                        : AppTheme.warningTextFor(context),
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      AppStrings.get(isVip
+                          ? 'mistake_mode_vip_unlocked'
+                          : 'mistake_mode_vip_suffix'),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: isVip
+                            ? AppTheme.successTextFor(context)
+                            : AppTheme.warningTextFor(context),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: enabled ? AppTheme.chunkyShadowFor(context) : null,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    key: const Key('mistake_mode_start'),
+                    onPressed: enabled
+                        ? () {
+                            if (!isVip) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const SubscriptionPage(),
+                                ),
+                              );
+                            } else {
+                              _startMistakePractice();
+                            }
+                          }
+                        : null,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppTheme.accentFor(context),
+                      foregroundColor: AppTheme.onAccentFor(context),
+                      minimumSize: const Size.fromHeight(54),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: const BorderSide(
+                            color: AppTheme.roadInk, width: 2),
+                      ),
+                      textStyle: Theme.of(context)
+                          .textTheme
+                          .labelLarge
+                          ?.copyWith(fontSize: 16, fontWeight: FontWeight.w900),
+                    ),
+                    icon: Icon(
+                      isVip ? Icons.play_arrow_rounded : Icons.lock_outline,
+                      size: 20,
+                    ),
+                    label: Text(AppStrings.get('mistake_mode_title')),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   /// 開始專項複習
   Future<void> _startMistakePractice() async {
     if (_errorQuestions.isEmpty) return;
@@ -594,7 +762,7 @@ class _MistakeReviewScreenState extends State<MistakeReviewScreen> {
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
             decoration: BoxDecoration(
-              color: colorScheme.surface.withOpacity(0.82),
+              color: AppTheme.headerBackgroundFor(context),
               border: Border(
                 bottom: BorderSide(
                   color: colorScheme.outline.withOpacity(0.2),

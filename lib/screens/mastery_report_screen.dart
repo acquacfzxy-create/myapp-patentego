@@ -131,7 +131,7 @@ class _MasteryReportScreenState extends State<MasteryReportScreen>
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: AppTheme.pageBackgroundFor(context),
       appBar: AppBar(
         title: Text(
           AppStrings.getWithLanguage(currentLang, 'mastery_report_title'),
@@ -141,8 +141,11 @@ class _MasteryReportScreenState extends State<MasteryReportScreen>
             color: colorScheme.onSurface,
           ),
         ),
-        backgroundColor: colorScheme.surface,
+        backgroundColor: AppTheme.pageBackgroundFor(context),
         elevation: 0,
+        // 滾動時不疊加 Material 3 的表面著色，頂欄保持頁面底色。
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           tooltip: MaterialLocalizations.of(context).backButtonTooltip,
           icon: Icon(
@@ -760,7 +763,10 @@ class _MasteryReportScreenState extends State<MasteryReportScreen>
       case ChapterCapabilityState.learning:
         return AppTheme.primaryFor(context);
       case ChapterCapabilityState.needsAttention:
-        return AppTheme.dangerFor(context);
+        // 道路主題用標誌黃系提示「需要加強」，避免整頁粉紅色的壓迫感。
+        return AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context)
+            ? AppTheme.warningTextFor(context)
+            : AppTheme.dangerFor(context);
       case ChapterCapabilityState.stable:
         return AppTheme.successFor(context);
     }
@@ -1116,12 +1122,16 @@ class _MasteryReportScreenState extends State<MasteryReportScreen>
     const chartMinY = 0.0;
     final chartMaxY = (maxVal > 10 ? maxVal : 10).toDouble() + 5.0;
 
+    // 折線表示錯題數，升高不是好事：線用中性色，及格與否只由圓點顏色表達。
+    final lineColor = AppTheme.usesRoadPalette && !isRetro
+        ? AppTheme.inkFor(context).withOpacity(0.55)
+        : primaryColor;
     final barData = LineChartBarData(
       spots: spots,
       isCurved: true,
       curveSmoothness: 0.3,
       barWidth: 3,
-      color: primaryColor,
+      color: lineColor,
       dotData: FlDotData(
         show: true,
         getDotPainter: (spot, percent, bd, index) {
@@ -1140,8 +1150,8 @@ class _MasteryReportScreenState extends State<MasteryReportScreen>
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            primaryColor.withOpacity(0.35),
-            primaryColor.withOpacity(0.08),
+            lineColor.withOpacity(0.25),
+            lineColor.withOpacity(0.06),
             Colors.transparent,
           ],
           stops: const [0.0, 0.4, 1.0],
@@ -1241,6 +1251,15 @@ class _MasteryReportScreenState extends State<MasteryReportScreen>
                               ? _mockHistory[vi]['timestamp']
                               : null;
                           final label = _formatChartDate(ts);
+                          // 同一天多次考試只在第一次下方標日期，避免重複。
+                          final previousLabel = vi > 0 &&
+                                  vi - 1 < _mockHistory.length
+                              ? _formatChartDate(
+                                  _mockHistory[vi - 1]['timestamp'])
+                              : null;
+                          if (label.isNotEmpty && label == previousLabel) {
+                            return const SizedBox.shrink();
+                          }
                           final displayLabel = label.isEmpty
                               ? '${AppStrings.getWithLanguage(lang, 'mock_exam_nth_prefix')}${vi + 1}'
                               : label;
