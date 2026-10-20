@@ -4,7 +4,7 @@ import '../config/app_theme.dart';
 
 /// 首頁功能入口的一套路牌圖標：同樣的圓角方形牌面、同樣的深色描邊與
 /// 實色厚底陰影、同一組圓角線條圖示，只用道路標誌的四種底色區分：
-/// 自由練習＝高速綠、章節練習＝指示藍、模擬考試＝標誌黃、錯題回顧＝警示紅。
+/// 自由練習＝高速綠、章節練習＝指示藍、模擬考試＝標誌黃、錯題回顧＝柔和磚紅。
 enum RoadSignKind { freePractice, chapters, mockTest, mistakes }
 
 class RoadSignIcon extends StatelessWidget {
@@ -14,6 +14,9 @@ class RoadSignIcon extends StatelessWidget {
   final double size;
 
   static const Color _signBlue = Color(0xFF1F4E9E);
+
+  /// 錯題入口用柔和的磚紅，避免警示紅在首頁過於搶眼（白色圖示對比度 4.35）。
+  static const Color _mistakeBrick = Color(0xFFC8553D);
 
   (Color fill, Color glyph, IconData icon) get _spec {
     switch (kind) {
@@ -25,7 +28,7 @@ class RoadSignIcon extends StatelessWidget {
         return (AppTheme.roadAccent, AppTheme.roadInk, Icons.timer_rounded);
       case RoadSignKind.mistakes:
         return (
-          AppTheme.roadDanger,
+          _mistakeBrick,
           Colors.white,
           Icons.priority_high_rounded,
         );
