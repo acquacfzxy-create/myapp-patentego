@@ -21,6 +21,7 @@ import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/circular_progress_card.dart';
 import '../widgets/learning_route_card.dart';
+import '../widgets/road_sign_icon.dart';
 
 /// 首頁
 /// 提供應用的主要功能入口
@@ -440,6 +441,7 @@ class _HomeScreenState extends State<HomeScreen>
                     _buildFeatureCard(
                       context,
                       title: AppStrings.get('random_practice'),
+                      sign: RoadSignKind.freePractice,
                       icon: Icons.shuffle,
                       iconColor: AppTheme.primaryFor(context),
                       bgColor: AppTheme.primarySoftFor(context),
@@ -488,6 +490,7 @@ class _HomeScreenState extends State<HomeScreen>
                     _buildFeatureCard(
                       context,
                       title: AppStrings.get('chapter_practice'),
+                      sign: RoadSignKind.chapters,
                       icon: Icons.menu_book,
                       iconColor: AppTheme.successFor(context),
                       bgColor: AppTheme.successSoftFor(context),
@@ -506,6 +509,7 @@ class _HomeScreenState extends State<HomeScreen>
                     _buildFeatureCard(
                       context,
                       title: AppStrings.get('official_mock_test'),
+                      sign: RoadSignKind.mockTest,
                       icon: Icons.timer,
                       iconColor: AppTheme.warningTextFor(context),
                       bgColor: AppTheme.warningFor(context).withOpacity(0.12),
@@ -518,6 +522,7 @@ class _HomeScreenState extends State<HomeScreen>
                     _buildFeatureCard(
                       context,
                       title: AppStrings.get('mistake_review'),
+                      sign: RoadSignKind.mistakes,
                       icon: Icons.report,
                       iconColor: AppTheme.dangerFor(context),
                       bgColor: AppTheme.dangerSoftFor(context),
@@ -1705,9 +1710,12 @@ class _HomeScreenState extends State<HomeScreen>
     required Color iconColor,
     required Color bgColor,
     required VoidCallback? onTap,
+    RoadSignKind? sign,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isRetro = AppTheme.isRetroFor(context);
+    // 道路主題用路牌圖標取代方塊圖示；復古與 Web 保持原樣。
+    final useSign = sign != null && AppTheme.usesRoadPalette && !isRetro;
     final effectiveIconColor = isRetro ? AppTheme.retroPrimary : iconColor;
     return GlassCard(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
@@ -1717,6 +1725,9 @@ class _HomeScreenState extends State<HomeScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (useSign)
+            RoadSignIcon(kind: sign, size: 56)
+          else
           Container(
             width: 56,
             height: 56,
