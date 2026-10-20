@@ -126,5 +126,5 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/images/app_icon.png"
   remove_alpha_ios: true  # 必须开启这个，移除透明度
-  adaptive_icon_background: "#3B82F6"
-  adaptive_icon_foreground: "assets/images/app_icon.png"
+  adaptive_icon_background: "#FFC20E"
+  adaptive_icon_foreground: "assets/icon_src/app_icon_foreground.png"

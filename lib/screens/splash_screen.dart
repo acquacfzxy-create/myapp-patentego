@@ -119,10 +119,14 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         );
                       },
-                      child: Image.asset(
-                        'assets/images/app_icon.png',
-                        width: 150,
-                        height: 150,
+                      // 圖標為滿版黃底方圖，裁成與桌面一致的圓角。
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(34),
+                        child: Image.asset(
+                          'assets/images/app_icon.png',
+                          width: 150,
+                          height: 150,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 28),
