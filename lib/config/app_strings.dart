@@ -137,7 +137,7 @@ class AppStrings {
       'daily_goal_dynamic_short': 'Piano dinamico',
       'daily_goal_start_today_plan': 'Inizia il piano di oggi',
       'daily_goal_plan_complete': 'Hai completato il piano di oggi.',
-      'daily_goal_extra_round': 'Piano completato · Un altro giro',
+      'daily_goal_extra_round': 'Piano fatto · Altre domande nuove',
       'daily_goal_no_plan_questions':
           'Nessuna domanda disponibile per il piano di oggi.',
       'learning_streak_days': 'Giorni consecutivi: {count}',
@@ -790,7 +790,7 @@ class AppStrings {
       'daily_goal_dynamic_short': '动态计划',
       'daily_goal_start_today_plan': '开始今日计划',
       'daily_goal_plan_complete': '今日计划已完成。',
-      'daily_goal_extra_round': '今日计划已完成 · 再练一组',
+      'daily_goal_extra_round': '今日计划已完成 · 再来一组新题',
       'daily_goal_no_plan_questions': '今日计划暂无可用题目。',
       'learning_streak_days': '连续学习 {count} 天',
       'learning_streak_active_today': '今日已保持',
@@ -1363,7 +1363,7 @@ class AppStrings {
       'daily_goal_dynamic_short': 'Dynamic plan',
       'daily_goal_start_today_plan': 'Start today\'s plan',
       'daily_goal_plan_complete': 'Today\'s plan is complete.',
-      'daily_goal_extra_round': 'Plan done · One more round',
+      'daily_goal_extra_round': 'Plan done · More new questions',
       'daily_goal_no_plan_questions':
           'No questions are available for today\'s plan.',
       'learning_streak_days': '{count}-day learning streak',
@@ -2008,7 +2008,7 @@ class AppStrings {
       'daily_goal_dynamic_short': 'Динамический план',
       'daily_goal_start_today_plan': 'Начать план на сегодня',
       'daily_goal_plan_complete': 'План на сегодня выполнен.',
-      'daily_goal_extra_round': 'План выполнен · Ещё подход',
+      'daily_goal_extra_round': 'План выполнен · Ещё новые вопросы',
       'daily_goal_no_plan_questions':
           'Для плана на сегодня нет доступных вопросов.',
       'learning_streak_days': 'Серия обучения: {count} дн.',
@@ -2662,7 +2662,7 @@ class AppStrings {
       'daily_goal_dynamic_short': 'متحرک منصوبہ',
       'daily_goal_start_today_plan': 'آج کا منصوبہ شروع کریں',
       'daily_goal_plan_complete': 'آج کا منصوبہ مکمل ہے۔',
-      'daily_goal_extra_round': 'آج کا منصوبہ مکمل · ایک اور راؤنڈ',
+      'daily_goal_extra_round': 'منصوبہ مکمل · مزید نئے سوالات',
       'daily_goal_no_plan_questions':
           'آج کے منصوبے کے لیے کوئی سوال دستیاب نہیں۔',
       'learning_streak_days': '{count} دن مسلسل سیکھا',
@@ -3307,7 +3307,7 @@ class AppStrings {
       'daily_goal_dynamic_short': 'ਗਤੀਸ਼ੀਲ ਯੋਜਨਾ',
       'daily_goal_start_today_plan': 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਸ਼ੁਰੂ ਕਰੋ',
       'daily_goal_plan_complete': 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਪੂਰੀ ਹੋ ਗਈ।',
-      'daily_goal_extra_round': 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਪੂਰੀ · ਇੱਕ ਹੋਰ ਦੌਰ',
+      'daily_goal_extra_round': 'ਯੋਜਨਾ ਪੂਰੀ · ਹੋਰ ਨਵੇਂ ਸਵਾਲ',
       'daily_goal_no_plan_questions': 'ਅੱਜ ਦੀ ਯੋਜਨਾ ਲਈ ਕੋਈ ਸਵਾਲ ਉਪਲਬਧ ਨਹੀਂ।',
       'learning_streak_days': '{count} ਦਿਨ ਦੀ ਸਿੱਖਣ ਲੜੀ',
       'learning_streak_active_today': 'ਅੱਜ ਲੜੀ ਬਣੀ ਰਹੀ',
@@ -3949,7 +3949,7 @@ class AppStrings {
       'daily_goal_dynamic_short': 'Динамічний план',
       'daily_goal_start_today_plan': 'Почати план на сьогодні',
       'daily_goal_plan_complete': 'План на сьогодні виконано.',
-      'daily_goal_extra_round': 'План виконано · Ще підхід',
+      'daily_goal_extra_round': 'План виконано · Ще нові питання',
       'daily_goal_no_plan_questions':
           'Для плану на сьогодні немає доступних питань.',
       'learning_streak_days': 'Серія навчання: {count} дн.',

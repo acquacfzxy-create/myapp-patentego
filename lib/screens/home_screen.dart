@@ -1231,7 +1231,7 @@ class _HomeScreenState extends State<HomeScreen>
                 onPressed: !canPractice
                     ? null
                     : planComplete
-                        ? () => _startTodayRecommendation(userStateProvider)
+                        ? () => _startExtraRound(userStateProvider)
                         : () => _startDailyPlan(userStateProvider),
                 icon: Icon(
                   isRoadHero && !canPractice
@@ -1299,6 +1299,44 @@ class _HomeScreenState extends State<HomeScreen>
     if (!mounted) return;
     if (questions.isEmpty) {
       _showDailyPlanMessage('daily_goal_no_plan_questions');
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PracticeScreen(
+          questions: questions,
+          skipMastered: false,
+        ),
+      ),
+    );
+    if (mounted) await _loadStatistics();
+  }
+
+  /// 今日計劃完成後的「再練一組」：再來一組沒做過的新題，
+  /// 與「今日建議」（錯題／薄弱章節）區分開。
+  static const int _extraRoundSize = 10;
+
+  Future<void> _startExtraRound(UserStateProvider provider) async {
+    await provider.checkAndResetDailyCounters();
+    if (!mounted || !provider.canPractice()) return;
+
+    final count = provider.isVip
+        ? _extraRoundSize
+        : min(
+            _extraRoundSize,
+            AccessPolicy.freeDailyQuizLimit - provider.dailyQuizCount,
+          );
+    if (count <= 0) return;
+    final questions = await DatabaseService.getStudyPlanQuestions(
+      newCount: count,
+      reviewCount: 0,
+      translationLang: provider.currentLanguage,
+      userId: provider.effectiveUserId,
+    );
+    if (!mounted) return;
+    if (questions.isEmpty) {
+      _showDailyPlanMessage('daily_goal_all_done');
       return;
     }
 

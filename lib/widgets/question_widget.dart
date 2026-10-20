@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:provider/provider.dart';
+import 'dart:math' show max;
 import 'dart:ui';
 import '../models/question.dart';
 import '../services/database_service.dart';
@@ -637,6 +638,16 @@ class _StudyTipSectionState extends State<_StudyTipSection>
 
 class _QuestionWidgetState extends State<QuestionWidget>
     with SingleTickerProviderStateMixin {
+  /// 侧边操作按钮列距屏幕行尾的距离（与卡片行尾边缘对齐）。
+  static const double _actionRailEndInset = 20;
+
+  /// 按钮列的实际宽度（48dp 按钮加阴影与描边的外扩）。
+  static const double _actionRailWidth = 52;
+
+  /// 按钮列占用的行尾宽度（含与文字的间距），卡片内容在此之外排版。
+  static const double _actionRailReserve =
+      _actionRailEndInset + _actionRailWidth + 8;
+
   bool _showExplanation = false;
   bool _isFavorite = false;
   bool _showTranslation = false; // 翻譯顯示狀態
@@ -973,9 +984,10 @@ class _QuestionWidgetState extends State<QuestionWidget>
                             key: ValueKey(
                                 widget.question.id), // 使用题目ID作为key，确保题目变化时触发动画
                             controller: _scrollController,
-                            // 操作按钮不再叠在内容上，末尾只需常规留白。
+                            // 卡片左右对称（与旧版一致居中）；按钮悬浮在卡片行尾内侧，
+                            // 由卡片内边距为按钮让出位置，文字不会被遮挡。
                             padding: const EdgeInsetsDirectional.fromSTEB(
-                                20, 24, 12, 32),
+                                20, 24, 20, 32),
                             child: _buildMainContent(
                               context,
                               questionTextIt,
@@ -988,34 +1000,33 @@ class _QuestionWidgetState extends State<QuestionWidget>
                       );
                     },
                   );
-                  // 反馈气泡叠在内容区底部（与原先一样浮在内容之上），不越过侧边操作按钮区域。
-                  final contentWithBubbles = Stack(
+                  // 反馈气泡浮在内容区底部，不越过侧边操作按钮区域。
+                  return Stack(
                     children: [
                       Positioned.fill(child: content),
-                      Positioned(
-                        left: 0,
-                        right: 0,
+                      PositionedDirectional(
+                        start: 0,
+                        end: _actionRailEndInset + _actionRailWidth,
                         bottom: 16,
                         child: _buildFeedbackBubbles(),
                       ),
-                    ],
-                  );
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Expanded(child: contentWithBubbles),
-                      Padding(
-                        padding: const EdgeInsetsDirectional.only(
-                            end: 20, bottom: 16),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              for (var k = 0; k < actions.length; k++) ...[
-                                if (k > 0) const SizedBox(height: 12),
-                                actions[k],
+                      PositionedDirectional(
+                        end: _actionRailEndInset,
+                        bottom: 16,
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: max(0, constraints.maxHeight - 32),
+                          ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                for (var k = 0; k < actions.length; k++) ...[
+                                  if (k > 0) const SizedBox(height: 12),
+                                  actions[k],
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
                       ),
@@ -1077,7 +1088,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
   ) {
     final colorScheme = Theme.of(context).colorScheme;
     return GlassCard(
-      padding: const EdgeInsets.all(24),
+      // 行尾多留出按钮列的宽度：卡片满宽居中，文字与图片不进入按钮下方。
+      padding: const EdgeInsetsDirectional.fromSTEB(
+          24, 24, _actionRailReserve - 20, 24),
       borderRadius: BorderRadius.circular(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

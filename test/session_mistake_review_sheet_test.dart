@@ -125,4 +125,37 @@ void main() {
       }
     });
   }
+
+  testWidgets('expanding more explanation scrolls the sheet to it',
+      (tester) async {
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final entry = mistake('long', true);
+    entry.question.translations['zh'] = List.filled(40, '很长的题意').join();
+    entry.question.explanations['zh'] = jsonEncode({
+      'detailed_description': List.filled(30, '原因说明').join(),
+      'key_points': [
+        {'title': '要点', 'content': '内容'}
+      ],
+      'study_tip': '小贴士',
+    });
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SessionMistakeReviewSheet(mistakes: [entry], language: 'zh'),
+      ),
+    ));
+    await tester.pumpAndSettle();
+    final scrollable =
+        tester.state<ScrollableState>(find.byType(Scrollable).first);
+    final before = scrollable.position.pixels;
+    await tester.ensureVisible(find.byKey(const Key('session_review_more')));
+    await tester.pumpAndSettle();
+    final afterButton = scrollable.position.pixels;
+    await tester.tap(find.byKey(const Key('session_review_more')));
+    await tester.pumpAndSettle();
+    expect(scrollable.position.pixels, greaterThan(afterButton));
+    expect(afterButton, greaterThanOrEqualTo(before));
+  });
 }

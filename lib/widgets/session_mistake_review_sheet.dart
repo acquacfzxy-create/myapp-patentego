@@ -33,6 +33,7 @@ class _SessionMistakeReviewSheetState extends State<SessionMistakeReviewSheet> {
   final _scrollController = ScrollController();
   int _index = 0;
   final Set<String> _expandedQuestions = {};
+  final _supplementKey = GlobalKey();
 
   String _text(String key) => AppStrings.getWithLanguage(widget.language, key);
 
@@ -48,10 +49,24 @@ class _SessionMistakeReviewSheetState extends State<SessionMistakeReviewSheet> {
   }
 
   void _toggleMore(Question question) {
+    var expanded = false;
     setState(() {
       if (!_expandedQuestions.remove(question.id)) {
         _expandedQuestions.add(question.id);
+        expanded = true;
       }
+    });
+    if (!expanded) return;
+    // 展開後自動滑到補充解析，與做題時打開解析的體驗一致。
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = _supplementKey.currentContext;
+      if (!mounted || target == null) return;
+      Scrollable.ensureVisible(
+        target,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+        alignment: 0.05,
+      );
     });
   }
 
@@ -170,10 +185,13 @@ class _SessionMistakeReviewSheetState extends State<SessionMistakeReviewSheet> {
                           : 'session_mistakes_expand')),
                     ),
                     if (isExpanded)
-                      QuestionWidget.buildExplanationSupplement(
-                        context,
-                        parsedExplanation: parsed,
-                        currentLanguage: widget.language,
+                      KeyedSubtree(
+                        key: _supplementKey,
+                        child: QuestionWidget.buildExplanationSupplement(
+                          context,
+                          parsedExplanation: parsed,
+                          currentLanguage: widget.language,
+                        ),
                       ),
                   ],
                 ],
