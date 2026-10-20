@@ -65,7 +65,8 @@ class _VoicePackScreenState extends State<VoicePackScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // 標題欄透明，需由 Scaffold 提供頁面底色，否則會露出黑色窗口底。
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(AppStrings.get('voice_pack_title')),
         backgroundColor: Colors.transparent,

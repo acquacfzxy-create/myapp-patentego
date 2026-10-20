@@ -231,14 +231,21 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
     final hasImage =
         question.imageName != null && question.imageName!.isNotEmpty;
 
+    // 未作答也算答錯；答錯的卡片加紅框，方便在 30 題中快速找到。
+    final answeredWrong = userChoice != correctAnswer;
+
     return ClipRRect(
       borderRadius: cardRadius,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
         child: Container(
+          key: answeredWrong ? Key('exam_review_wrong_$index') : null,
           decoration: BoxDecoration(
             color: colorScheme.surface.withOpacity(0.94),
             borderRadius: cardRadius,
+            border: answeredWrong
+                ? Border.all(color: AppTheme.dangerFor(context), width: 2)
+                : null,
             boxShadow: AppTheme.cardShadowFor(context),
           ),
           child: Padding(
@@ -388,6 +395,7 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
     if (kDebugMode && isWrong) {}
     final successColor = AppTheme.successFor(context);
     final mutedColor = AppTheme.mutedFor(context);
+    final dangerColor = AppTheme.dangerFor(context);
 
     return SizedBox(
       width: 40,
@@ -404,12 +412,16 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
               shape: BoxShape.circle,
               color: isCorrect
                   ? successColor.withOpacity(0.15) // 正確答案：淡綠色背景（始終顯示）
-                  : Colors.transparent,
+                  : isWrong
+                      ? dangerColor.withOpacity(0.12)
+                      : Colors.transparent,
               border: Border.all(
                 color: isCorrect
                     ? successColor // 正確答案：綠色邊框（始終顯示）
-                    : mutedColor.withOpacity(0.38),
-                width: isCorrect ? 2 : 1.5,
+                    : isWrong
+                        ? dangerColor
+                        : mutedColor.withOpacity(0.38),
+                width: isCorrect || isWrong ? 2 : 1.5,
               ),
             ),
             child: Center(
@@ -423,19 +435,32 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
                   ], // Monospace 效果
                   color: isCorrect
                       ? successColor // 正確答案：綠色文字（始終顯示）
-                      : mutedColor, // 未選中：灰色文字
+                      : isWrong
+                          ? dangerColor
+                          : mutedColor, // 未選中：灰色文字
                 ),
               ),
             ),
           ),
 
-          // 用戶選錯標記（紅色斜線，模擬老師用紅筆劃掉）
-          // 只有當用戶選錯了（isWrong = true）時，才在用戶選的那個錯誤字母上畫紅線
-          // 紅杠在 Stack 的最頂層，確保覆蓋在圓圈上方
+          // 用戶選錯標記：紅色圓圈 + 右上角小叉，取代會超出圓圈的紅色斜線。
           if (isWrong)
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _RedSlashPainter(color: AppTheme.dangerFor(context)),
+            Positioned(
+              top: -4,
+              right: -4,
+              child: Container(
+                key: const Key('exam_review_wrong_pick'),
+                width: 16,
+                height: 16,
+                decoration: BoxDecoration(
+                  color: dangerColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(context).colorScheme.surface,
+                    width: 1.5,
+                  ),
+                ),
+                child: const Icon(Icons.close, size: 10, color: Colors.white),
               ),
             ),
         ],
@@ -633,39 +658,3 @@ class _ExamReviewScreenState extends State<ExamReviewScreen> {
   }
 }
 
-/// 紅色斜線繪製器（模擬老師用紅筆劃掉的效果）
-///
-/// 視覺精修：
-/// - 顏色：鮮豔的紅色 (Colors.red)
-/// - 厚度：2px
-/// - 角度：-45度（從左上到右下）
-/// - 寬度：稍微超出圓圈一點，模仿老師批改的效果
-class _RedSlashPainter extends CustomPainter {
-  final Color color;
-
-  const _RedSlashPainter({required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color // 鮮豔的紅色
-      ..strokeWidth = 2.0 // 厚度 2px
-      ..strokeCap = StrokeCap.round; // 圓角端點，更像手寫效果
-
-    // 從左上到右下畫一條斜線（-45度）
-    // 稍微超出圓圈，模擬手寫效果
-    const startX = -6.0;
-    const startY = -6.0;
-    final endX = size.width + 6.0;
-    final endY = size.height + 6.0;
-
-    canvas.drawLine(
-      Offset(startX, startY),
-      Offset(endX, endY),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}

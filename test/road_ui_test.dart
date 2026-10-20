@@ -9,6 +9,7 @@ import 'package:lingua_patente/config/app_strings.dart';
 import 'package:lingua_patente/config/app_theme.dart';
 import 'package:lingua_patente/models/question.dart';
 import 'package:lingua_patente/providers/user_state_provider.dart';
+import 'package:lingua_patente/screens/exam_review_screen.dart';
 import 'package:lingua_patente/screens/mock_test_result_screen.dart';
 import 'package:lingua_patente/widgets/learning_route_card.dart';
 import 'package:lingua_patente/widgets/question_widget.dart';
@@ -227,6 +228,58 @@ void main() {
       expect(find.byKey(const Key('mock_result_stickers')), findsNothing);
       expect(find.textContaining('错题，下次就能过'), findsOneWidget);
     });
+
+    testWidgets('NON IDONEO stays on one line on a 360dp phone',
+        (tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(screen(errors: 6));
+      await tester.pump();
+
+      final headline = tester.widget<Text>(find.text('NON IDONEO'));
+      expect(headline.maxLines, 1);
+      expect(
+        find.ancestor(
+            of: find.text('NON IDONEO'), matching: find.byType(FittedBox)),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a failed rating uses the warning color, not green',
+        (tester) async {
+      await tester.pumpWidget(screen(errors: 6));
+      await tester.pump();
+
+      final rating =
+          tester.widget<Text>(find.text(AppStrings.get('keep_trying')));
+      expect(rating.style?.color, AppTheme.roadDanger);
+    });
+  });
+
+  testWidgets('exam review frames wrong answers and badges the wrong pick',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({'current_language': 'zh'});
+    final question = _fixture('test/fixtures/l10n_sample_question.json');
+    await tester.pumpWidget(
+      ChangeNotifierProvider<UserStateProvider>.value(
+        value: UserStateProvider(),
+        child: MaterialApp(
+          theme: AppTheme.lightTheme(language: 'zh'),
+          home: ExamReviewScreen(
+            questions: [question, question],
+            userChoices: {0: !question.answer, 1: question.answer},
+          ),
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.byKey(const Key('exam_review_wrong_0')), findsOneWidget);
+    expect(find.byKey(const Key('exam_review_wrong_1')), findsNothing);
+    expect(find.byKey(const Key('exam_review_wrong_pick')), findsOneWidget);
   });
 }
 

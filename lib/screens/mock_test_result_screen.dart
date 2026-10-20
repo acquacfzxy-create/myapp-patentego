@@ -111,7 +111,8 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.transparent,
+      // 內容比屏幕短時，透明底會在下方露出黑色窗口底，改用頁面底色。
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       // 毛玻璃 AppBar
       appBar: _buildGlassAppBar(context),
       body: Container(
@@ -164,14 +165,19 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
 
     final headline = Column(
       children: [
-        Text(
-          isPassed ? AppStrings.get('idoneo') : AppStrings.get('non_idoneo'),
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.w900,
-            color: statusColor,
-            letterSpacing: 1,
+        // 窄屏（360dp）上 NON IDONEO 也保持一行，必要時等比縮小。
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            isPassed ? AppStrings.get('idoneo') : AppStrings.get('non_idoneo'),
+            maxLines: 1,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 40,
+              fontWeight: FontWeight.w900,
+              color: statusColor,
+              letterSpacing: 1,
+            ),
           ),
         ),
         const SizedBox(height: 6),
@@ -584,15 +590,19 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
               _buildStatusIcon(isPassed, statusColor),
               const SizedBox(height: 16),
               // 大標題（合格/不合格 或 IDONEO/NON IDONEO）
-              Text(
-                isPassed
-                    ? AppStrings.get('idoneo')
-                    : AppStrings.get('non_idoneo'),
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w800,
-                  color: statusColor,
-                  letterSpacing: 0,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  isPassed
+                      ? AppStrings.get('idoneo')
+                      : AppStrings.get('non_idoneo'),
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w800,
+                    color: statusColor,
+                    letterSpacing: 0,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -711,12 +721,16 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final isRetro = AppTheme.isRetroFor(context);
+    // 評價跟隨考試結果：通過用主色，未通過用警示色，不再一律綠色。
+    final primaryValueColor = widget.isPassed
+        ? colorScheme.primary
+        : AppTheme.dangerFor(context);
     return Column(
       children: [
         Icon(
           icon,
           size: 20,
-          color: isPrimary ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          color: isPrimary ? primaryValueColor : colorScheme.onSurfaceVariant,
         ),
         const SizedBox(height: 4),
         Text(
@@ -736,7 +750,7 @@ class _MockTestResultScreenState extends State<MockTestResultScreen>
           style: TextStyle(
             fontSize: isPrimary ? 18 : 20,
             fontWeight: FontWeight.bold,
-            color: isPrimary ? colorScheme.primary : colorScheme.onSurface,
+            color: isPrimary ? primaryValueColor : colorScheme.onSurface,
           ),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,

@@ -1014,6 +1014,13 @@ class _HomeScreenState extends State<HomeScreen>
             ? AppTheme.roadAccent
             : const Color(0xFFF59E0B);
     final plan = userStateProvider.currentDailyPlan;
+    // 今日新題與複習都已達標：主按鈕改為「再練一組」，直接進入今日建議。
+    final planComplete =
+        max(0, plan.newGoal - userStateProvider.dailyNewQuestionCount) +
+                max(0,
+                    plan.reviewGoal - userStateProvider.dailyReviewQuestionCount) ==
+            0;
+    final canPractice = userStateProvider.canPractice();
     final streak = userStateProvider.learningStreak;
     final estimatedText = plan.newGoal == 0
         ? AppStrings.getWithLanguage(_currentLanguage, 'daily_goal_all_done')
@@ -1221,13 +1228,17 @@ class _HomeScreenState extends State<HomeScreen>
               width: double.infinity,
               child: FilledButton.icon(
                 key: const Key('start_daily_plan_button'),
-                onPressed: userStateProvider.canPractice()
-                    ? () => _startDailyPlan(userStateProvider)
-                    : null,
+                onPressed: !canPractice
+                    ? null
+                    : planComplete
+                        ? () => _startTodayRecommendation(userStateProvider)
+                        : () => _startDailyPlan(userStateProvider),
                 icon: Icon(
-                  isRoadHero && !userStateProvider.canPractice()
+                  isRoadHero && !canPractice
                       ? Icons.lock_clock_rounded
-                      : Icons.play_arrow_rounded,
+                      : planComplete
+                          ? Icons.replay_rounded
+                          : Icons.play_arrow_rounded,
                   size: 20,
                   color: isRetro ? AppTheme.retroPage : null,
                 ),
@@ -1235,9 +1246,11 @@ class _HomeScreenState extends State<HomeScreen>
                   AppStrings.getWithLanguage(
                     _currentLanguage,
                     // 道路主題下額度用完直接說明原因，而不是只顯示灰掉的按鈕。
-                    isRoadHero && !userStateProvider.canPractice()
+                    isRoadHero && !canPractice
                         ? 'quiz_limit_reached'
-                        : 'daily_goal_start_today_plan',
+                        : planComplete
+                            ? 'daily_goal_extra_round'
+                            : 'daily_goal_start_today_plan',
                   ),
                 ),
               ),
