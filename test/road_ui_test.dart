@@ -11,6 +11,7 @@ import 'package:lingua_patente/models/question.dart';
 import 'package:lingua_patente/providers/user_state_provider.dart';
 import 'package:lingua_patente/screens/exam_review_screen.dart';
 import 'package:lingua_patente/screens/mock_test_result_screen.dart';
+import 'package:lingua_patente/widgets/answer_motion.dart';
 import 'package:lingua_patente/widgets/bouncy_press.dart';
 import 'package:lingua_patente/widgets/learning_route_card.dart';
 import 'package:lingua_patente/widgets/question_widget.dart';
@@ -139,6 +140,56 @@ void main() {
         ),
       );
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('AnswerMotion', () {
+    Future<void> pumpMotion(WidgetTester tester, AnswerMotionKind kind,
+        {bool reduceMotion = false}) async {
+      Widget app(AnswerMotionKind k) => MediaQuery(
+            data: MediaQueryData(disableAnimations: reduceMotion),
+            child: Directionality(
+              textDirection: TextDirection.ltr,
+              child: Center(
+                child: AnswerMotion(
+                  kind: k,
+                  child: const SizedBox(width: 80, height: 40),
+                ),
+              ),
+            ),
+          );
+      await tester.pumpWidget(app(AnswerMotionKind.none));
+      await tester.pumpWidget(app(kind));
+      await tester.pump(); // post-frame start
+      await tester.pump(const Duration(milliseconds: 90));
+    }
+
+    Matrix4? transformNow(WidgetTester tester) {
+      final finder = find.descendant(
+        of: find.byType(AnswerMotion),
+        matching: find.byType(Transform),
+      );
+      if (finder.evaluate().isEmpty) return null;
+      return tester.widget<Transform>(finder.first).transform;
+    }
+
+    testWidgets('correct answer pops above full size', (tester) async {
+      await pumpMotion(tester, AnswerMotionKind.correctPop);
+      expect(transformNow(tester)!.getMaxScaleOnAxis(), greaterThan(1.01));
+      await tester.pumpAndSettle();
+      expect(transformNow(tester), isNull);
+    });
+
+    testWidgets('wrong answer shakes sideways', (tester) async {
+      await pumpMotion(tester, AnswerMotionKind.wrongShake);
+      expect(transformNow(tester)!.getTranslation().x.abs(), greaterThan(0.5));
+      await tester.pumpAndSettle();
+      expect(transformNow(tester), isNull);
+    });
+
+    testWidgets('reduce motion keeps the button still', (tester) async {
+      await pumpMotion(tester, AnswerMotionKind.wrongShake, reduceMotion: true);
+      expect(transformNow(tester), isNull);
     });
   });
 

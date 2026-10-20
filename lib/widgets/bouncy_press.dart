@@ -32,7 +32,8 @@ class _BouncyPressState extends State<BouncyPress>
   }
 
   void _release() {
-    if (!widget.enabled) return;
+    // 按下後卡片可能立刻變成不可點（例如答題後），仍要彈回原大小。
+    if (_controller.value == 1.0) return;
     _controller.animateTo(
       1.0,
       duration: const Duration(milliseconds: 480),
