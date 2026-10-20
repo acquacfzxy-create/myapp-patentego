@@ -54,7 +54,8 @@ class _StreakJitterState extends State<StreakJitter>
     final amp = widget.strength >= 2 ? 1.0 : 0.55;
     return AnimatedBuilder(
       animation: _controller,
-      child: widget.child,
+      // 徽章本身（含大光暈陰影）單獨快取，抖動時只變換位置，不必每幀重畫。
+      child: RepaintBoundary(child: widget.child),
       builder: (context, child) {
         final t = _controller.value * 2 * math.pi;
         // 幾個不同頻率疊加，抖動不呆板。

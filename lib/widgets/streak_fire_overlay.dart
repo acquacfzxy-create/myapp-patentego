@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -28,6 +29,8 @@ class _StreakFireOverlayState extends State<StreakFireOverlay>
     duration: const Duration(milliseconds: 2400),
   );
   double _shownIntensity = 0;
+  List<ui.Image>? _sprites;
+  double _spriteDpr = 0;
 
   @override
   void initState() {
@@ -69,7 +72,25 @@ class _StreakFireOverlayState extends State<StreakFireOverlay>
   @override
   void dispose() {
     _ticker.dispose();
+    for (final image in _sprites ?? const <ui.Image>[]) {
+      image.dispose();
+    }
     super.dispose();
+  }
+
+  /// 火苗貼圖：三層火舌與模糊光暈只畫一次，之後每幀只做縮放、傾斜貼上，
+  /// 避免每幀對幾十條火舌即時模糊（真機上原本每幀繪製約 30ms）。
+  List<ui.Image> _spritesFor(double dpr) {
+    if (_sprites != null && _spriteDpr == dpr) return _sprites!;
+    for (final image in _sprites ?? const <ui.Image>[]) {
+      image.dispose();
+    }
+    _spriteDpr = dpr;
+    _sprites = [
+      _FlameSprite.render(dpr, curl: 0.35),
+      _FlameSprite.render(dpr, curl: -0.45),
+    ];
+    return _sprites!;
   }
 
   @override
@@ -82,16 +103,21 @@ class _StreakFireOverlayState extends State<StreakFireOverlay>
         duration: const Duration(milliseconds: 600),
         curve: Curves.easeOut,
         child: RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: _ticker,
-            builder: (context, _) => CustomPaint(
-              size: Size.infinite,
-              painter: _EdgeFirePainter(
-                time: _ticker.value,
-                intensity: _shownIntensity,
-              ),
-            ),
-          ),
+          child: target <= 0 && !_ticker.isAnimating && _sprites == null
+              ? const SizedBox.expand()
+              : AnimatedBuilder(
+                  animation: _ticker,
+                  builder: (context, _) => CustomPaint(
+                    size: Size.infinite,
+                    painter: _EdgeFirePainter(
+                      // 火焰以約 30fps 更新即可，其餘幀跳過重繪。
+                      time: (_ticker.value * 72).floor() / 72,
+                      intensity: _shownIntensity,
+                      sprites:
+                          _spritesFor(MediaQuery.devicePixelRatioOf(context)),
+                    ),
+                  ),
+                ),
         ),
       ),
     );
@@ -99,10 +125,15 @@ class _StreakFireOverlayState extends State<StreakFireOverlay>
 }
 
 class _EdgeFirePainter extends CustomPainter {
-  _EdgeFirePainter({required this.time, required this.intensity});
+  _EdgeFirePainter({
+    required this.time,
+    required this.intensity,
+    required this.sprites,
+  });
 
   final double time;
   final double intensity;
+  final List<ui.Image> sprites;
 
   static const _deep = Color(0xFFB31B00);
   static const _red = Color(0xFFFF3D00);
@@ -206,15 +237,13 @@ class _EdgeFirePainter extends CustomPainter {
       canvas.drawCircle(
         pos,
         1.2 + (1 - life) * 1.6,
-        Paint()
-          ..color = Color.lerp(_yellow, _red, life)!.withOpacity(alpha)
-          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.2),
+        Paint()..color = Color.lerp(_yellow, _red, life)!.withOpacity(alpha),
       );
     }
   }
 
-  /// 一條火苗：外層暗紅模糊光暈、中層橙色、內芯亮黃白；
-  /// 尖端細長，邊緣隨時間左右彎曲，像真的火舌一樣舔動。
+  /// 一條火苗：取預先畫好的火苗貼圖，平移、旋轉到位，按高度縮放並隨時間
+  /// 左右傾斜，模擬火舌舔動。
   void _flame(
     Canvas canvas, {
     required Offset base,
@@ -225,98 +254,110 @@ class _EdgeFirePainter extends CustomPainter {
     required double phase,
   }) {
     if (height <= 2) return;
-    // 在局部座標裡畫一條朝上的火苗，再平移、旋轉到指定位置與方向。
+    final sprite = sprites[(phase * 10).round().abs() % sprites.length];
+    final sway = math.sin(t * 4.3 + phase * 1.3) * 0.22 +
+        math.sin(t * 3.1 + phase) * 0.12;
     canvas.save();
     canvas.translate(base.dx, base.dy);
     canvas.rotate(angle);
-    base = Offset.zero;
-    const lean = 0.0;
-    Path tongue(double scaleW, double scaleH) {
-      final h = height * scaleH;
-      final hw = width * scaleW / 2;
-      final sway1 = math.sin(t * 3.1 + phase) * hw * 0.35;
-      final sway2 = math.sin(t * 4.3 + phase * 1.3) * hw * 0.5;
-      final tip = Offset(base.dx + lean * h + sway2, base.dy - h);
-      return Path()
-        ..moveTo(base.dx - hw, base.dy)
-        ..cubicTo(
-          base.dx - hw * 1.05,
-          base.dy - h * 0.35,
-          base.dx - hw * 0.35 + sway1 + lean * h * 0.4,
-          base.dy - h * 0.6,
-          tip.dx,
-          tip.dy,
-        )
-        ..cubicTo(
-          base.dx + hw * 0.25 + sway1 + lean * h * 0.5,
-          base.dy - h * 0.55,
-          base.dx + hw * 1.05,
-          base.dy - h * 0.3,
-          base.dx + hw,
-          base.dy,
-        )
-        ..close();
-    }
-
-    Shader shade(Rect r, List<Color> colors, List<double> stops) =>
-        LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: colors,
-          stops: stops,
-        ).createShader(r);
-
-    final a = intensity.clamp(0.55, 1.0);
-    final outer = tongue(1.0, 1.0);
-    final bounds = outer.getBounds();
-    canvas.drawPath(
-      outer,
+    canvas.skew(sway, 0);
+    canvas.drawImageRect(
+      sprite,
+      Rect.fromLTWH(0, 0, sprite.width.toDouble(), sprite.height.toDouble()),
+      Rect.fromLTWH(-width / 2, -height, width, height),
       Paint()
-        ..shader = shade(bounds, [
-          _red.withOpacity(0.75 * a),
-          _deep.withOpacity(0.45 * a),
-          _deep.withOpacity(0),
-        ], const [
-          0,
-          0.6,
-          1
-        ])
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
-    );
-    final mid = tongue(0.72, 0.8);
-    canvas.drawPath(
-      mid,
-      Paint()
-        ..shader = shade(mid.getBounds(), [
-          _yellow.withOpacity(0.9 * a),
-          _orange.withOpacity(0.8 * a),
-          _red.withOpacity(0),
-        ], const [
-          0,
-          0.5,
-          1
-        ])
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2.5),
-    );
-    final core = tongue(0.38, 0.5);
-    canvas.drawPath(
-      core,
-      Paint()
-        ..shader = shade(core.getBounds(), [
-          _white.withOpacity(0.95 * a),
-          _yellow.withOpacity(0.7 * a),
-          _yellow.withOpacity(0),
-        ], const [
-          0,
-          0.55,
-          1
-        ])
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.5),
+        ..filterQuality = FilterQuality.low
+        ..color = Color.fromRGBO(0, 0, 0, intensity.clamp(0.55, 1.0)),
     );
     canvas.restore();
   }
 
   @override
   bool shouldRepaint(_EdgeFirePainter old) =>
-      old.time != time || old.intensity != intensity;
+      old.time != time || old.intensity != intensity || old.sprites != sprites;
+}
+
+/// 一張朝上的火苗貼圖（局部 60×120，按螢幕密度放大）：外層暗紅模糊光暈、
+/// 中層橙色、內芯亮黃白；[curl] 決定火舌的彎曲方向，讓兩種貼圖不雷同。
+class _FlameSprite {
+  static const double w = 60;
+  static const double h = 120;
+
+  static ui.Image render(double dpr, {required double curl}) {
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    canvas.scale(dpr);
+    const base = Offset(w / 2, h);
+
+    Path tongue(double scaleW, double scaleH) {
+      final th = (h - 8) * scaleH;
+      final hw = w * 0.4 * scaleW;
+      final bend = curl * hw;
+      final tip = Offset(base.dx + bend * 0.8, base.dy - th);
+      return Path()
+        ..moveTo(base.dx - hw, base.dy)
+        ..cubicTo(base.dx - hw * 1.05, base.dy - th * 0.35,
+            base.dx - hw * 0.35 + bend, base.dy - th * 0.6, tip.dx, tip.dy)
+        ..cubicTo(base.dx + hw * 0.25 + bend, base.dy - th * 0.55,
+            base.dx + hw * 1.05, base.dy - th * 0.3, base.dx + hw, base.dy)
+        ..close();
+    }
+
+    Shader shade(Path path, List<Color> colors, List<double> stops) =>
+        LinearGradient(
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+          colors: colors,
+          stops: stops,
+        ).createShader(path.getBounds());
+
+    final outer = tongue(1, 1);
+    canvas.drawPath(
+      outer,
+      Paint()
+        ..shader = shade(outer, [
+          _EdgeFirePainter._red.withOpacity(0.75),
+          _EdgeFirePainter._deep.withOpacity(0.45),
+          _EdgeFirePainter._deep.withOpacity(0),
+        ], const [
+          0,
+          0.6,
+          1
+        ])
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+    );
+    final mid = tongue(0.72, 0.8);
+    canvas.drawPath(
+      mid,
+      Paint()
+        ..shader = shade(mid, [
+          _EdgeFirePainter._yellow.withOpacity(0.9),
+          _EdgeFirePainter._orange.withOpacity(0.8),
+          _EdgeFirePainter._red.withOpacity(0),
+        ], const [
+          0,
+          0.5,
+          1
+        ])
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2),
+    );
+    final core = tongue(0.38, 0.5);
+    canvas.drawPath(
+      core,
+      Paint()
+        ..shader = shade(core, [
+          _EdgeFirePainter._white.withOpacity(0.95),
+          _EdgeFirePainter._yellow.withOpacity(0.7),
+          _EdgeFirePainter._yellow.withOpacity(0),
+        ], const [
+          0,
+          0.55,
+          1
+        ])
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.2),
+    );
+    return recorder
+        .endRecording()
+        .toImageSync((w * dpr).ceil(), (h * dpr).ceil());
+  }
 }
