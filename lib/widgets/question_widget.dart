@@ -12,6 +12,8 @@ import '../config/app_theme.dart';
 import '../providers/user_state_provider.dart';
 import '../screens/voice_pack_screen.dart';
 import 'glass_card.dart';
+import 'answer_motion.dart';
+import 'bouncy_press.dart';
 import 'explanation_emphasis.dart';
 import 'translation_panel.dart';
 
@@ -1778,43 +1780,49 @@ class _QuestionWidgetState extends State<QuestionWidget>
       selected: isSelected,
       child: GestureDetector(
         onTap: widget.isAnswered ? null : () => widget.onAnswerSelected(isVero),
-        child: AnimatedScale(
-          scale: isCorrectOption ? 1.02 : 1,
-          duration: const Duration(milliseconds: 160),
-          curve: Curves.easeOutBack,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            curve: Curves.easeOutCubic,
-            height: 66,
-            decoration: BoxDecoration(
-              color: background,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: border, width: 2),
-              boxShadow: [
-                BoxShadow(
-                  color: shadow,
-                  blurRadius: 0,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 22, color: foreground),
-                  const SizedBox(width: 6),
-                ],
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 19,
-                    fontWeight: FontWeight.w800,
-                    color: foreground,
-                    letterSpacing: 1.2,
+        // 按下回彈 + 對錯動效：答對的按鈕彈起，選錯的按鈕輕抖。
+        child: BouncyPress(
+          enabled: !widget.isAnswered,
+          child: AnswerMotion(
+            kind: hasVerdict && isSelected
+                ? (widget.isCorrect!
+                    ? AnswerMotionKind.correctPop
+                    : AnswerMotionKind.wrongShake)
+                : AnswerMotionKind.none,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOutCubic,
+              height: 66,
+              decoration: BoxDecoration(
+                color: background,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: border, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: shadow,
+                    blurRadius: 0,
+                    offset: const Offset(0, 4),
                   ),
-                ),
-              ],
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 22, color: foreground),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      color: foreground,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -1831,7 +1839,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
     // 使用短距淡入，避免大幅回彈造成整個畫面像閃了一下。
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
-      duration: const Duration(milliseconds: 240),
+      duration: const Duration(milliseconds: 160),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) {
         final opacityValue = value.clamp(0.0, 1.0).toDouble();

@@ -629,6 +629,18 @@ class _PracticeScreenState extends State<PracticeScreen> {
     final answeredIndex = _currentIndex;
     final isCorrect = selectedAnswer == answeredQuestion.answer;
 
+    // 先立即顯示對錯（按鈕顏色、動效、對錯提示與連對數），不等資料庫讀寫；
+    // 掌握進度、「已掌握」氣泡等需要資料庫結果的資訊在下方寫入完成後補上。
+    setState(() {
+      _isAnswered = true;
+      _isCorrect = isCorrect;
+      _userChoice = selectedAnswer;
+      _sessionCorrectStreak = isCorrect ? _sessionCorrectStreak + 1 : 0;
+      _mistakeEliminated = false;
+      _showMasteredBadge = false;
+      _hideCorrectBadge = false;
+    });
+
     try {
       // 同時取得答題前狀態；掌握進度沿用既有「連對 3 次」規則。
       final userStateProvider =
@@ -709,7 +721,6 @@ class _PracticeScreenState extends State<PracticeScreen> {
         _userChoice = selectedAnswer;
         _mistakeEliminated = mistakeEliminated;
         _questionMasteryStep = nextMasteryStep;
-        _sessionCorrectStreak = isCorrect ? _sessionCorrectStreak + 1 : 0;
         if (newlyMastered) _newlyMasteredCount++;
         if (mistakeEliminated) _mistakesResolvedCount++;
 
