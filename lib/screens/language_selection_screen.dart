@@ -5,7 +5,7 @@ import '../config/app_theme.dart';
 import '../models/user_state.dart';
 import '../providers/user_state_provider.dart';
 import '../widgets/glass_card.dart';
-import 'daily_goal_setup_screen.dart';
+import 'theme_selection_screen.dart';
 
 /// 語言選擇頁面
 /// 首次啟動時顯示，讓用戶選擇首選語言
@@ -94,10 +94,10 @@ class _LanguageSelectionScreenState extends State<LanguageSelectionScreen>
 
     if (!context.mounted) return;
 
-    // 使用淡入淡出動畫進入每日目標設定頁
+    // 使用淡入淡出動畫進入主題選擇頁（之後再到每日目標設定）
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => const DailyGoalSetupScreen(),
+        pageBuilder: (_, __, ___) => const ThemeSelectionScreen(),
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(
             opacity: animation,
