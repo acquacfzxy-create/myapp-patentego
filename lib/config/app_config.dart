@@ -13,7 +13,7 @@ class AppConfig {
   }
 
   /// 應用版本號
-  static const String appVersion = '1.1.1';
+  static const String appVersion = '1.1.2';
 
   /// App Store Connect / Google Play Console 中的自動續訂月訂閱商品 ID
   static const String monthlySubscriptionProductId = 'patentego_vip_monthly';
