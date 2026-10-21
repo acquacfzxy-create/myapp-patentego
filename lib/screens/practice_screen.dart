@@ -1720,8 +1720,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           ],
                         ),
             )),
-                // 連對 5 題起畫面邊緣開始燃燒（只在道路主題）。
-                if (AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context))
+                // 連對 5 題起畫面邊緣開始燃燒：道路主題為火苗，復古主題為像素火焰。
+                if (AppTheme.usesRoadPalette)
                   Positioned.fill(
                     child: StreakFireOverlay(streak: _sessionCorrectStreak),
                   ),

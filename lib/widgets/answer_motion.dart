@@ -2,9 +2,13 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../config/app_theme.dart';
+
 /// 答題按鈕的對錯動效：答對時輕輕彈起（放大到約 1.06 再落回），
 /// 答錯時左右輕抖兩下。整段約 0.42 秒，在 1.25 秒自動跳題前結束；
 /// 系統開啟「減少動態效果」時不播放，只保留顏色變化。
+/// 復古主題改為像素式：答對向上跳一格再落下，答錯左右各移一格抖兩下，
+/// 全程按整數像素逐格移動，不做平滑縮放。
 enum AnswerMotionKind { none, correctPop, wrongShake }
 
 class AnswerMotion extends StatefulWidget {
@@ -74,6 +78,35 @@ class _AnswerMotionState extends State<AnswerMotion>
       builder: (context, child) {
         final t = _controller.value;
         if (!_controller.isAnimating && t == 0 || t == 1) return child!;
+        if (AppTheme.isRetroFor(context)) {
+          final double dx;
+          final double dy;
+          switch (widget.kind) {
+            case AnswerMotionKind.correctPop:
+              dx = 0;
+              dy = t < 0.18
+                  ? -2
+                  : t < 0.45
+                      ? -4
+                      : t < 0.62
+                          ? -2
+                          : 0;
+            case AnswerMotionKind.wrongShake:
+              dy = 0;
+              dx = t < 0.15
+                  ? -3
+                  : t < 0.3
+                      ? 3
+                      : t < 0.45
+                          ? -3
+                          : t < 0.6
+                              ? 3
+                              : 0;
+            case AnswerMotionKind.none:
+              return child!;
+          }
+          return Transform.translate(offset: Offset(dx, dy), child: child);
+        }
         switch (widget.kind) {
           case AnswerMotionKind.correctPop:
             return Transform.scale(scale: _pop.transform(t), child: child);

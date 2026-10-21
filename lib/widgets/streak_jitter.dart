@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../config/app_theme.dart';
+
 /// 連對徽章的持續抖動：像被火烤得坐不住。[strength] 0 不動、1 輕抖、2 明顯抖；
 /// 系統「減少動態效果」時保持靜止。
 class StreakJitter extends StatefulWidget {
@@ -16,6 +18,7 @@ class StreakJitter extends StatefulWidget {
 
 class _StreakJitterState extends State<StreakJitter>
     with SingleTickerProviderStateMixin {
+
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 900),
@@ -52,6 +55,32 @@ class _StreakJitterState extends State<StreakJitter>
   Widget build(BuildContext context) {
     if (widget.strength <= 0) return widget.child;
     final amp = widget.strength >= 2 ? 1.0 : 0.55;
+    if (AppTheme.isRetroFor(context)) {
+      // 復古主題：約 8fps 逐格跳動，位移取 2 像素整數格，不旋轉不縮放。
+      return AnimatedBuilder(
+        animation: _controller,
+        child: RepaintBoundary(child: widget.child),
+        builder: (context, child) {
+          final step = (_controller.value * 7).floor();
+          const pattern = [
+            Offset(0, 0),
+            Offset(2, -2),
+            Offset(0, 0),
+            Offset(-2, 0),
+            Offset(0, -2),
+            Offset(2, 0),
+            Offset(-2, -2),
+          ];
+          final o = pattern[step % pattern.length] * amp;
+          final moved = Transform.translate(
+            offset: Offset(o.dx.roundToDouble(), o.dy.roundToDouble()),
+            child: child,
+          );
+          // 每隔一格變淡一次，像老掌機的閃爍提示（顏色仍在復古色板內）。
+          return step.isOdd ? Opacity(opacity: 0.45, child: moved) : moved;
+        },
+      );
+    }
     return AnimatedBuilder(
       animation: _controller,
       // 徽章本身（含大光暈陰影）單獨快取，抖動時只變換位置，不必每幀重畫。

@@ -354,6 +354,42 @@ void main() {
       }
     });
 
+    testWidgets('retro: wrong pick shows the answer and a hot streak chip',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({'current_language': 'zh'});
+      Future<void> pump({required bool correct, int streak = 0}) =>
+          tester.pumpWidget(
+            ChangeNotifierProvider<UserStateProvider>.value(
+              value: UserStateProvider(),
+              child: MaterialApp(
+                theme: AppTheme.retroTheme(language: 'zh'),
+                home: Scaffold(
+                  body: QuestionWidget(
+                    key: ValueKey('$correct$streak'),
+                    question: question,
+                    currentLanguage: 'zh',
+                    onAnswerSelected: (_) {},
+                    isAnswered: true,
+                    isCorrect: correct,
+                    userChoice: correct ? question.answer : !question.answer,
+                    sessionCorrectStreak: streak,
+                  ),
+                ),
+              ),
+            ),
+          );
+      await pump(correct: false);
+      await tester.pump(const Duration(milliseconds: 600));
+      final answer = question.answer ? 'VERO' : 'FALSO';
+      expect(find.text('差一点！答案是 $answer'), findsOneWidget);
+      expect(find.byIcon(Icons.check), findsWidgets);
+      expect(find.byIcon(Icons.close), findsWidgets);
+
+      await pump(correct: true, streak: 6);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.byKey(const ValueKey('streak-chip-tier-2')), findsOneWidget);
+    });
+
     testWidgets('a correct pick marks only that option', (tester) async {
       await pumpAnswered(tester, correct: true);
       await tester.pump(const Duration(milliseconds: 400));

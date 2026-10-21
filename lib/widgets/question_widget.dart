@@ -1643,7 +1643,8 @@ class _QuestionWidgetState extends State<QuestionWidget>
             decoration: const BoxDecoration(
               color: Colors.transparent,
             ),
-            child: isRoad
+            // 復古按鈕帶右下像素硬陰影，同樣不能被裁切。
+            child: isRoad || AppTheme.isRetroFor(context)
                 ? buttons
                 : ClipRRect(
                     child: BackdropFilter(
@@ -1668,6 +1669,15 @@ class _QuestionWidgetState extends State<QuestionWidget>
     final displayedChoice = widget.userChoice ?? widget.selectedAnswer;
     final isSelected = widget.isAnswered && displayedChoice == isVero;
 
+    if (AppTheme.isRetroFor(context)) {
+      return _buildRetroAnswerButton(
+        context: context,
+        label: label,
+        isVero: isVero,
+        isSelected: isSelected,
+        displayedChoice: displayedChoice,
+      );
+    }
     if (AppTheme.usesRoadPalette && !AppTheme.isRetroFor(context)) {
       return _buildRoadAnswerButton(
         context: context,
@@ -1831,6 +1841,99 @@ class _QuestionWidgetState extends State<QuestionWidget>
     );
   }
 
+  /// 復古主題的答題按鈕：方形、像素硬陰影；作答後正確選項反色並打勾，
+  /// 選錯的選項深棕描邊並打叉；配合像素式的跳動、抖動與按下下沉。
+  Widget _buildRetroAnswerButton({
+    required BuildContext context,
+    required String label,
+    required bool isVero,
+    required bool isSelected,
+    required bool? displayedChoice,
+  }) {
+    final hasVerdict = widget.isAnswered &&
+        widget.isCorrect != null &&
+        displayedChoice != null;
+    final correctChoice = hasVerdict
+        ? (widget.isCorrect! ? displayedChoice : !displayedChoice)
+        : null;
+    final isCorrectOption = hasVerdict && correctChoice == isVero;
+    final isWrongPick = hasVerdict && isSelected && !widget.isCorrect!;
+
+    Color background = AppTheme.retroSurface;
+    Color foreground = AppTheme.retroInk;
+    Color border = AppTheme.retroLine;
+    IconData? icon;
+    if (isCorrectOption) {
+      background = AppTheme.retroPrimary;
+      foreground = AppTheme.retroPage;
+      border = AppTheme.retroPrimary;
+      icon = Icons.check;
+    } else if (isWrongPick) {
+      foreground = AppTheme.retroDanger;
+      border = AppTheme.retroDanger;
+      icon = Icons.close;
+    } else if (isSelected) {
+      background = AppTheme.retroPrimary;
+      foreground = AppTheme.retroPage;
+      border = AppTheme.retroPrimary;
+    } else if (hasVerdict) {
+      foreground = AppTheme.retroMuted;
+    }
+
+    return Semantics(
+      button: true,
+      enabled: !widget.isAnswered,
+      selected: isSelected,
+      child: GestureDetector(
+        onTap: widget.isAnswered ? null : () => widget.onAnswerSelected(isVero),
+        child: BouncyPress(
+          enabled: !widget.isAnswered,
+          child: AnswerMotion(
+            kind: hasVerdict && isSelected
+                ? (widget.isCorrect!
+                    ? AnswerMotionKind.correctPop
+                    : AnswerMotionKind.wrongShake)
+                : AnswerMotionKind.none,
+            child: Container(
+              height: 66,
+              decoration: BoxDecoration(
+                color: background,
+                border: Border.all(color: border, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.retroLine,
+                    blurRadius: 0,
+                    offset: hasVerdict && !isCorrectOption && !isWrongPick
+                        ? Offset.zero
+                        : const Offset(4, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 22, color: foreground),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: foreground,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// 构建反馈标签（Badge）
   Widget _buildFeedbackBadge() {
     if (!widget.isAnswered || widget.isCorrect == null) {
@@ -1877,7 +1980,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
         final displayedChoice = widget.userChoice ?? widget.selectedAnswer;
         final feedbackLabel = widget.isCorrect!
             ? AppStrings.getWithLanguage(widget.currentLanguage, 'correct')
-            : isRoad && displayedChoice != null
+            : (isRoad || isRetro) && displayedChoice != null
                 ? AppStrings.getWithLanguage(
                     widget.currentLanguage,
                     'answer_feedback_wrong_gentle',
@@ -1986,7 +2089,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
     // 連對分檔：3 起火焰變大變橙，5 起徽章轉橙紅漸層並發光，10 起火力全開。
     final streak = widget.sessionCorrectStreak;
     final isRoad = AppTheme.usesRoadPalette && !isRetro;
-    final tier = !isRoad
+    final tier = !isRoad && !isRetro
         ? 0
         : streak >= 10
             ? 3
@@ -2001,8 +2104,14 @@ class _QuestionWidgetState extends State<QuestionWidget>
       Color(0xFFFFE08A),
       Color(0xFFFFF3C4),
     ];
-    final flameColor =
-        isRetro ? feedbackForeground : tierFlameColors[tier];
+    // 復古反色徽章上，火焰與文字改用深色。
+    final retroHot = isRetro && tier >= 2;
+    final flameColor = retroHot
+        ? AppTheme.retroPrimary
+        : isRetro
+            ? feedbackForeground
+            : tierFlameColors[tier];
+    final streakTextColor = retroHot ? AppTheme.retroPrimary : feedbackForeground;
     final flameSize = const [18.0, 24.0, 30.0, 36.0][tier];
     final streakFontSize = const [12.0, 14.0, 17.0, 20.0][tier];
     final masteryStep = widget.questionMasteryStep.clamp(0, 3).toInt();
@@ -2038,9 +2147,14 @@ class _QuestionWidgetState extends State<QuestionWidget>
                   vertical: tier >= 2 ? 5 : 3,
                 ),
                 decoration: BoxDecoration(
-                  color: tier >= 2 ? null : feedbackForeground.withOpacity(0.18),
+                  // 復古主題 5 連對起反色（亮底深字），不用漸層與光暈。
+                  color: isRetro && tier >= 2
+                      ? AppTheme.retroPage
+                      : tier >= 2
+                          ? null
+                          : feedbackForeground.withOpacity(0.18),
                   // 黃→橙→紅的亮色漸層，連對越多越紅越亮。
-                  gradient: tier >= 2
+                  gradient: tier >= 2 && !isRetro
                       ? LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
@@ -2057,15 +2171,20 @@ class _QuestionWidgetState extends State<QuestionWidget>
                                 ],
                         )
                       : null,
-                  border: tier >= 2
+                  border: isRetro && tier >= 2
                       ? Border.all(
-                          color: const Color(0xFFFFF3C4).withOpacity(0.9),
-                          width: 1.5,
+                          color: AppTheme.retroPage,
+                          width: tier >= 3 ? 3 : 2,
                         )
-                      : null,
+                      : tier >= 2
+                          ? Border.all(
+                              color: const Color(0xFFFFF3C4).withOpacity(0.9),
+                              width: 1.5,
+                            )
+                          : null,
                   borderRadius:
                       isRetro ? BorderRadius.zero : BorderRadius.circular(999),
-                  boxShadow: tier >= 2
+                  boxShadow: tier >= 2 && !isRetro
                       ? [
                           BoxShadow(
                             color: const Color(0xFFFF7A00)
@@ -2147,11 +2266,11 @@ class _QuestionWidgetState extends State<QuestionWidget>
                     Text(
                       streakLabel,
                       style: TextStyle(
-                        color: feedbackForeground,
+                        color: streakTextColor,
                         fontSize: streakFontSize,
                         fontWeight:
                             tier >= 2 ? FontWeight.w900 : FontWeight.w700,
-                        shadows: tier >= 2
+                        shadows: tier >= 2 && !isRetro
                             ? const [
                                 Shadow(
                                   color: Color(0xCC9A1B00),

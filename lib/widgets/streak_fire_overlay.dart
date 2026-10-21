@@ -3,6 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
+import '../config/app_theme.dart';
+
 /// 連對 5 題起，畫面四周開始燃燒：底邊與兩側冒出跳動的火苗，越連對越旺，
 /// 10 題起火力全開並持續燃燒。只畫在螢幕邊緣、不攔截觸控，不遮題目與按鈕；
 /// 答錯（連對歸零）時淡出；系統「減少動態效果」時火焰靜止。
@@ -29,6 +31,7 @@ class _StreakFireOverlayState extends State<StreakFireOverlay>
     duration: const Duration(milliseconds: 2400),
   );
   double _shownIntensity = 0;
+  int _shownStreak = 0;
   List<ui.Image>? _sprites;
   double _spriteDpr = 0;
 
@@ -36,6 +39,7 @@ class _StreakFireOverlayState extends State<StreakFireOverlay>
   void initState() {
     super.initState();
     _shownIntensity = StreakFireOverlay.intensityFor(widget.streak);
+    _shownStreak = widget.streak;
   }
 
   @override
@@ -48,7 +52,10 @@ class _StreakFireOverlayState extends State<StreakFireOverlay>
   void didUpdateWidget(StreakFireOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     final next = StreakFireOverlay.intensityFor(widget.streak);
-    if (next > 0) _shownIntensity = next;
+    if (next > 0) {
+      _shownIntensity = next;
+      _shownStreak = widget.streak;
+    }
     _syncTicker();
   }
 
@@ -105,19 +112,32 @@ class _StreakFireOverlayState extends State<StreakFireOverlay>
         child: RepaintBoundary(
           child: target <= 0 && !_ticker.isAnimating && _sprites == null
               ? const SizedBox.expand()
-              : AnimatedBuilder(
-                  animation: _ticker,
-                  builder: (context, _) => CustomPaint(
-                    size: Size.infinite,
-                    painter: _EdgeFirePainter(
-                      // 火焰以約 30fps 更新即可，其餘幀跳過重繪。
-                      time: (_ticker.value * 72).floor() / 72,
-                      intensity: _shownIntensity,
-                      sprites:
-                          _spritesFor(MediaQuery.devicePixelRatioOf(context)),
+              : AppTheme.isRetroFor(context)
+                  // 復古主題：像素方塊火焰，約 8fps 逐格切換。
+                  ? AnimatedBuilder(
+                      animation: _ticker,
+                      builder: (context, _) => CustomPaint(
+                        size: Size.infinite,
+                        painter: _PixelFirePainter(
+                          frame: (_ticker.value * 19).floor(),
+                          streak: _shownStreak,
+                          intensity: _shownIntensity,
+                        ),
+                      ),
+                    )
+                  : AnimatedBuilder(
+                      animation: _ticker,
+                      builder: (context, _) => CustomPaint(
+                        size: Size.infinite,
+                        painter: _EdgeFirePainter(
+                          // 火焰以約 30fps 更新即可，其餘幀跳過重繪。
+                          time: (_ticker.value * 72).floor() / 72,
+                          intensity: _shownIntensity,
+                          sprites: _spritesFor(
+                              MediaQuery.devicePixelRatioOf(context)),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
         ),
       ),
     );
@@ -360,4 +380,160 @@ class _FlameSprite {
         .endRecording()
         .toImageSync((w * dpr).ceil(), (h * dpr).ceil());
   }
+}
+
+/// 復古主題的像素火焰：經典 8-bit 火把造型的火苗點陣圖，三幀輪流切換，
+/// 每株火苗錯開節奏。只在兩側：火苗朝螢幕內伸、根部藏在螢幕外，
+/// 另有暖色像素火星往上飄。顏色借用復古主題的深棕，再配暗橙、暗黃，
+/// 飽和度壓低以融入橄欖綠底色。同色方塊合併成一條路徑一次畫完。
+class _PixelFirePainter extends CustomPainter {
+  _PixelFirePainter({
+    required this.frame,
+    required this.intensity,
+    required this.streak,
+  });
+
+  final int streak;
+
+  final int frame;
+  final double intensity;
+
+  /// 每個像素點的邊長（邏輯像素）。
+  static const double px = 3;
+
+  /// 'o' 外焰（深棕）、'm' 火身（暗橙）、'c' 火芯（暗黃）。
+  static const List<List<String>> _frames = [
+    [
+      '...o...',
+      '..oo...',
+      '..omo..',
+      '.oomo..',
+      '.ommoo.',
+      'oomcmo.',
+      'omccmoo',
+      'omcccmo',
+      'omcccmo',
+      'oommmoo',
+      '.ooooo.',
+    ],
+    [
+      '....o..',
+      '...oo..',
+      '..omo..',
+      '..ommo.',
+      '.oomcmo',
+      '.omcmo.',
+      'omccmoo',
+      'omcccmo',
+      'omcccmo',
+      'oommmoo',
+      '.ooooo.',
+    ],
+    [
+      '.......',
+      '...o...',
+      '..oo...',
+      '..omo..',
+      '.ommoo.',
+      'oomcmo.',
+      'omccmoo',
+      'omcccmo',
+      'omcccmo',
+      'oommmoo',
+      '.ooooo.',
+    ],
+  ];
+
+  static const _outer = AppTheme.retroDanger; // 深棕
+  static const _body = Color(0xFFA85A2A); // 暗橙
+  static const _core = Color(0xFFE2BC5A); // 暗黃
+
+  static const double _spriteW = 7 * px;
+  static const double _spriteH = 11 * px;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (intensity <= 0 || size.isEmpty) return;
+    final outer = Path();
+    final body = Path();
+    final core = Path();
+
+    /// 在局部座標（火苗朝上、底部中點在原點）把一株火苗的點陣加進路徑，
+    /// 再由 [toScreen] 轉成螢幕座標。
+    void flame(int frameIndex, Offset Function(Offset local) toScreen) {
+      final rows = _frames[frameIndex % _frames.length];
+      for (var r = 0; r < rows.length; r++) {
+        final row = rows[r];
+        for (var c = 0; c < row.length; c++) {
+          final ch = row[c];
+          if (ch == '.') continue;
+          final local = Offset(c * px - _spriteW / 2, r * px - _spriteH);
+          final a = toScreen(local);
+          final b = toScreen(local + const Offset(px, px));
+          final rect = Rect.fromPoints(a, b);
+          (ch == 'o'
+                  ? outer
+                  : ch == 'm'
+                      ? body
+                      : core)
+              .addRect(rect);
+        }
+      }
+    }
+
+    void sized(double scale, int frameIndex, Offset Function(Offset) place) {
+      flame(frameIndex, (l) => place(l * scale));
+    }
+
+    /// 在左側或右側某個高度放一株火苗：橫放朝內，根部藏在螢幕外。
+    void sideFlame(bool left, double y, double scale, int f,
+        {double hiddenRatio = 0.4}) {
+      final hidden = _spriteH * scale * hiddenRatio;
+      if (left) {
+        sized(scale, f, (l) => Offset(-l.dy - hidden, y + l.dx));
+      } else {
+        sized(scale, f, (l) => Offset(size.width + l.dy + hidden, y - l.dx));
+      }
+    }
+
+    // 5 連對 1 株，每多答對 1 題多 1 株，最多 14 株；
+    // 左側從下往上、右側從按鈕上方往上，左右交替長出，株距緊湊成串。
+    const scale = 5 / px;
+    const step = _spriteW * scale + 8;
+    final count = (streak - 4).clamp(1, 14);
+    var leftRow = 0;
+    var rightRow = 0;
+    for (var k = 0; k < count; k++) {
+      final left = k.isEven;
+      final y = left
+          // 左側起點在答題按鈕上方，不壓到 VERO。
+          ? size.height * 0.78 - leftRow++ * step
+          : size.height * 0.46 - rightRow++ * step;
+      sideFlame(left, y, scale, frame + k * 2);
+    }
+
+    // 底邊不放火苗：那裡是系統導航列與答題按鈕，火苗會被導航列蓋住發白。
+
+    // 像素火星：從兩側往上飄、逐漸變暗。
+    final embers = (3 + 5 * intensity).round();
+    for (var i = 0; i < embers; i++) {
+      final speed = 2 + i % 3;
+      final life = ((frame * speed + i * 7) % 24) / 24;
+      final fromLeft = i.isEven;
+      final x = fromLeft ? px * (2 + i % 3) : size.width - px * (3 + i % 3);
+      final y0 = size.height * (0.3 + ((i * 0.618) % 0.65));
+      final raw = y0 - life * 120;
+      final y = raw - (raw % px);
+      (life < 0.5 ? core : body).addRect(Offset(x, y) & const Size(px, px));
+    }
+
+    final a = intensity.clamp(0.6, 1.0);
+    canvas.drawPath(outer, Paint()..color = _outer.withOpacity(0.92 * a));
+    canvas.drawPath(body, Paint()..color = _body.withOpacity(0.92 * a));
+    canvas.drawPath(core, Paint()..color = _core.withOpacity(0.95 * a));
+  }
+
+  @override
+  bool shouldRepaint(_PixelFirePainter old) =>
+      old.frame != frame || old.intensity != intensity || old.streak != streak;
 }

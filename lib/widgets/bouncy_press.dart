@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../config/app_theme.dart';
+
 /// 按下時輕微縮小、放開後彈性回彈。只監聽原始指標事件，不參與手勢競爭，
 /// 因此可直接包住已有 onTap 的卡片；[enabled] 為 false 時不做動畫。
 class BouncyPress extends StatefulWidget {
@@ -24,6 +26,11 @@ class _BouncyPressState extends State<BouncyPress>
 
   void _press() {
     if (!widget.enabled) return;
+    if (AppTheme.isRetroFor(context)) {
+      // 復古主題：像按下掌機按鍵，瞬間下沉，不做縮放動畫。
+      _controller.value = 0.92;
+      return;
+    }
     _controller.animateTo(
       0.92,
       duration: const Duration(milliseconds: 90),
@@ -34,6 +41,10 @@ class _BouncyPressState extends State<BouncyPress>
   void _release() {
     // 按下後卡片可能立刻變成不可點（例如答題後），仍要彈回原大小。
     if (_controller.value == 1.0) return;
+    if (AppTheme.isRetroFor(context)) {
+      _controller.value = 1.0;
+      return;
+    }
     _controller.animateTo(
       1.0,
       duration: const Duration(milliseconds: 480),
@@ -49,11 +60,21 @@ class _BouncyPressState extends State<BouncyPress>
 
   @override
   Widget build(BuildContext context) {
+    final retro = AppTheme.isRetroFor(context);
     return Listener(
       onPointerDown: (_) => _press(),
       onPointerUp: (_) => _release(),
       onPointerCancel: (_) => _release(),
-      child: ScaleTransition(scale: _controller, child: widget.child),
+      child: retro
+          ? AnimatedBuilder(
+              animation: _controller,
+              child: widget.child,
+              builder: (context, child) => Transform.translate(
+                offset: Offset(0, _controller.value < 1 ? 3 : 0),
+                child: child,
+              ),
+            )
+          : ScaleTransition(scale: _controller, child: widget.child),
     );
   }
 }
