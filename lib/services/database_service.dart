@@ -192,7 +192,7 @@ class DatabaseService {
   static const String _userProgressDbName = 'user_progress.db';
 
   // 靜態數據庫版本號（用於強制更新）
-  static const int kStaticDbVersion = 92;
+  static const int kStaticDbVersion = 93;
   static const String _lastCopiedDbVersionKey = 'last_copied_db_version';
 
   // 初始化錯誤信息（如果初始化失敗，保存錯誤信息）
