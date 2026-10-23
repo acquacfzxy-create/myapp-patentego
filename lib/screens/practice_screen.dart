@@ -642,6 +642,29 @@ class _PracticeScreenState extends State<PracticeScreen> {
       _hideCorrectBadge = false;
     });
 
+    // 切題計時從按下答案起算，與下方存檔同時進行；存檔完成前不切題，
+    // 以免遺漏本輪紀錄或越過每日限額。停留時間與對錯動效各自獨立。
+    // 閱讀、回看和結算期間暫停；關閉後重新給足回饋時間。
+    final savingHold = 'saving:${answeredQuestion.id}';
+    _autoAdvance.schedule(
+      () {
+        if (!mounted ||
+            _isLeaving ||
+            _currentQuestion?.id != answeredQuestion.id) {
+          return;
+        }
+        if (widget.questions != null && !_hasNextQuestion) {
+          unawaited(_handleExitRequest());
+        } else {
+          unawaited(_nextQuestion());
+        }
+      },
+      delay: isCorrect
+          ? PracticeAutoAdvance.correctDelay
+          : PracticeAutoAdvance.wrongDelay,
+    );
+    _autoAdvance.hold(savingHold);
+
     try {
       // 同時取得答題前狀態；掌握進度沿用既有「連對 3 次」規則。
       final userStateProvider =
@@ -763,21 +786,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
       if (isFav && mounted && _currentQuestion?.id == answeredQuestion.id) {
         setState(() => _showFavoriteBadge = true);
       }
-
-      // 閱讀、回看和結算期間暫停；關閉後重新給足原有的回饋時間。
-      _autoAdvance.schedule(() {
-        if (!mounted || _isLeaving ||
-            _currentQuestion?.id != answeredQuestion.id) {
-          return;
-        }
-        if (widget.questions != null && !_hasNextQuestion) {
-          unawaited(_handleExitRequest());
-        } else {
-          unawaited(_nextQuestion());
-        }
-      });
     } finally {
       _isProcessingAnswer = false;
+      _autoAdvance.release(savingHold);
     }
   }
 
@@ -1715,6 +1726,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
                                 mistakeEliminated: _mistakeEliminated,
                                 sessionCorrectStreak: _sessionCorrectStreak,
                                 questionMasteryStep: _questionMasteryStep,
+                                // 切題保持快速，上一題對錯回饋在新題上再停留一會。
+                                lingerFeedbackOnAdvance: true,
                               ),
                             ),
                           ],

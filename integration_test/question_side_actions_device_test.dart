@@ -58,7 +58,12 @@ void main() {
           locale: AppLocales.localeFor('zh'),
           supportedLocales: AppLocales.supportedLocales,
           localizationsDelegates: AppLocales.delegates,
-          theme: AppTheme.retroTheme(language: 'zh'),
+          // --dart-define=SIDE_ACTIONS_THEME=light|dark|retro（默认 retro）
+          theme: switch (const String.fromEnvironment('SIDE_ACTIONS_THEME')) {
+            'light' => AppTheme.lightTheme(language: 'zh'),
+            'dark' => AppTheme.darkTheme(language: 'zh'),
+            _ => AppTheme.retroTheme(language: 'zh'),
+          },
           builder: (context, child) => RepaintBoundary(
             key: boundaryKey,
             child: MediaQuery(
@@ -126,11 +131,32 @@ void main() {
         rects.add(tester.getRect(
             find.ancestor(of: button, matching: find.byType(GlassCard)).first));
       }
-      final content = tester.getRect(find.byType(SingleChildScrollView).first);
+      // 1.1.2 起按钮浮在滚动区行尾、由卡片内边距让位：
+      // 判定可见的文字段落与图片不在按钮下面（与 question_actions_layout_test 一致）。
+      final scrollView = find.byType(SingleChildScrollView).first;
+      final viewport = tester.getRect(scrollView);
+      final visible = <Rect>[
+        for (final element in find
+            .descendant(of: scrollView, matching: find.byType(RichText))
+            .evaluate())
+          (element.renderObject as RenderBox).localToGlobal(Offset.zero) &
+              (element.renderObject as RenderBox).size,
+        for (final element in find
+            .descendant(of: scrollView, matching: find.byType(Image))
+            .evaluate())
+          (element.renderObject as RenderBox).localToGlobal(Offset.zero) &
+              (element.renderObject as RenderBox).size,
+      ]
+          .map((rect) => rect.intersect(viewport))
+          .where((rect) => rect.width > 1 && rect.height > 1)
+          .toList();
       final answer = tester.getRect(find.text('VERO'));
       for (var i = 0; i < rects.length; i++) {
         expect(rects[i].left, rects.first.left);
-        expect(rects[i].overlaps(content), isFalse);
+        for (final rect in visible) {
+          expect(rects[i].overlaps(rect), isFalse,
+              reason: 'content $rect under action ${rects[i]}');
+        }
         expect(rects[i].bottom, lessThan(answer.top));
         if (i > 0) expect(rects[i].top, greaterThan(rects[i - 1].bottom));
       }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../config/app_strings.dart';
+import '../config/app_theme.dart';
 import '../models/question.dart';
 import '../services/explanation_parser.dart';
 import 'explanation_emphasis.dart';
@@ -73,6 +74,23 @@ class _SessionMistakeReviewSheetState extends State<SessionMistakeReviewSheet> {
 
   @override
   Widget build(BuildContext context) {
+    // 復古主題的全域 iconTheme 是深墨色，會蓋過填充按鈕的前景色，
+    // 導致「下一題」箭頭與深色底融在一起；這裡明確指定前景色，像素主題用方角。
+    final scheme = Theme.of(context).colorScheme;
+    final isRetro = AppTheme.isRetroFor(context);
+    final navShape = isRetro
+        ? const RoundedRectangleBorder(borderRadius: BorderRadius.zero)
+        : null;
+    final filledNavStyle = IconButton.styleFrom(
+      backgroundColor: scheme.primary,
+      foregroundColor: scheme.onPrimary,
+      shape: navShape,
+    );
+    final outlinedNavStyle = IconButton.styleFrom(
+      foregroundColor: scheme.primary,
+      side: BorderSide(color: scheme.primary.withOpacity(0.6)),
+      shape: navShape,
+    );
     final mistake = widget.mistakes[_index];
     final question = mistake.question;
     final italian = question.getQuestionText('it') ??
@@ -213,6 +231,7 @@ class _SessionMistakeReviewSheetState extends State<SessionMistakeReviewSheet> {
                     IconButton.outlined(
                       key: const Key('session_review_previous'),
                       tooltip: _text('previous_question'),
+                      style: outlinedNavStyle,
                       onPressed: () => _move(_index - 1),
                       icon: const Icon(Icons.navigate_before),
                     ),
@@ -221,6 +240,7 @@ class _SessionMistakeReviewSheetState extends State<SessionMistakeReviewSheet> {
                     IconButton.filled(
                       key: const Key('session_review_next'),
                       tooltip: _text('next_question'),
+                      style: filledNavStyle,
                       onPressed: () => _move(_index + 1),
                       icon: const Icon(Icons.navigate_next),
                     )
@@ -228,6 +248,7 @@ class _SessionMistakeReviewSheetState extends State<SessionMistakeReviewSheet> {
                     IconButton.filled(
                       key: const Key('session_review_done'),
                       tooltip: _text('session_mistakes_done'),
+                      style: filledNavStyle,
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(Icons.check),
                     ),

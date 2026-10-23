@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lingua_patente/config/app_locales.dart';
 import 'package:lingua_patente/config/app_strings.dart';
+import 'package:lingua_patente/config/app_theme.dart';
 import 'package:lingua_patente/models/question.dart';
 import 'package:lingua_patente/widgets/session_mistake_review_sheet.dart';
 
@@ -24,6 +25,35 @@ SessionMistake mistake(String id, bool correct) => SessionMistake(
     );
 
 void main() {
+  testWidgets('next arrow uses the button foreground in every theme',
+      (tester) async {
+    // 復古主題的全域 iconTheme 曾讓「下一題」箭頭與深色按鈕底融在一起。
+    for (final theme in [
+      AppTheme.lightTheme(language: 'zh'),
+      AppTheme.darkTheme(language: 'zh'),
+      AppTheme.retroTheme(language: 'zh'),
+    ]) {
+      await tester.pumpWidget(MaterialApp(
+        theme: theme,
+        home: Scaffold(
+          body: SessionMistakeReviewSheet(
+            key: UniqueKey(),
+            mistakes: [mistake('a', true), mistake('b', false)],
+            language: 'zh',
+          ),
+        ),
+      ));
+      await tester.pumpAndSettle();
+      final scheme = theme.colorScheme;
+      final arrow = tester.widget<RichText>(find.descendant(
+        of: find.byIcon(Icons.navigate_next),
+        matching: find.byType(RichText),
+      ));
+      expect(arrow.text.style?.color, scheme.onPrimary);
+      expect(scheme.onPrimary, isNot(scheme.primary));
+    }
+  });
+
   testWidgets('partial records do not render raw JSON or lose the question',
       (tester) async {
     final entry = mistake('partial', true);

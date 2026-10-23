@@ -318,7 +318,12 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       final answer = question.answer ? 'VERO' : 'FALSO';
-      expect(find.text('差一点！答案是 $answer'), findsOneWidget);
+      // 答錯卡與答對卡同樣兩層：溫和短句＋「正確答案」膠囊。
+      expect(find.text('差一点！'), findsOneWidget);
+      expect(find.byKey(const ValueKey('wrong-answer-chip')), findsOneWidget);
+      expect(find.text('正确答案  $answer'), findsOneWidget);
+      // 答錯只顯示「差一点！」與正確答案，不顯示本題掌握進度。
+      expect(find.textContaining('本题掌握'), findsNothing);
       expect(find.byIcon(Icons.check_rounded), findsOneWidget);
       expect(find.byIcon(Icons.close_rounded), findsOneWidget);
       // 反饋層不提供「下一題」按鈕：跳題交給練習頁的自動前進。
@@ -381,13 +386,96 @@ void main() {
       await pump(correct: false);
       await tester.pump(const Duration(milliseconds: 600));
       final answer = question.answer ? 'VERO' : 'FALSO';
-      expect(find.text('差一点！答案是 $answer'), findsOneWidget);
+      expect(find.text('差一点！'), findsOneWidget);
+      expect(find.text('正确答案  $answer'), findsOneWidget);
       expect(find.byIcon(Icons.check), findsWidgets);
       expect(find.byIcon(Icons.close), findsWidgets);
 
       await pump(correct: true, streak: 6);
       await tester.pump(const Duration(milliseconds: 600));
       expect(find.byKey(const ValueKey('streak-chip-tier-2')), findsOneWidget);
+    });
+
+    testWidgets('practice feedback lingers after a fast switch, then fades',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({'current_language': 'zh'});
+      final next = Question(
+        id: '${question.id}-next',
+        answer: question.answer,
+        translations: question.translations,
+        explanations: question.explanations,
+      );
+      final provider = UserStateProvider();
+      Future<void> pump(Question q, {bool answered = false}) =>
+          tester.pumpWidget(
+            ChangeNotifierProvider<UserStateProvider>.value(
+              value: provider,
+              child: MaterialApp(
+                theme: AppTheme.lightTheme(language: 'zh'),
+                home: Scaffold(
+                  body: QuestionWidget(
+                    question: q,
+                    currentLanguage: 'zh',
+                    onAnswerSelected: (_) {},
+                    isAnswered: answered,
+                    isCorrect: answered ? false : null,
+                    userChoice: answered ? !q.answer : null,
+                    lingerFeedbackOnAdvance: true,
+                  ),
+                ),
+              ),
+            ),
+          );
+      await pump(question, answered: true);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('差一点！'), findsOneWidget);
+
+      // 切到下一題（未作答）：上一題的回饋仍在。
+      await pump(next);
+      await tester.pump(const Duration(milliseconds: 600));
+      expect(find.text('差一点！'), findsOneWidget);
+      expect(find.text('VERO'), findsWidgets);
+
+      // 停留結束後淡出移除。
+      await tester.pump(QuestionWidget.feedbackLinger);
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(find.text('差一点！'), findsNothing);
+    });
+
+    testWidgets('without the practice flag feedback clears on switch',
+        (tester) async {
+      SharedPreferences.setMockInitialValues({'current_language': 'zh'});
+      final provider = UserStateProvider();
+      Widget app(Question q, bool answered) =>
+          ChangeNotifierProvider<UserStateProvider>.value(
+            value: provider,
+            child: MaterialApp(
+              theme: AppTheme.lightTheme(language: 'zh'),
+              home: Scaffold(
+                body: QuestionWidget(
+                  question: q,
+                  currentLanguage: 'zh',
+                  onAnswerSelected: (_) {},
+                  isAnswered: answered,
+                  isCorrect: answered ? false : null,
+                  userChoice: answered ? !q.answer : null,
+                ),
+              ),
+            ),
+          );
+      await tester.pumpWidget(app(question, true));
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('差一点！'), findsOneWidget);
+      await tester.pumpWidget(app(
+          Question(
+            id: '${question.id}-other',
+            answer: question.answer,
+            translations: question.translations,
+            explanations: question.explanations,
+          ),
+          false));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('差一点！'), findsNothing);
     });
 
     testWidgets('a correct pick marks only that option', (tester) async {

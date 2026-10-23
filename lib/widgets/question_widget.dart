@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:provider/provider.dart';
@@ -46,6 +48,20 @@ class QuestionWidget extends StatefulWidget {
   final bool mistakeEliminated; // 错题是否已彻底消灭（wrong_count 降到 0）
   final int sessionCorrectStreak; // 本次練習連續答對題數
   final int questionMasteryStep; // 單題掌握進度（0-3）
+  /// 練習頁：切到下一題後，上一題的對錯回饋在原位置再停留 [feedbackLinger]，
+  /// 讓切題保持快速、回饋又能看清；兩者時間各自獨立。
+  final bool lingerFeedbackOnAdvance;
+
+  /// 切題後回饋再停留的時間（含最後的淡出）。
+  static const Duration feedbackLinger = Duration(milliseconds: 1500);
+  static const Duration feedbackLingerFade = Duration(milliseconds: 300);
+
+  /// 對／錯／已精通回饋卡共用同一外框：同寬（最寬 300，窄屏隨可用寬度）、
+  /// 同最小高度、同內距，內容置中，視覺比例一致。
+  static const BoxConstraints _feedbackCardConstraints =
+      BoxConstraints(maxWidth: 300, minHeight: 84);
+  static const EdgeInsets _feedbackCardPadding =
+      EdgeInsets.symmetric(horizontal: 16, vertical: 10);
 
   const QuestionWidget({
     super.key,
@@ -71,6 +87,7 @@ class QuestionWidget extends StatefulWidget {
     this.mistakeEliminated = false,
     this.sessionCorrectStreak = 0,
     this.questionMasteryStep = 0,
+    this.lingerFeedbackOnAdvance = false,
   });
 
   /// 全 App 統一的解析底部彈窗（練習、考後復盤等共用，自動識別 JSON / 純文本）
@@ -583,6 +600,33 @@ class _QuestionWidgetState extends State<QuestionWidget>
   AnimationController? _dragAnimationController;
   Animation<double>? _dragAnimation;
 
+  // 切題後仍在顯示的上一題回饋（設定不可變，可直接沿用其對錯、連對與掌握度）。
+  QuestionWidget? _lingerSource;
+  bool _lingerFading = false;
+  Timer? _lingerFadeTimer;
+  Timer? _lingerEndTimer;
+
+  void _clearLinger() {
+    _lingerFadeTimer?.cancel();
+    _lingerEndTimer?.cancel();
+    _lingerFadeTimer = null;
+    _lingerEndTimer = null;
+    _lingerSource = null;
+    _lingerFading = false;
+  }
+
+  void _startLinger(QuestionWidget source) {
+    _clearLinger();
+    _lingerSource = source;
+    _lingerFadeTimer = Timer(
+        QuestionWidget.feedbackLinger - QuestionWidget.feedbackLingerFade, () {
+      if (mounted) setState(() => _lingerFading = true);
+    });
+    _lingerEndTimer = Timer(QuestionWidget.feedbackLinger, () {
+      if (mounted) setState(_clearLinger);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -606,6 +650,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
     _speechService.dispose();
     _scrollController.dispose();
     _dragAnimationController?.dispose();
+    _clearLinger();
     super.dispose();
   }
 
@@ -615,6 +660,14 @@ class _QuestionWidgetState extends State<QuestionWidget>
     super.didUpdateWidget(oldWidget);
     // 如果題目ID改變，重置翻譯和解析顯示狀態，并重置拖拽状态
     if (oldWidget.question.id != widget.question.id) {
+      if (widget.lingerFeedbackOnAdvance &&
+          !widget.isAnswered &&
+          oldWidget.isAnswered &&
+          oldWidget.isCorrect != null) {
+        _startLinger(oldWidget);
+      } else {
+        _clearLinger();
+      }
       _speechSession++;
       _speechService.stop();
       setState(() {
@@ -624,6 +677,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
         _isPreparingSpeech = false;
         _resetDragState();
       });
+    } else if (widget.isAnswered && _lingerSource != null) {
+      // 新題已作答：立即換成這一題的回饋。
+      _clearLinger();
     }
   }
 
@@ -962,34 +1018,41 @@ class _QuestionWidgetState extends State<QuestionWidget>
   /// 反馈气泡（精通、收藏、答对/答错），垂直排列，显示在内容区底部中间。
   /// 放在内容区内部，而不是底部按钮区，这样不会盖住侧边操作按钮。
   Widget _buildFeedbackBubbles() {
+    // 切題後上一題的回饋再停留一會（只在練習頁開啟），新題一作答即換成新回饋。
+    final lingering = !widget.isAnswered && _lingerSource != null;
+    final w = lingering ? _lingerSource! : widget;
     return Padding(
       key: const ValueKey('question-feedback-bubbles'),
       // 两侧留边距；气泡内文字可换行，长语言或放大字号时不会横向溢出。
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Center(
+      child: AnimatedOpacity(
+        opacity: lingering && _lingerFading ? 0 : 1,
+        duration: QuestionWidget.feedbackLingerFade,
+        child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // 精通气泡（蓝色背景，最上方）
-            if (widget.showMasteredBadge)
+            if (w.showMasteredBadge)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: _buildMasteredBadge(),
+                child: _buildMasteredBadge(w),
               ),
             // 收藏气泡（蓝色背景）
-            if (widget.showFavoriteBadge)
+            if (w.showFavoriteBadge)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: _buildFavoriteBadge(),
+                child: _buildFavoriteBadge(w),
               ),
             // 对错提示气泡（最下方）
             // 如果显示精通气泡，则隐藏"正确"气泡
-            if (widget.isAnswered &&
-                widget.isCorrect != null &&
-                !widget.hideCorrectBadge)
-              _buildFeedbackBadge(),
+            if (w.isAnswered &&
+                w.isCorrect != null &&
+                !w.hideCorrectBadge)
+              _buildFeedbackBadge(w),
           ],
         ),
+      ),
       ),
     );
   }
@@ -1935,8 +1998,8 @@ class _QuestionWidgetState extends State<QuestionWidget>
   }
 
   /// 构建反馈标签（Badge）
-  Widget _buildFeedbackBadge() {
-    if (!widget.isAnswered || widget.isCorrect == null) {
+  Widget _buildFeedbackBadge(QuestionWidget w) {
+    if (!w.isAnswered || w.isCorrect == null) {
       return const SizedBox.shrink();
     }
 
@@ -1952,12 +2015,12 @@ class _QuestionWidgetState extends State<QuestionWidget>
         final isRoad = AppTheme.usesRoadPalette && !isRetro;
         // 道路主題：答錯用深墨色而非大紅，語氣溫和，並直接告訴正確答案。
         final feedbackBackground = isRoad
-            ? widget.isCorrect!
+            ? w.isCorrect!
                 ? (isDark
                     ? AppTheme.roadNightPrimarySoft
                     : AppTheme.roadPrimary)
                 : (isDark ? AppTheme.roadNightSurfaceAlt : AppTheme.roadInk)
-            : widget.isCorrect!
+            : w.isCorrect!
                 ? isRetro
                     ? AppTheme.retroPrimary
                     : isDark
@@ -1973,19 +2036,23 @@ class _QuestionWidgetState extends State<QuestionWidget>
             : isRoad
                 ? Colors.white
                 : isDark
-                    ? (widget.isCorrect!
+                    ? (w.isCorrect!
                         ? const Color(0xFFD1FAE5)
                         : const Color(0xFFFECACA))
                     : Colors.white;
-        final displayedChoice = widget.userChoice ?? widget.selectedAnswer;
-        final feedbackLabel = widget.isCorrect!
-            ? AppStrings.getWithLanguage(widget.currentLanguage, 'correct')
-            : (isRoad || isRetro) && displayedChoice != null
+        final displayedChoice = w.userChoice ?? w.selectedAnswer;
+        // 道路／復古主題的答錯卡與答對卡同樣分兩層：
+        // 上層溫和短句，下層「正確答案」膠囊＋本題掌握進度。
+        final showWrongDetail =
+            !w.isCorrect! && (isRoad || isRetro) && displayedChoice != null;
+        final feedbackLabel = w.isCorrect!
+            ? AppStrings.getWithLanguage(w.currentLanguage, 'correct')
+            : showWrongDetail
                 ? AppStrings.getWithLanguage(
-                    widget.currentLanguage,
-                    'answer_feedback_wrong_gentle',
-                  ).replaceAll('{answer}', displayedChoice ? 'FALSO' : 'VERO')
-                : AppStrings.getWithLanguage(widget.currentLanguage, 'wrong');
+                    w.currentLanguage,
+                    'answer_feedback_wrong_short',
+                  )
+                : AppStrings.getWithLanguage(w.currentLanguage, 'wrong');
         return Opacity(
           opacity: opacityValue,
           child: Transform.translate(
@@ -1994,7 +2061,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
               scale: 0.96 + (0.04 * value),
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    QuestionWidget._feedbackCardPadding,
+                constraints: QuestionWidget._feedbackCardConstraints,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: feedbackBackground,
                   borderRadius:
@@ -2003,7 +2072,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                       ? Border.all(color: AppTheme.retroLine)
                       : isRoad && isDark
                           ? Border.all(
-                              color: widget.isCorrect!
+                              color: w.isCorrect!
                                   ? AppTheme.roadNightPrimary
                                   : AppTheme.roadNightLine,
                             )
@@ -2027,8 +2096,8 @@ class _QuestionWidgetState extends State<QuestionWidget>
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          widget.isCorrect! ? Icons.check : Icons.close,
-                          color: isRoad && widget.isCorrect!
+                          w.isCorrect! ? Icons.check : Icons.close,
+                          color: isRoad && w.isCorrect!
                               ? AppTheme.roadAccent
                               : feedbackForeground,
                           size: 18,
@@ -2048,15 +2117,24 @@ class _QuestionWidgetState extends State<QuestionWidget>
                         ),
                       ],
                     ),
-                    if (widget.isCorrect!) ...[
+                    if (w.isCorrect!) ...[
                       const SizedBox(height: 6),
-                      _buildCorrectMomentum(opacityValue),
+                      _buildCorrectMomentum(w, opacityValue),
+                    ],
+                    if (showWrongDetail) ...[
+                      const SizedBox(height: 6),
+                      _buildWrongAnswerDetail(
+                        w,
+                        correctAnswer: !displayedChoice,
+                        foreground: feedbackForeground,
+                        animationValue: opacityValue,
+                      ),
                     ],
                     // 错题已彻底消灭提示
-                    if (widget.isCorrect! && widget.mistakeEliminated) ...[
+                    if (w.isCorrect! && w.mistakeEliminated) ...[
                       const SizedBox(height: 4),
                       Text(
-                        AppStrings.getWithLanguage(widget.currentLanguage,
+                        AppStrings.getWithLanguage(w.currentLanguage,
                             'mistake_cleared_celebration'),
                         style: TextStyle(
                           color: feedbackForeground,
@@ -2076,8 +2154,95 @@ class _QuestionWidgetState extends State<QuestionWidget>
     );
   }
 
+  /// 答錯卡下層：醒目的「正確答案」膠囊（對應答對卡的連對徽章）。
+  Widget _buildWrongAnswerDetail(
+    QuestionWidget w, {
+    required bool correctAnswer,
+    required Color foreground,
+    required double animationValue,
+  }) {
+    final isRetro = AppTheme.isRetroFor(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final answerText = correctAnswer ? 'VERO' : 'FALSO';
+    final answerLabel = AppStrings.getWithLanguage(
+      w.currentLanguage,
+      'modal_correct_answer_label',
+    );
+    // 道路主題用標誌黃膠囊＋深墨字；復古主題反色（亮底深字）。
+    final chipBackground = isRetro
+        ? AppTheme.retroPage
+        : isDark
+            ? AppTheme.roadAccent.withOpacity(0.92)
+            : AppTheme.roadAccent;
+    final chipForeground = isRetro ? AppTheme.retroPrimary : AppTheme.roadInk;
+    // 膠囊彈入：放大到 1.08 再落回，與連對徽章的節奏一致但更輕。
+    final pop = animationValue < 0.6
+        ? 0.86 + 0.22 * Curves.easeOutCubic.transform(animationValue / 0.6)
+        : 1.08 - 0.08 * Curves.easeOut.transform((animationValue - 0.6) / 0.4);
+
+    return Semantics(
+      label: '$answerLabel $answerText',
+      child: ExcludeSemantics(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 10,
+          runSpacing: 5,
+          children: [
+            Transform.scale(
+              scale: pop,
+              child: Container(
+                key: const ValueKey('wrong-answer-chip'),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                decoration: BoxDecoration(
+                  color: chipBackground,
+                  borderRadius:
+                      isRetro ? BorderRadius.zero : BorderRadius.circular(999),
+                  border: isRetro
+                      ? Border.all(color: AppTheme.retroPage, width: 2)
+                      : null,
+                  boxShadow: isRetro
+                      ? null
+                      : [
+                          BoxShadow(
+                            color: AppTheme.roadAccent.withOpacity(0.45),
+                            blurRadius: 12,
+                          ),
+                        ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle_rounded,
+                      color: chipForeground,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        '$answerLabel  $answerText',
+                        style: TextStyle(
+                          color: chipForeground,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// 以短標籤和 3 格進度呈現本次連對與單題掌握度。
-  Widget _buildCorrectMomentum(double animationValue) {
+  Widget _buildCorrectMomentum(QuestionWidget w, double animationValue) {
     final safeAnimationValue = animationValue.clamp(0.0, 1.0).toDouble();
     final isRetro = AppTheme.isRetroFor(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -2087,7 +2252,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
             ? const Color(0xFFD1FAE5)
             : Colors.white;
     // 連對分檔：3 起火焰變大變橙，5 起徽章轉橙紅漸層並發光，10 起火力全開。
-    final streak = widget.sessionCorrectStreak;
+    final streak = w.sessionCorrectStreak;
     final isRoad = AppTheme.usesRoadPalette && !isRetro;
     final tier = !isRoad && !isRetro
         ? 0
@@ -2114,17 +2279,17 @@ class _QuestionWidgetState extends State<QuestionWidget>
     final streakTextColor = retroHot ? AppTheme.retroPrimary : feedbackForeground;
     final flameSize = const [18.0, 24.0, 30.0, 36.0][tier];
     final streakFontSize = const [12.0, 14.0, 17.0, 20.0][tier];
-    final masteryStep = widget.questionMasteryStep.clamp(0, 3).toInt();
+    final masteryStep = w.questionMasteryStep.clamp(0, 3).toInt();
     final streakLabel = AppStrings.getWithLanguage(
-      widget.currentLanguage,
+      w.currentLanguage,
       'answer_streak_short',
-    ).replaceAll('{count}', '${widget.sessionCorrectStreak}');
+    ).replaceAll('{count}', '${w.sessionCorrectStreak}');
     final masteryLabel = AppStrings.getWithLanguage(
-      widget.currentLanguage,
+      w.currentLanguage,
       'question_mastery_progress_short',
     ).replaceAll('{current}', '$masteryStep').replaceAll('{total}', '3');
     final semanticParts = <String>[
-      if (widget.sessionCorrectStreak >= 1) streakLabel,
+      if (w.sessionCorrectStreak >= 1) streakLabel,
       masteryLabel,
     ];
 
@@ -2137,7 +2302,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
           spacing: 10,
           runSpacing: 5,
           children: [
-            if (widget.sessionCorrectStreak >= 1)
+            if (w.sessionCorrectStreak >= 1)
               StreakJitter(
                 strength: tier >= 3 ? 2 : (tier >= 2 ? 1 : 0),
                 child: Container(
@@ -2206,7 +2371,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                   children: [
                     TweenAnimationBuilder<double>(
                       key: ValueKey<String>(
-                        'streak-flame-${widget.question.id}-${widget.sessionCorrectStreak}',
+                        'streak-flame-${w.question.id}-${w.sessionCorrectStreak}',
                       ),
                       tween: Tween<double>(begin: 0, end: 1),
                       duration: const Duration(milliseconds: 520),
@@ -2324,7 +2489,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
   }
 
   /// 构建收藏气泡（Badge）
-  Widget _buildFavoriteBadge() {
+  Widget _buildFavoriteBadge(QuestionWidget w) {
     // 使用 TweenAnimationBuilder 实现流畅的入场动画
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -2369,7 +2534,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                     Flexible(
                       child: Text(
                         AppStrings.getWithLanguage(
-                            widget.currentLanguage, 'favorited'),
+                            w.currentLanguage, 'favorited'),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color:
@@ -2391,7 +2556,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
   }
 
   /// 构建精通气泡（Badge）
-  Widget _buildMasteredBadge() {
+  Widget _buildMasteredBadge(QuestionWidget w) {
     // 精通提示也保持短距、無回彈，避免連答時產生閃動。
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.0, end: 1.0),
@@ -2410,7 +2575,9 @@ class _QuestionWidgetState extends State<QuestionWidget>
               scale: 0.96 + (0.04 * value),
               child: Container(
                 padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    QuestionWidget._feedbackCardPadding,
+                constraints: QuestionWidget._feedbackCardConstraints,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: primaryColor,
                   borderRadius:
@@ -2441,7 +2608,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                         Flexible(
                           child: Text(
                             AppStrings.getWithLanguage(
-                                widget.currentLanguage, 'mastered_badge_short'),
+                                w.currentLanguage, 'mastered_badge_short'),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: isRetro
@@ -2456,7 +2623,7 @@ class _QuestionWidgetState extends State<QuestionWidget>
                       ],
                     ),
                     const SizedBox(height: 6),
-                    _buildCorrectMomentum(opacityValue),
+                    _buildCorrectMomentum(w, opacityValue),
                   ],
                 ),
               ),
